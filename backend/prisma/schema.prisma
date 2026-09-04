@@ -1,0 +1,334 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  admin
+  supervisor
+  operator
+  viewer
+}
+
+enum UserStatus {
+  active
+  inactive
+  pending
+}
+
+enum ProductStatus {
+  active
+  inactive
+  discontinued
+}
+
+enum PositionStatus {
+  free
+  occupied
+  blocked
+  reserved
+}
+
+enum MovementType {
+  entry
+  exit
+  transfer
+  loss
+  adjustment
+  inventory
+}
+
+enum ExitReason {
+  sale
+  transfer
+  loss
+  break
+  internal
+}
+
+enum LotStatus {
+  valid
+  expiring
+  expired
+  quarantine
+}
+
+enum InventoryCountType {
+  full
+  partial
+  cyclic
+}
+
+enum InventoryCountStatus {
+  planned
+  in_progress
+  review
+  completed
+}
+
+enum SupplierStatus {
+  active
+  inactive
+}
+
+enum CustomerStatus {
+  active
+  inactive
+}
+
+model User {
+  id         String     @id @default(cuid())
+  name       String
+  email      String     @unique
+  password   String
+  role       UserRole   @default(operator)
+  department String
+  status     UserStatus @default(pending)
+  avatarUrl  String?
+  lastLogin  DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  movements       Movement[]
+  auditLogs       AuditLog[]
+  inventoryCounts InventoryCount[]
+  notifications   Notification[]
+
+  @@map("users")
+}
+
+model Category {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  slug      String   @unique
+  color     String   @default("#6366f1")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  products Product[]
+
+  @@map("categories")
+}
+
+model Brand {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  slug      String   @unique
+  logoUrl   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  products Product[]
+
+  @@map("brands")
+}
+
+model Supplier {
+  id          String         @id @default(cuid())
+  name        String
+  tradeName   String
+  cnpj        String         @unique
+  email       String
+  phone       String
+  contactName String
+  category    String
+  status      SupplierStatus @default(active)
+  city        String
+  state       String
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  products  Product[]
+  movements Movement[]
+  lots      Lot[]
+
+  @@map("suppliers")
+}
+
+model Product {
+  id           String        @id @default(cuid())
+  name         String
+  internalCode String        @unique
+  sku          String        @unique
+  barcode      String        @unique
+  unit         String
+  weight       Float         @default(0)
+  width        Float         @default(0)
+  height       Float         @default(0)
+  depth        Float         @default(0)
+  description  String?
+  purchasePrice Float        @default(0)
+  salePrice    Float         @default(0)
+  minStock     Int           @default(0)
+  maxStock     Int           @default(0)
+  currentStock Int           @default(0)
+  status       ProductStatus @default(active)
+  imageUrl     String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id])
+
+  brandId String
+  brand   Brand  @relation(fields: [brandId], references: [id])
+
+  supplierId String
+  supplier   Supplier @relation(fields: [supplierId], references: [id])
+
+  movements         Movement[]
+  warehouseAddresses WarehouseAddress[]
+  lots              Lot[]
+
+  @@map("products")
+}
+
+model WarehouseAddress {
+  id        String         @id @default(cuid())
+  code      String         @unique
+  aisle     String
+  street    String
+  shelf     String
+  level     String
+  position  String
+  status    PositionStatus @default(free)
+  capacity  Float
+  occupied  Float          @default(0)
+  lotNumber String?
+  quantity  Int?
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  productId String?
+  product   Product? @relation(fields: [productId], references: [id])
+
+  fromMovements Movement[] @relation("FromAddress")
+  toMovements   Movement[] @relation("ToAddress")
+
+  @@map("warehouse_addresses")
+}
+
+model Movement {
+  id             String       @id @default(cuid())
+  type           MovementType
+  quantity       Int
+  unitCost       Float        @default(0)
+  totalValue     Float        @default(0)
+  invoiceNumber  String?
+  lotNumber      String?
+  expirationDate DateTime?
+  exitReason     ExitReason?
+  notes          String?
+  createdAt      DateTime     @default(now())
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+
+  supplierId String?
+  supplier   Supplier? @relation(fields: [supplierId], references: [id])
+
+  customerId   String?
+  customerName String?
+
+  fromAddressId String?
+  fromAddress   WarehouseAddress? @relation("FromAddress", fields: [fromAddressId], references: [id])
+
+  toAddressId String?
+  toAddress   WarehouseAddress? @relation("ToAddress", fields: [toAddressId], references: [id])
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@map("movements")
+}
+
+model Lot {
+  id                String    @id @default(cuid())
+  lotNumber         String    @unique
+  quantity          Int
+  manufacturingDate DateTime
+  expirationDate    DateTime
+  address           String
+  status            LotStatus @default(valid)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+
+  supplierId String
+  supplier   Supplier @relation(fields: [supplierId], references: [id])
+
+  @@map("lots")
+}
+
+model InventoryCount {
+  id          String               @id @default(cuid())
+  name        String
+  type        InventoryCountType
+  status      InventoryCountStatus @default(planned)
+  startDate   DateTime
+  endDate     DateTime?
+  totalItems  Int                  @default(0)
+  countedItems Int                 @default(0)
+  divergences Int                  @default(0)
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+
+  responsibleId String
+  responsible   User   @relation(fields: [responsibleId], references: [id])
+
+  @@map("inventory_counts")
+}
+
+model Customer {
+  id          String         @id @default(cuid())
+  name        String
+  tradeName   String
+  cnpj        String         @unique
+  email       String
+  phone       String?
+  contactName String?
+  city        String
+  state       String
+  status      CustomerStatus @default(active)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@map("customers")
+}
+
+model Notification {
+  id       String   @id @default(cuid())
+  alertKey String
+  readAt   DateTime @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@unique([alertKey, userId])
+  @@map("notifications")
+}
+
+model AuditLog {
+  id         String  @id @default(cuid())
+  action     String
+  entity     String
+  entityId   String
+  entityName String
+  oldValue   Json?
+  newValue   Json?
+  ip         String
+
+  userId   String
+  user     User   @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@map("audit_logs")
+}
