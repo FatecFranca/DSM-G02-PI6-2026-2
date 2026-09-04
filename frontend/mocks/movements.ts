@@ -1,0 +1,29 @@
+import type { Movement, Lot, InventoryCount } from '@/types/movement'
+
+export const mockMovements: Movement[] = [
+  { id: 'm1', type: 'entry', productId: '1', productName: 'Cabo HDMI 2.0 2m', productCode: 'EL-0042', quantity: 50, unitCost: 22.50, totalValue: 1125.00, supplierId: 's1', supplierName: 'TechDistrib Ltda', invoiceNumber: 'NF-2026-04521', lotNumber: 'LOT-001', userId: 'u1', userName: 'Carlos Silva', createdAt: '2026-06-30T14:32:00' },
+  { id: 'm2', type: 'exit', productId: '2', productName: 'Luva de Segurança CA', productCode: 'EP-0018', quantity: 24, unitCost: 24.90, totalValue: 597.60, exitReason: 'sale', customerId: 'cl1', customerName: 'Construtora Horizonte', userId: 'u2', userName: 'Ana Lima', createdAt: '2026-06-30T14:15:00' },
+  { id: 'm3', type: 'entry', productId: '3', productName: 'Álcool 70% 1L', productCode: 'QM-0091', quantity: 200, unitCost: 12.00, totalValue: 2400.00, supplierId: 's3', supplierName: 'QuimiNorte Distribuidora', invoiceNumber: 'NF-2026-00891', lotNumber: 'LOT-ALC-001', expirationDate: '2027-06-01', userId: 'u3', userName: 'Rafael Costa', createdAt: '2026-06-30T13:48:00' },
+  { id: 'm4', type: 'transfer', productId: '4', productName: 'Parafuso M8×50', productCode: 'FE-0203', quantity: 500, unitCost: 0.18, totalValue: 90.00, fromAddress: 'A-01-03-B-02', toAddress: 'B-02-01-A-03', userId: 'u4', userName: 'Juliana Martins', createdAt: '2026-06-30T12:30:00' },
+  { id: 'm5', type: 'exit', productId: '5', productName: 'Fita Isolante 19mm', productCode: 'EL-0077', quantity: 36, unitCost: 8.90, totalValue: 320.40, exitReason: 'internal', userId: 'u1', userName: 'Carlos Silva', createdAt: '2026-06-30T11:55:00' },
+  { id: 'm6', type: 'loss', productId: '8', productName: 'Lâmpada LED 9W', productCode: 'EL-0112', quantity: 3, unitCost: 22.90, totalValue: 68.70, notes: 'Quebra durante movimentação', userId: 'u3', userName: 'Rafael Costa', createdAt: '2026-06-30T11:20:00' },
+  { id: 'm7', type: 'entry', productId: '6', productName: 'Bateria 18650 3.7V', productCode: 'EL-0098', quantity: 120, unitCost: 28.00, totalValue: 3360.00, supplierId: 's5', supplierName: 'PowerCell Imp.', invoiceNumber: 'NF-2026-01234', userId: 'u2', userName: 'Ana Lima', createdAt: '2026-06-30T10:45:00' },
+  { id: 'm8', type: 'exit', productId: '7', productName: 'Capacete Amarelo CA', productCode: 'EP-0031', quantity: 10, unitCost: 119.00, totalValue: 1190.00, exitReason: 'sale', customerId: 'cl2', customerName: 'Metalúrgica Rápida', userId: 'u4', userName: 'Juliana Martins', createdAt: '2026-06-30T09:30:00' },
+  { id: 'm9', type: 'adjustment', productId: '9', productName: 'Embalagem Papelão', productCode: 'EM-0055', quantity: -15, unitCost: 6.50, totalValue: -97.50, notes: 'Divergência inventário junho', userId: 'u1', userName: 'Carlos Silva', createdAt: '2026-06-29T16:00:00' },
+  { id: 'm10', type: 'entry', productId: '11', productName: 'Cabo PP 2×2.5mm²', productCode: 'EL-0034', quantity: 20, unitCost: 280.00, totalValue: 5600.00, supplierId: 's1', supplierName: 'TechDistrib Ltda', invoiceNumber: 'NF-2026-04498', userId: 'u3', userName: 'Rafael Costa', createdAt: '2026-06-29T14:20:00' },
+]
+
+export const mockLots: Lot[] = [
+  { id: 'l1', lotNumber: 'LOT-ALC-001', productId: '3', productName: 'Álcool 70% 1L', productCode: 'QM-0091', quantity: 200, manufacturingDate: '2026-01-15', expirationDate: '2027-06-01', supplierId: 's3', supplierName: 'QuimiNorte', address: 'C-03-02-A-01', status: 'valid', createdAt: '2026-06-30' },
+  { id: 'l2', lotNumber: 'LOT-ALC-000', productId: '3', productName: 'Álcool 70% 1L', productCode: 'QM-0091', quantity: 50, manufacturingDate: '2025-07-10', expirationDate: '2026-07-05', supplierId: 's3', supplierName: 'QuimiNorte', address: 'C-03-02-A-02', status: 'expiring', createdAt: '2025-07-10' },
+  { id: 'l3', lotNumber: 'LOT-001', productId: '1', productName: 'Cabo HDMI 2.0 2m', productCode: 'EL-0042', quantity: 87, manufacturingDate: '2026-03-01', expirationDate: '2031-03-01', supplierId: 's1', supplierName: 'TechDistrib', address: 'A-01-03-B-05', status: 'valid', createdAt: '2026-06-30' },
+  { id: 'l4', lotNumber: 'LOT-LUVA-22', productId: '2', productName: 'Luva de Segurança CA', productCode: 'EP-0018', quantity: 12, manufacturingDate: '2022-08-01', expirationDate: '2026-08-01', supplierId: 's2', supplierName: 'EPI Brasil', address: 'B-01-02-A-01', status: 'expiring', createdAt: '2022-08-15' },
+  { id: 'l5', lotNumber: 'LOT-DESF-OLD', productId: '10', productName: 'Extintor PQS 4Kg', productCode: 'SE-0012', quantity: 5, manufacturingDate: '2023-01-01', expirationDate: '2025-12-31', supplierId: 's7', supplierName: 'SafeStock', address: 'D-01-01-A-01', status: 'expired', createdAt: '2023-01-05' },
+]
+
+export const mockInventories: InventoryCount[] = [
+  { id: 'inv1', name: 'Inventário Geral Junho 2026', type: 'full', status: 'completed', startDate: '2026-06-25', endDate: '2026-06-28', totalItems: 1847, countedItems: 1847, divergences: 12, responsibleId: 'u1', responsibleName: 'Carlos Silva', createdAt: '2026-06-20' },
+  { id: 'inv2', name: 'Inventário Cíclico EPI — Jul/26', type: 'cyclic', status: 'in_progress', startDate: '2026-07-01', totalItems: 287, countedItems: 142, divergences: 3, responsibleId: 'u2', responsibleName: 'Ana Lima', createdAt: '2026-06-28' },
+  { id: 'inv3', name: 'Inventário Eletrônicos Q2-26', type: 'partial', status: 'planned', startDate: '2026-07-10', totalItems: 423, countedItems: 0, divergences: 0, responsibleId: 'u4', responsibleName: 'Juliana Martins', createdAt: '2026-06-30' },
+  { id: 'inv4', name: 'Inventário Geral Março 2026', type: 'full', status: 'completed', startDate: '2026-03-25', endDate: '2026-03-28', totalItems: 1792, countedItems: 1792, divergences: 8, responsibleId: 'u1', responsibleName: 'Carlos Silva', createdAt: '2026-03-20' },
+]
