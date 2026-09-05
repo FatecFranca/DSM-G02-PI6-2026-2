@@ -45,11 +45,13 @@ Este projeto é dividido em duas aplicações independentes que se comunicam via
 
 ```
 pi/
-├── backend/    # API REST — Node.js/Express, TypeScript e PostgreSQL (via Prisma ORM)
-│               # → backend/README.md
-├── frontend/   # Aplicação web — Next.js/React, interface de operação do sistema
-│               # → frontend/README.md
-└── docs/       # Documentação de arquitetura, nuvem, mineração de dados e requisitos
+├── backend/          # API REST — Node.js/Express, TypeScript e PostgreSQL (via Prisma ORM)
+│                     # → backend/README.md
+├── frontend/         # Aplicação web — Next.js/React, interface de operação do sistema
+│                     # → frontend/README.md
+├── machine-learning/ # Protótipo de previsão de demanda (mineração de dados)
+│                     # → machine-learning/README.md
+└── docs/             # Documentação de arquitetura, nuvem, mineração de dados e requisitos
     ├── ARCHITECTURE.md
     └── REQUIREMENTS.md
 ```
@@ -58,6 +60,7 @@ pi/
 |---|---|---|
 | [`backend/`](backend) | [backend/README.md](backend/README.md) | API REST autenticada, validada, documentada (Swagger) e testada — 15 módulos / 67 endpoints |
 | [`frontend/`](frontend) | [frontend/README.md](frontend/README.md) | Protótipo navegável de todas as telas do sistema (Next.js/React), atualmente com dados mockados |
+| [`machine-learning/`](machine-learning) | [machine-learning/README.md](machine-learning/README.md) | Protótipo de previsão de demanda por categoria (regressão linear simples) |
 
 ## Arquitetura da solução
 
@@ -97,6 +100,7 @@ Instruções detalhadas, variáveis de ambiente e scripts em [backend/README.md]
 |---|---|
 | [backend/README.md](backend/README.md) | Stack, estrutura em camadas, setup, banco de dados, autenticação/RBAC, segurança, testes, tabela completa de endpoints |
 | [frontend/README.md](frontend/README.md) | Stack, estrutura de pastas, telas implementadas, componentes reutilizáveis, dados mockados, setup |
+| [machine-learning/README.md](machine-learning/README.md) | Dataset usado, mapeamento para o schema do StockIQ, algoritmo de previsão, como rodar |
 | [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md) | Escopo, requisitos funcionais (RF01–RF16), requisitos não funcionais (RNF01–RNF10) e hierarquia de perfis de acesso |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Visão lógica, casos de uso, modelo de dados (ER), arquitetura AWS, mensageria (SQS) e planejamento de mineração de dados |
 
