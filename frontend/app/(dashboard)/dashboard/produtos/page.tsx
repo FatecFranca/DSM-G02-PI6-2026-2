@@ -1,5 +1,5 @@
 'use client'
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import Link from 'next/link'
 import {
   Plus, Search, Filter, LayoutGrid, List, Download,
@@ -12,9 +12,39 @@ import { Badge } from '@/components/ui/Badge'
 import { Input } from '@/components/ui/Input'
 import { Pagination } from '@/components/ui/Pagination'
 import { EmptyState } from '@/components/ui/EmptyState'
-import { mockProducts, mockCategories } from '@/mocks/products'
 import { formatCurrency, formatNumber } from '@/lib/utils'
 import { cn } from '@/lib/cn'
+import { api, ApiError } from '@/lib/api'
+import type { Product } from '@/types/product'
+
+interface ApiCategory { id: string; name: string; slug: string; color: string }
+interface ApiProduct {
+  id: string; name: string; internalCode: string; sku: string; barcode: string
+  categoryId: string; brandId: string; supplierId: string; unit: string
+  weight: number; width: number; height: number; depth: number
+  description?: string; purchasePrice: number; salePrice: number
+  minStock: number; maxStock: number; currentStock: number
+  status: Product['status']; stockStatus: Product['stockStatus']
+  imageUrl?: string; createdAt: string; updatedAt: string
+  category: { id: string; name: string }
+  brand: { id: string; name: string }
+  supplier: { id: string; name: string }
+}
+
+function mapProduct(p: ApiProduct): Product {
+  return {
+    id: p.id, name: p.name, internalCode: p.internalCode, sku: p.sku, barcode: p.barcode,
+    categoryId: p.categoryId, categoryName: p.category?.name ?? '—',
+    brandId: p.brandId, brandName: p.brand?.name ?? '—',
+    unit: p.unit, weight: p.weight,
+    dimensions: { width: p.width, height: p.height, depth: p.depth },
+    description: p.description ?? '', purchasePrice: p.purchasePrice, salePrice: p.salePrice,
+    supplierId: p.supplierId, supplierName: p.supplier?.name ?? '—',
+    minStock: p.minStock, maxStock: p.maxStock, currentStock: p.currentStock,
+    status: p.status, stockStatus: p.stockStatus, imageUrl: p.imageUrl,
+    createdAt: p.createdAt, updatedAt: p.updatedAt,
+  }
+}
 
 const STOCK_STATUS = {
   ok:       { label: 'Em Estoque',   variant: 'success' as const },
@@ -31,6 +61,10 @@ const PRODUCT_STATUS = {
 const PER_PAGE = 10
 
 export default function ProdutosPage() {
+  const [products, setProducts] = useState<Product[]>([])
+  const [categories, setCategories] = useState<ApiCategory[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
   const [view, setView] = useState<'table' | 'card'>('table')
   const [search, setSearch] = useState('')
   const [catFilter, setCatFilter] = useState('')
@@ -41,8 +75,31 @@ export default function ProdutosPage() {
   const [sortKey, setSortKey] = useState('name')
   const [sortDir, setSortDir] = useState<'asc'|'desc'>('asc')
 
+  useEffect(() => {
+    Promise.all([
+      api.get<{ data: ApiProduct[] }>('/products', { limit: 100 }),
+      api.get<ApiCategory[]>('/categories'),
+    ])
+      .then(([prodRes, cats]) => {
+        setProducts(prodRes.data.map(mapProduct))
+        setCategories(cats)
+      })
+      .catch(err => setError(err instanceof ApiError ? err.message : 'Falha ao carregar produtos'))
+      .finally(() => setLoading(false))
+  }, [])
+
+  async function handleDelete(p: Product) {
+    if (!confirm(`Remover o produto "${p.name}"?`)) return
+    try {
+      await api.delete(`/products/${p.id}`)
+      setProducts(prev => prev.filter(x => x.id !== p.id))
+    } catch (err) {
+      alert(err instanceof ApiError ? err.message : 'Falha ao remover produto')
+    }
+  }
+
   const filtered = useMemo(() => {
-    let list = [...mockProducts]
+    let list = [...products]
     if (search) list = list.filter(p => p.name.toLowerCase().includes(search.toLowerCase()) || p.internalCode.toLowerCase().includes(search.toLowerCase()) || p.sku.toLowerCase().includes(search.toLowerCase()))
     if (catFilter) list = list.filter(p => p.categoryId === catFilter)
     if (statusFilter) list = list.filter(p => p.status === statusFilter)
@@ -53,7 +110,7 @@ export default function ProdutosPage() {
       return sortDir === 'asc' ? va.localeCompare(vb) : vb.localeCompare(va)
     })
     return list
-  }, [search, catFilter, statusFilter, stockFilter, sortKey, sortDir])
+  }, [products, search, catFilter, statusFilter, stockFilter, sortKey, sortDir])
 
   const paginated = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE)
 
@@ -69,7 +126,7 @@ export default function ProdutosPage() {
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-xl font-bold text-[color:var(--text-primary)]">Produtos</h1>
-          <p className="text-sm text-[color:var(--text-tertiary)] mt-0.5">{formatNumber(mockProducts.length)} produtos cadastrados</p>
+          <p className="text-sm text-[color:var(--text-tertiary)] mt-0.5">{formatNumber(products.length)} produtos cadastrados</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" leftIcon={<Download className="w-3.5 h-3.5" />}>Exportar</Button>
@@ -117,7 +174,7 @@ export default function ProdutosPage() {
               className="h-8 px-3 rounded-[var(--radius-md)] border border-[color:var(--border)] bg-[color:var(--bg-base)] text-sm text-[color:var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[color:var(--brand)]"
             >
               <option value="">Todas as categorias</option>
-              {mockCategories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+              {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
             <select
               value={statusFilter}
@@ -149,8 +206,14 @@ export default function ProdutosPage() {
         )}
       </div>
 
+      {error && (
+        <p className="text-sm text-[color:var(--danger)] bg-[color:var(--danger-subtle)] border border-[color:var(--danger)]/30 rounded-[var(--radius-md)] px-3 py-2">{error}</p>
+      )}
+
       {/* Content */}
-      {filtered.length === 0 ? (
+      {loading ? (
+        <p className="text-sm text-[color:var(--text-tertiary)]">Carregando…</p>
+      ) : filtered.length === 0 ? (
         <EmptyState
           icon={<Package className="w-6 h-6" />}
           title="Nenhum produto encontrado"
@@ -236,7 +299,7 @@ export default function ProdutosPage() {
                         <button className="w-7 h-7 flex items-center justify-center rounded-[var(--radius-md)] hover:bg-[color:var(--bg-muted)] text-[color:var(--text-tertiary)] hover:text-[color:var(--text-primary)] transition-colors" title="Editar">
                           <Edit className="w-3.5 h-3.5" />
                         </button>
-                        <button className="w-7 h-7 flex items-center justify-center rounded-[var(--radius-md)] hover:bg-[color:var(--danger-subtle)] text-[color:var(--text-tertiary)] hover:text-[color:var(--danger)] transition-colors" title="Excluir">
+                        <button onClick={() => handleDelete(p)} className="w-7 h-7 flex items-center justify-center rounded-[var(--radius-md)] hover:bg-[color:var(--danger-subtle)] text-[color:var(--text-tertiary)] hover:text-[color:var(--danger)] transition-colors" title="Excluir">
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
                         <button className="w-7 h-7 flex items-center justify-center rounded-[var(--radius-md)] hover:bg-[color:var(--bg-muted)] text-[color:var(--text-tertiary)] transition-colors">

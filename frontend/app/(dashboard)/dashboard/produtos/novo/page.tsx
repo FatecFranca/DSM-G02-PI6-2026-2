@@ -1,21 +1,21 @@
 'use client'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { ChevronLeft, Save, Package, Image as ImageIcon, Barcode, Tag } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { ChevronLeft, Save, Image as ImageIcon, Barcode, Tag } from 'lucide-react'
 import { Breadcrumb } from '@/components/ui/Breadcrumb'
 import { Button } from '@/components/ui/Button'
 import { Card, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { Tabs } from '@/components/ui/Tabs'
-import { mockCategories, mockBrands, mockSuppliers } from '@/mocks/products'
 import { cn } from '@/lib/cn'
+import { api, ApiError } from '@/lib/api'
 
 const TABS = [
   { id: 'basic', label: 'Informações Básicas' },
   { id: 'stock', label: 'Estoque e Preço' },
   { id: 'logistics', label: 'Logística' },
-  { id: 'images', label: 'Imagens' },
 ]
 
 const UNITS = [
@@ -29,14 +29,81 @@ const UNITS = [
   { value: 'PCT', label: 'Pacote (PCT)' },
 ]
 
+interface Option { id: string; name: string; tradeName?: string }
+
 export default function NovoProdutoPage() {
+  const router = useRouter()
   const [tab, setTab] = useState('basic')
   const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+
+  const [categories, setCategories] = useState<Option[]>([])
+  const [brands, setBrands] = useState<Option[]>([])
+  const [suppliers, setSuppliers] = useState<Option[]>([])
+
+  const [name, setName] = useState('')
+  const [internalCode, setInternalCode] = useState('')
+  const [sku, setSku] = useState('')
+  const [barcode, setBarcode] = useState('')
+  const [description, setDescription] = useState('')
+  const [categoryId, setCategoryId] = useState('')
+  const [brandId, setBrandId] = useState('')
+  const [supplierId, setSupplierId] = useState('')
+  const [unit, setUnit] = useState('')
+  const [status, setStatus] = useState<'active' | 'inactive' | 'discontinued'>('active')
+
+  const [minStock, setMinStock] = useState('0')
+  const [maxStock, setMaxStock] = useState('0')
+  const [purchasePrice, setPurchasePrice] = useState('')
+  const [salePrice, setSalePrice] = useState('')
+
+  const [weight, setWeight] = useState('0')
+  const [width, setWidth] = useState('0')
+  const [height, setHeight] = useState('0')
+  const [depth, setDepth] = useState('0')
+
+  useEffect(() => {
+    Promise.all([
+      api.get<Option[]>('/categories'),
+      api.get<Option[]>('/brands'),
+      api.get<{ data: Option[] }>('/suppliers', { limit: 100 }),
+    ]).then(([cats, brs, sups]) => {
+      setCategories(cats)
+      setBrands(brs)
+      setSuppliers(sups.data)
+    }).catch(() => {})
+  }, [])
 
   const handleSave = async () => {
     setSaving(true)
-    await new Promise(r => setTimeout(r, 1200))
-    setSaving(false)
+    setError('')
+    try {
+      await api.post('/products', {
+        name,
+        internalCode,
+        sku,
+        barcode,
+        categoryId,
+        brandId,
+        supplierId,
+        unit,
+        description: description || undefined,
+        weight: Number(weight) || 0,
+        width: Number(width) || 0,
+        height: Number(height) || 0,
+        depth: Number(depth) || 0,
+        purchasePrice: Number(purchasePrice) || 0,
+        salePrice: Number(salePrice) || 0,
+        minStock: Number(minStock) || 0,
+        maxStock: Number(maxStock) || 0,
+        status,
+      })
+      router.push('/dashboard/produtos')
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Falha ao salvar produto')
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
@@ -65,6 +132,10 @@ export default function NovoProdutoPage() {
         </div>
       </div>
 
+      {error && (
+        <p className="text-sm text-[color:var(--danger)] bg-[color:var(--danger-subtle)] border border-[color:var(--danger)]/30 rounded-[var(--radius-md)] px-3 py-2">{error}</p>
+      )}
+
       <Tabs tabs={TABS} active={tab} onChange={setTab} />
 
       {tab === 'basic' && (
@@ -76,18 +147,19 @@ export default function NovoProdutoPage() {
               </CardHeader>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="sm:col-span-2">
-                  <Input label="Nome do Produto *" placeholder="Ex: Cabo HDMI 2.0 4K Ultra HD 2m" />
+                  <Input label="Nome do Produto *" placeholder="Ex: Cabo HDMI 2.0 4K Ultra HD 2m" value={name} onChange={e => setName(e.target.value)} />
                 </div>
-                <Input label="Código Interno *" placeholder="EX: EL-0042" leftIcon={<Tag className="w-3.5 h-3.5" />} />
-                <Input label="SKU (Stock Keeping Unit)" placeholder="EX: CAB-HDMI-2M-BK" />
-                <Input label="Código de Barras (EAN/GTIN)" placeholder="7891234567890" leftIcon={<Barcode className="w-3.5 h-3.5" />} />
-                <Input label="QR Code (opcional)" placeholder="Identificador único" />
+                <Input label="Código Interno *" placeholder="EX: EL-0042" leftIcon={<Tag className="w-3.5 h-3.5" />} value={internalCode} onChange={e => setInternalCode(e.target.value)} />
+                <Input label="SKU (Stock Keeping Unit) *" placeholder="EX: CAB-HDMI-2M-BK" value={sku} onChange={e => setSku(e.target.value)} />
+                <Input label="Código de Barras (EAN/GTIN) *" placeholder="7891234567890" leftIcon={<Barcode className="w-3.5 h-3.5" />} value={barcode} onChange={e => setBarcode(e.target.value)} />
                 <div className="sm:col-span-2">
                   <label className="text-sm font-medium text-[color:var(--text-primary)] block mb-1.5">Descrição</label>
                   <textarea
                     rows={3}
                     placeholder="Descreva o produto em detalhes, especificações técnicas, características…"
                     className="w-full px-3 py-2 rounded-[var(--radius-md)] border border-[color:var(--border)] bg-[color:var(--bg-base)] text-sm text-[color:var(--text-primary)] placeholder:text-[color:var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-[color:var(--brand)] resize-none"
+                    value={description}
+                    onChange={e => setDescription(e.target.value)}
                   />
                 </div>
               </div>
@@ -101,22 +173,30 @@ export default function NovoProdutoPage() {
                 <Select
                   label="Categoria *"
                   placeholder="Selecione a categoria"
-                  options={mockCategories.map(c => ({ value: c.id, label: c.name }))}
+                  options={categories.map(c => ({ value: c.id, label: c.name }))}
+                  value={categoryId}
+                  onChange={e => setCategoryId(e.target.value)}
                 />
                 <Select
-                  label="Marca"
+                  label="Marca *"
                   placeholder="Selecione a marca"
-                  options={mockBrands.map(b => ({ value: b.id, label: b.name }))}
+                  options={brands.map(b => ({ value: b.id, label: b.name }))}
+                  value={brandId}
+                  onChange={e => setBrandId(e.target.value)}
                 />
                 <Select
                   label="Unidade de Medida *"
                   placeholder="Selecione a unidade"
                   options={UNITS}
+                  value={unit}
+                  onChange={e => setUnit(e.target.value)}
                 />
                 <Select
-                  label="Fornecedor Principal"
+                  label="Fornecedor Principal *"
                   placeholder="Selecione o fornecedor"
-                  options={mockSuppliers.map(s => ({ value: s.id, label: s.tradeName }))}
+                  options={suppliers.map(s => ({ value: s.id, label: s.tradeName ?? s.name }))}
+                  value={supplierId}
+                  onChange={e => setSupplierId(e.target.value)}
                 />
                 <Select
                   label="Status"
@@ -125,6 +205,8 @@ export default function NovoProdutoPage() {
                     { value: 'inactive', label: 'Inativo' },
                     { value: 'discontinued', label: 'Descontinuado' },
                   ]}
+                  value={status}
+                  onChange={e => setStatus(e.target.value as typeof status)}
                 />
               </div>
             </Card>
@@ -175,10 +257,8 @@ export default function NovoProdutoPage() {
               <CardTitle description="Configurações de controle de estoque">Controle de Estoque</CardTitle>
             </CardHeader>
             <div className="grid grid-cols-2 gap-4">
-              <Input label="Estoque Mínimo *" type="number" placeholder="0" hint="Abaixo disso gera alerta" />
-              <Input label="Estoque Máximo" type="number" placeholder="1000" hint="Quantidade máxima" />
-              <Input label="Ponto de Reposição" type="number" placeholder="50" hint="Quando disparar compra" />
-              <Input label="Quantidade Inicial" type="number" placeholder="0" hint="Estoque de abertura" />
+              <Input label="Estoque Mínimo *" type="number" placeholder="0" hint="Abaixo disso gera alerta" value={minStock} onChange={e => setMinStock(e.target.value)} />
+              <Input label="Estoque Máximo" type="number" placeholder="1000" hint="Quantidade máxima" value={maxStock} onChange={e => setMaxStock(e.target.value)} />
             </div>
           </Card>
           <Card>
@@ -186,11 +266,13 @@ export default function NovoProdutoPage() {
               <CardTitle description="Preços e margens">Precificação</CardTitle>
             </CardHeader>
             <div className="grid grid-cols-2 gap-4">
-              <Input label="Preço de Compra *" placeholder="0,00" leftIcon={<span className="text-xs font-medium">R$</span>} />
-              <Input label="Preço de Venda *" placeholder="0,00" leftIcon={<span className="text-xs font-medium">R$</span>} />
+              <Input label="Preço de Compra *" placeholder="0,00" leftIcon={<span className="text-xs font-medium">R$</span>} value={purchasePrice} onChange={e => setPurchasePrice(e.target.value)} />
+              <Input label="Preço de Venda *" placeholder="0,00" leftIcon={<span className="text-xs font-medium">R$</span>} value={salePrice} onChange={e => setSalePrice(e.target.value)} />
               <div className="col-span-2 p-4 rounded-[var(--radius-md)] bg-[color:var(--success-subtle)] border border-[color:var(--success-muted)]">
                 <p className="text-xs font-medium text-[color:var(--success)] mb-1">Margem estimada</p>
-                <p className="text-2xl font-bold text-[color:var(--success)]">—</p>
+                <p className="text-2xl font-bold text-[color:var(--success)]">
+                  {purchasePrice && salePrice ? `${(((Number(salePrice) - Number(purchasePrice)) / Number(salePrice)) * 100).toFixed(1)}%` : '—'}
+                </p>
                 <p className="text-xs text-[color:var(--text-tertiary)] mt-1">Preencha os preços acima</p>
               </div>
             </div>
@@ -204,34 +286,10 @@ export default function NovoProdutoPage() {
             <CardTitle description="Dimensões e peso para WMS">Informações Logísticas</CardTitle>
           </CardHeader>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <Input label="Peso Líquido (kg)" type="number" placeholder="0,000" />
-            <Input label="Peso Bruto (kg)" type="number" placeholder="0,000" />
-            <Input label="Largura (cm)" type="number" placeholder="0,0" />
-            <Input label="Altura (cm)" type="number" placeholder="0,0" />
-            <Input label="Profundidade (cm)" type="number" placeholder="0,0" />
-            <Input label="Volume (m³)" type="number" placeholder="0,0000" />
-            <div className="col-span-2">
-              <Select label="Controla Lote?" options={[{ value: 'yes', label: 'Sim' }, { value: 'no', label: 'Não' }]} />
-            </div>
-            <div className="col-span-2">
-              <Select label="Controla Validade?" options={[{ value: 'yes', label: 'Sim' }, { value: 'no', label: 'Não' }]} />
-            </div>
-          </div>
-        </Card>
-      )}
-
-      {tab === 'images' && (
-        <Card>
-          <CardHeader>
-            <CardTitle description="Fotos do produto para o catálogo">Galeria de Imagens</CardTitle>
-          </CardHeader>
-          <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="aspect-square border-2 border-dashed border-[color:var(--border)] rounded-[var(--radius-lg)] flex flex-col items-center justify-center gap-2 hover:border-[color:var(--brand)] hover:bg-[color:var(--brand-subtle)] cursor-pointer transition-all">
-                <ImageIcon className="w-6 h-6 text-[color:var(--text-tertiary)]" />
-                <span className="text-[10px] text-[color:var(--text-tertiary)]">+ Imagem</span>
-              </div>
-            ))}
+            <Input label="Peso (kg)" type="number" placeholder="0,000" value={weight} onChange={e => setWeight(e.target.value)} />
+            <Input label="Largura (cm)" type="number" placeholder="0,0" value={width} onChange={e => setWidth(e.target.value)} />
+            <Input label="Altura (cm)" type="number" placeholder="0,0" value={height} onChange={e => setHeight(e.target.value)} />
+            <Input label="Profundidade (cm)" type="number" placeholder="0,0" value={depth} onChange={e => setDepth(e.target.value)} />
           </div>
         </Card>
       )}

@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation'
 import { Eye, EyeOff, Boxes, ArrowRight, ShieldCheck, Zap, BarChart3 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
-import { cn } from '@/lib/cn'
+import { useAuth } from '@/lib/auth-context'
+import { ApiError } from '@/lib/api'
 
 const features = [
   { icon: ShieldCheck, title: 'WMS Completo', desc: 'Gestão por endereço, corredor, prateleira e posição' },
@@ -15,16 +16,25 @@ const features = [
 
 export default function LoginPage() {
   const router = useRouter()
-  const [email, setEmail] = useState('carlos.silva@empresa.com.br')
-  const [password, setPassword] = useState('••••••••')
+  const { login } = useAuth()
+  const [email, setEmail] = useState('admin@wms.com')
+  const [password, setPassword] = useState('admin123')
   const [showPass, setShowPass] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
+    setError('')
     setLoading(true)
-    await new Promise(r => setTimeout(r, 800))
-    router.push('/dashboard')
+    try {
+      await login(email, password)
+      router.push('/dashboard')
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Não foi possível conectar ao servidor')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -124,6 +134,12 @@ export default function LoginPage() {
               </div>
             </div>
 
+            {error && (
+              <p className="text-xs text-[color:var(--danger)] bg-[color:var(--danger-subtle)] border border-[color:var(--danger)]/30 rounded-[var(--radius-md)] px-3 py-2">
+                {error}
+              </p>
+            )}
+
             <Button
               type="submit"
               size="lg"
@@ -138,8 +154,8 @@ export default function LoginPage() {
           <div className="mt-6 p-4 rounded-[var(--radius-lg)] bg-[color:var(--brand-subtle)] border border-[color:var(--brand-muted)]">
             <p className="text-xs text-[color:var(--brand)] font-medium mb-1">Acesso de demonstração</p>
             <p className="text-xs text-[color:var(--text-secondary)]">
-              E-mail: <span className="font-mono">carlos.silva@empresa.com.br</span><br />
-              Senha: qualquer valor
+              E-mail: <span className="font-mono">admin@wms.com</span><br />
+              Senha: <span className="font-mono">admin123</span>
             </p>
           </div>
 

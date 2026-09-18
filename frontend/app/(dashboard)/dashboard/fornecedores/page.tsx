@@ -1,19 +1,42 @@
 'use client'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Plus, Search, Eye, Edit, Truck, Mail, Phone, MapPin } from 'lucide-react'
 import { Breadcrumb } from '@/components/ui/Breadcrumb'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { Input } from '@/components/ui/Input'
 import { Avatar } from '@/components/ui/Avatar'
-import { mockSuppliers } from '@/mocks/products'
-import { cn } from '@/lib/cn'
+import { api, ApiError } from '@/lib/api'
+
+interface Supplier {
+  id: string
+  name: string
+  tradeName: string
+  cnpj: string
+  email: string
+  phone: string
+  contactName: string
+  category: string
+  status: 'active' | 'inactive'
+  city: string
+  state: string
+}
 
 export default function FornecedoresPage() {
+  const [suppliers, setSuppliers] = useState<Supplier[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
 
-  const filtered = mockSuppliers.filter(s => {
+  useEffect(() => {
+    api.get<{ data: Supplier[] }>('/suppliers', { limit: 100 })
+      .then(res => setSuppliers(res.data))
+      .catch(err => setError(err instanceof ApiError ? err.message : 'Falha ao carregar fornecedores'))
+      .finally(() => setLoading(false))
+  }, [])
+
+  const filtered = suppliers.filter(s => {
     const matchSearch = s.name.toLowerCase().includes(search.toLowerCase()) ||
       s.tradeName.toLowerCase().includes(search.toLowerCase()) ||
       s.cnpj.includes(search)
@@ -28,7 +51,7 @@ export default function FornecedoresPage() {
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-xl font-bold text-[color:var(--text-primary)]">Fornecedores</h1>
-          <p className="text-sm text-[color:var(--text-tertiary)] mt-0.5">{mockSuppliers.length} fornecedores cadastrados</p>
+          <p className="text-sm text-[color:var(--text-tertiary)] mt-0.5">{suppliers.length} fornecedores cadastrados</p>
         </div>
         <Button size="sm" leftIcon={<Plus className="w-3.5 h-3.5" />}>Novo Fornecedor</Button>
       </div>
@@ -47,6 +70,11 @@ export default function FornecedoresPage() {
           <option value="inactive">Inativo</option>
         </select>
       </div>
+
+      {error && (
+        <p className="text-sm text-[color:var(--danger)] bg-[color:var(--danger-subtle)] border border-[color:var(--danger)]/30 rounded-[var(--radius-md)] px-3 py-2">{error}</p>
+      )}
+      {loading && <p className="text-sm text-[color:var(--text-tertiary)]">Carregando…</p>}
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         {filtered.map(s => (

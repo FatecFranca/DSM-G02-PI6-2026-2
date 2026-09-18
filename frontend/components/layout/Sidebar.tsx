@@ -1,7 +1,7 @@
 'use client'
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import {
   LayoutDashboard, Bell, Package, Tag, Award, Truck, Users,
   ArrowDownToLine, ArrowUpFromLine, History, Layers, MapPin,
@@ -13,7 +13,7 @@ import { cn } from '@/lib/cn'
 import type { NavGroup } from '@/constants/navigation'
 import { NAV_GROUPS } from '@/constants/navigation'
 import { Avatar } from '@/components/ui/Avatar'
-import { currentUser } from '@/mocks/users'
+import { useAuth } from '@/lib/auth-context'
 
 const ICONS: Record<string, React.ElementType> = {
   LayoutDashboard, Bell, Package, Tag, Award, Truck, Users,
@@ -74,6 +74,8 @@ function NavItem({ item, collapsed, pathname }: {
 
 export function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: SidebarProps) {
   const pathname = usePathname()
+  const router = useRouter()
+  const { user, logout } = useAuth()
   const [query, setQuery] = useState('')
 
   const filteredGroups = useMemo(() => {
@@ -187,14 +189,15 @@ export function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: Side
             'w-full flex items-center gap-2.5 px-2 py-2 rounded-[var(--radius-md)] hover:bg-[color:var(--sidebar-hover)] transition-colors',
             collapsed && 'justify-center px-0',
           )}
-          title={collapsed ? currentUser.name : undefined}
+          title={collapsed ? user?.name : 'Sair'}
+          onClick={() => { logout(); router.push('/login') }}
         >
-          <Avatar name={currentUser.name} size="sm" />
+          <Avatar name={user?.name ?? '?'} size="sm" />
           {!collapsed && (
             <>
               <div className="min-w-0 flex-1 text-left">
-                <p className="text-[12.5px] font-semibold text-[color:var(--sidebar-text-active)] leading-none truncate">{currentUser.name}</p>
-                <p className="text-[11px] text-[color:var(--sidebar-text)] mt-1 truncate">{currentUser.role === 'admin' ? 'Administrador' : currentUser.role}</p>
+                <p className="text-[12.5px] font-semibold text-[color:var(--sidebar-text-active)] leading-none truncate">{user?.name}</p>
+                <p className="text-[11px] text-[color:var(--sidebar-text)] mt-1 truncate">{user?.role === 'admin' ? 'Administrador' : user?.role}</p>
               </div>
               <ChevronLeft strokeWidth={ICON_STROKE} className="w-3.5 h-3.5 text-[color:var(--sidebar-text)] rotate-[-90deg] flex-shrink-0" />
             </>

@@ -1,15 +1,23 @@
 'use client'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Plus, Search, Edit, Trash2, Tag, Package } from 'lucide-react'
 import { Breadcrumb } from '@/components/ui/Breadcrumb'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Modal } from '@/components/ui/Modal'
-import { Badge } from '@/components/ui/Badge'
 import { EmptyState } from '@/components/ui/EmptyState'
-import { mockCategories } from '@/mocks/products'
 import { formatNumber } from '@/lib/utils'
+import { slugify } from '@/lib/utils'
 import { cn } from '@/lib/cn'
+import { api, ApiError } from '@/lib/api'
+
+interface Category {
+  id: string
+  name: string
+  slug: string
+  color: string
+  _count: { products: number }
+}
 
 const COLORS = [
   '#2563eb','#7c3aed','#059669','#d97706','#dc2626',
@@ -17,18 +25,66 @@ const COLORS = [
 ]
 
 export default function CategoriasPage() {
+  const [categories, setCategories] = useState<Category[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
   const [search, setSearch] = useState('')
   const [showModal, setShowModal] = useState(false)
-  const [editing, setEditing] = useState<(typeof mockCategories)[0] | null>(null)
+  const [editing, setEditing] = useState<Category | null>(null)
   const [name, setName] = useState('')
   const [color, setColor] = useState(COLORS[0])
+  const [saving, setSaving] = useState(false)
+  const [formError, setFormError] = useState('')
 
-  const filtered = mockCategories.filter(c =>
+  async function load() {
+    setLoading(true)
+    setError('')
+    try {
+      const data = await api.get<Category[]>('/categories')
+      setCategories(data)
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Falha ao carregar categorias')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => { load() }, [])
+
+  const filtered = categories.filter(c =>
     c.name.toLowerCase().includes(search.toLowerCase())
   )
 
-  const openNew = () => { setEditing(null); setName(''); setColor(COLORS[0]); setShowModal(true) }
-  const openEdit = (c: (typeof mockCategories)[0]) => { setEditing(c); setName(c.name); setColor(c.color); setShowModal(true) }
+  const openNew = () => { setEditing(null); setName(''); setColor(COLORS[0]); setFormError(''); setShowModal(true) }
+  const openEdit = (c: Category) => { setEditing(c); setName(c.name); setColor(c.color); setFormError(''); setShowModal(true) }
+
+  async function handleSave() {
+    setSaving(true)
+    setFormError('')
+    try {
+      if (editing) {
+        await api.patch(`/categories/${editing.id}`, { name, color })
+      } else {
+        await api.post('/categories', { name, slug: slugify(name), color })
+      }
+      setShowModal(false)
+      await load()
+    } catch (err) {
+      setFormError(err instanceof ApiError ? err.message : 'Falha ao salvar categoria')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function handleDelete(c: Category) {
+    if (!confirm(`Remover a categoria "${c.name}"?`)) return
+    try {
+      await api.delete(`/categories/${c.id}`)
+      await load()
+    } catch (err) {
+      alert(err instanceof ApiError ? err.message : 'Falha ao remover categoria')
+    }
+  }
 
   return (
     <div className="space-y-5">
@@ -37,7 +93,7 @@ export default function CategoriasPage() {
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-xl font-bold text-[color:var(--text-primary)]">Categorias</h1>
-          <p className="text-sm text-[color:var(--text-tertiary)] mt-0.5">{mockCategories.length} categorias cadastradas</p>
+          <p className="text-sm text-[color:var(--text-tertiary)] mt-0.5">{formatNumber(categories.length)} categorias cadastradas</p>
         </div>
         <Button size="sm" leftIcon={<Plus className="w-3.5 h-3.5" />} onClick={openNew}>Nova Categoria</Button>
       </div>
@@ -51,7 +107,13 @@ export default function CategoriasPage() {
         />
       </div>
 
-      {filtered.length === 0 ? (
+      {error && (
+        <p className="text-sm text-[color:var(--danger)] bg-[color:var(--danger-subtle)] border border-[color:var(--danger)]/30 rounded-[var(--radius-md)] px-3 py-2">{error}</p>
+      )}
+
+      {loading ? (
+        <p className="text-sm text-[color:var(--text-tertiary)]">Carregando…</p>
+      ) : filtered.length === 0 ? (
         <EmptyState
           icon={<Tag className="w-6 h-6" />}
           title="Nenhuma categoria encontrada"
@@ -72,7 +134,7 @@ export default function CategoriasPage() {
                   <button onClick={() => openEdit(cat)} className="w-7 h-7 flex items-center justify-center rounded-[var(--radius-md)] hover:bg-[color:var(--bg-muted)] text-[color:var(--text-tertiary)] hover:text-[color:var(--text-primary)] transition-colors">
                     <Edit className="w-3.5 h-3.5" />
                   </button>
-                  <button className="w-7 h-7 flex items-center justify-center rounded-[var(--radius-md)] hover:bg-[color:var(--danger-subtle)] text-[color:var(--text-tertiary)] hover:text-[color:var(--danger)] transition-colors">
+                  <button onClick={() => handleDelete(cat)} className="w-7 h-7 flex items-center justify-center rounded-[var(--radius-md)] hover:bg-[color:var(--danger-subtle)] text-[color:var(--text-tertiary)] hover:text-[color:var(--danger)] transition-colors">
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
                 </div>
@@ -80,10 +142,10 @@ export default function CategoriasPage() {
               <p className="text-sm font-semibold text-[color:var(--text-primary)] mb-1">{cat.name}</p>
               <div className="flex items-center gap-2">
                 <Package className="w-3.5 h-3.5 text-[color:var(--text-tertiary)]" />
-                <span className="text-xs text-[color:var(--text-tertiary)]">{formatNumber(cat.productCount)} produtos</span>
+                <span className="text-xs text-[color:var(--text-tertiary)]">{formatNumber(cat._count.products)} produtos</span>
               </div>
               <div className="mt-3 h-1 rounded-full" style={{ background: cat.color + '30' }}>
-                <div className="h-full rounded-full" style={{ background: cat.color, width: `${Math.min(100, (cat.productCount / 500) * 100)}%` }} />
+                <div className="h-full rounded-full" style={{ background: cat.color, width: `${Math.min(100, (cat._count.products / 500) * 100)}%` }} />
               </div>
             </div>
           ))}
@@ -104,13 +166,16 @@ export default function CategoriasPage() {
         footer={
           <>
             <Button variant="outline" size="sm" onClick={() => setShowModal(false)}>Cancelar</Button>
-            <Button size="sm" onClick={() => setShowModal(false)}>
+            <Button size="sm" loading={saving} onClick={handleSave}>
               {editing ? 'Salvar alterações' : 'Criar categoria'}
             </Button>
           </>
         }
       >
         <div className="space-y-4">
+          {formError && (
+            <p className="text-sm text-[color:var(--danger)] bg-[color:var(--danger-subtle)] border border-[color:var(--danger)]/30 rounded-[var(--radius-md)] px-3 py-2">{formError}</p>
+          )}
           <Input
             label="Nome da categoria *"
             placeholder="Ex: Eletrônicos"

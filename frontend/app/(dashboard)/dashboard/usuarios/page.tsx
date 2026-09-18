@@ -1,6 +1,6 @@
 'use client'
-import { useState } from 'react'
-import { Plus, Search, Edit, Shield, UserCog } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Plus, Search, Edit, Shield } from 'lucide-react'
 import { Breadcrumb } from '@/components/ui/Breadcrumb'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
@@ -8,10 +8,10 @@ import { Input } from '@/components/ui/Input'
 import { Avatar } from '@/components/ui/Avatar'
 import { Modal } from '@/components/ui/Modal'
 import { Select } from '@/components/ui/Select'
-import { mockUsers } from '@/mocks/users'
 import { USER_ROLE_LABELS } from '@/constants/status'
 import { formatDateTime } from '@/lib/utils'
-import { cn } from '@/lib/cn'
+import { api, ApiError } from '@/lib/api'
+import type { User, UserRole } from '@/types/user'
 
 const ROLE_VARIANT: Record<string, 'danger'|'warning'|'info'|'default'> = {
   admin: 'danger', supervisor: 'warning', operator: 'info', viewer: 'default',
@@ -20,14 +20,59 @@ const ROLE_VARIANT: Record<string, 'danger'|'warning'|'info'|'default'> = {
 const ROLE_OPTIONS = Object.entries(USER_ROLE_LABELS).map(([v, l]) => ({ value: v, label: l }))
 
 export default function UsuariosPage() {
+  const [users, setUsers] = useState<User[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
   const [search, setSearch] = useState('')
   const [showModal, setShowModal] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [formError, setFormError] = useState('')
 
-  const filtered = mockUsers.filter(u =>
+  const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [role, setRole] = useState<UserRole>('operator')
+  const [department, setDepartment] = useState('')
+
+  async function load() {
+    setLoading(true)
+    setError('')
+    try {
+      const res = await api.get<{ data: User[] }>('/users', { limit: 100 })
+      setUsers(res.data)
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Falha ao carregar usuários')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => { load() }, [])
+
+  const filtered = users.filter(u =>
     u.name.toLowerCase().includes(search.toLowerCase()) ||
     u.email.toLowerCase().includes(search.toLowerCase()) ||
     u.department.toLowerCase().includes(search.toLowerCase())
   )
+
+  function openNew() {
+    setName(''); setEmail(''); setPassword(''); setRole('operator'); setDepartment('')
+    setFormError(''); setShowModal(true)
+  }
+
+  async function handleCreate() {
+    setSaving(true)
+    setFormError('')
+    try {
+      await api.post('/users', { name, email, password, role, department })
+      setShowModal(false)
+      await load()
+    } catch (err) {
+      setFormError(err instanceof ApiError ? err.message : 'Falha ao criar usuário')
+    } finally {
+      setSaving(false)
+    }
+  }
 
   return (
     <div className="space-y-5">
@@ -36,14 +81,19 @@ export default function UsuariosPage() {
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-xl font-bold text-[color:var(--text-primary)]">Usuários</h1>
-          <p className="text-sm text-[color:var(--text-tertiary)] mt-0.5">{mockUsers.length} usuários cadastrados</p>
+          <p className="text-sm text-[color:var(--text-tertiary)] mt-0.5">{users.length} usuários cadastrados</p>
         </div>
-        <Button size="sm" leftIcon={<Plus className="w-3.5 h-3.5" />} onClick={() => setShowModal(true)}>Novo Usuário</Button>
+        <Button size="sm" leftIcon={<Plus className="w-3.5 h-3.5" />} onClick={openNew}>Novo Usuário</Button>
       </div>
 
       <div className="max-w-md">
         <Input placeholder="Buscar por nome, e-mail, setor…" value={search} onChange={e => setSearch(e.target.value)} leftIcon={<Search className="w-4 h-4" />} />
       </div>
+
+      {error && (
+        <p className="text-sm text-[color:var(--danger)] bg-[color:var(--danger-subtle)] border border-[color:var(--danger)]/30 rounded-[var(--radius-md)] px-3 py-2">{error}</p>
+      )}
+      {loading && <p className="text-sm text-[color:var(--text-tertiary)]">Carregando…</p>}
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         {filtered.map(user => (
@@ -94,24 +144,32 @@ export default function UsuariosPage() {
         footer={
           <>
             <Button variant="outline" size="sm" onClick={() => setShowModal(false)}>Cancelar</Button>
-            <Button size="sm" onClick={() => setShowModal(false)}>Criar Usuário</Button>
+            <Button size="sm" loading={saving} onClick={handleCreate}>Criar Usuário</Button>
           </>
         }
       >
         <div className="space-y-4">
+          {formError && (
+            <p className="text-sm text-[color:var(--danger)] bg-[color:var(--danger-subtle)] border border-[color:var(--danger)]/30 rounded-[var(--radius-md)] px-3 py-2">{formError}</p>
+          )}
           <div className="grid grid-cols-2 gap-4">
             <div className="col-span-2">
-              <Input label="Nome completo *" placeholder="Nome do usuário" />
+              <Input label="Nome completo *" placeholder="Nome do usuário" value={name} onChange={e => setName(e.target.value)} />
             </div>
             <div className="col-span-2">
-              <Input label="E-mail corporativo *" type="email" placeholder="usuario@empresa.com.br" />
+              <Input label="E-mail corporativo *" type="email" placeholder="usuario@empresa.com.br" value={email} onChange={e => setEmail(e.target.value)} />
             </div>
-            <Select label="Perfil de acesso *" options={ROLE_OPTIONS} placeholder="Selecione o perfil" />
-            <Input label="Departamento" placeholder="Ex: Logística" />
-          </div>
-          <div className="p-4 rounded-[var(--radius-lg)] bg-[color:var(--info-subtle)] border border-[color:var(--info-muted)]">
-            <p className="text-xs font-semibold text-[color:var(--info)] mb-1">Senha de primeiro acesso</p>
-            <p className="text-xs text-[color:var(--text-secondary)]">Uma senha temporária será enviada ao e-mail do usuário.</p>
+            <div className="col-span-2">
+              <Input label="Senha temporária *" type="password" placeholder="Mínimo 6 caracteres" value={password} onChange={e => setPassword(e.target.value)} />
+            </div>
+            <Select
+              label="Perfil de acesso *"
+              options={ROLE_OPTIONS}
+              placeholder="Selecione o perfil"
+              value={role}
+              onChange={e => setRole(e.target.value as UserRole)}
+            />
+            <Input label="Departamento" placeholder="Ex: Logística" value={department} onChange={e => setDepartment(e.target.value)} />
           </div>
         </div>
       </Modal>

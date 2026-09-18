@@ -5,9 +5,9 @@ import { usePathname } from 'next/navigation'
 import { Search, Bell, Sun, Moon, Menu, HelpCircle, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import { Avatar } from '@/components/ui/Avatar'
-import { currentUser } from '@/mocks/users'
 import { alerts } from '@/mocks/dashboard'
 import { useTheme } from '@/hooks/useTheme'
+import { useAuth } from '@/lib/auth-context'
 import { NAV_GROUPS } from '@/constants/navigation'
 
 const ICON_STROKE = 1.75
@@ -30,6 +30,7 @@ interface TopbarProps {
 
 export function Topbar({ onMobileMenuOpen }: TopbarProps) {
   const { theme, toggle: toggleTheme } = useTheme()
+  const { user } = useAuth()
   const pathname = usePathname()
   const [showSearch, setShowSearch] = useState(false)
   const [showNotifs, setShowNotifs] = useState(false)
@@ -181,7 +182,7 @@ export function Topbar({ onMobileMenuOpen }: TopbarProps) {
 
         {/* Avatar (opens account/profile page) */}
         <Link href="/dashboard/configuracoes" className="ml-1">
-          <Avatar name={currentUser.name} size="xs" />
+          <Avatar name={user?.name ?? '?'} size="xs" />
         </Link>
       </div>
     </header>
