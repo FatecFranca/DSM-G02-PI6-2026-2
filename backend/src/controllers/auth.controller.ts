@@ -31,9 +31,6 @@ import * as authService from '../services/auth.service'
  *               password:
  *                 type: string
  *                 minLength: 6
- *               role:
- *                 type: string
- *                 enum: [admin, supervisor, operator, viewer]
  *               department:
  *                 type: string
  *     responses:

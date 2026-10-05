@@ -68,6 +68,7 @@ export async function getById(req: Request, res: Response, next: NextFunction): 
  * /api/users:
  *   post:
  *     summary: Create a new user
+ *     description: Supervisors can create operators and viewers; only admins can assign elevated roles.
  *     tags: [Users]
  *     requestBody:
  *       required: true
@@ -102,6 +103,7 @@ export async function create(req: Request, res: Response, next: NextFunction): P
  * /api/users/{id}:
  *   patch:
  *     summary: Update a user
+ *     description: Supervisors can update profile fields; only admins can change a user's role.
  *     tags: [Users]
  *     parameters:
  *       - in: path

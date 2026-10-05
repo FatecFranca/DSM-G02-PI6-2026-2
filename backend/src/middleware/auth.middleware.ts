@@ -41,3 +41,16 @@ export function authorize(...roles: string[]) {
     next()
   }
 }
+
+export function authorizeUserRoleChange(...allowedRoles: string[]) {
+  return (req: Request, _res: Response, next: NextFunction): void => {
+    if (!req.user) return next(new AppError('Unauthorized', 401))
+    if (req.user.role === 'admin') return next()
+
+    const requestedRole = req.body?.role
+    if (requestedRole !== undefined && !allowedRoles.includes(requestedRole)) {
+      return next(new AppError('Forbidden: insufficient permissions to assign this role', 403))
+    }
+    next()
+  }
+}

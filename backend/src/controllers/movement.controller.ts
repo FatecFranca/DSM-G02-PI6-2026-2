@@ -77,6 +77,7 @@ export async function getById(req: Request, res: Response, next: NextFunction): 
  * /api/movements:
  *   post:
  *     summary: Register a stock movement
+ *     description: Available to admins, supervisors, and operators. Viewers are read-only.
  *     tags: [Movements]
  *     requestBody:
  *       required: true

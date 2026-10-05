@@ -381,7 +381,7 @@ app.get('/', (_req, res) => {
     {
       name: 'Autenticação', icon: '🔐', base: '/api/auth', open: true,
       endpoints: [
-        { method: 'POST', path: '/api/auth/register', desc: 'Registrar novo usuário', role: 'public' },
+        { method: 'POST', path: '/api/auth/register', desc: 'Registrar novo usuário (perfil operador)', role: 'public' },
         { method: 'POST', path: '/api/auth/login',    desc: 'Login e obtenção de token', role: 'public' },
         { method: 'GET',  path: '/api/auth/me',       desc: 'Dados do usuário autenticado', role: null },
         { method: 'GET',  path: '/api/auth/profile',  desc: 'Perfil completo', role: null },
@@ -393,8 +393,8 @@ app.get('/', (_req, res) => {
       endpoints: [
         { method: 'GET',    path: '/api/users',     desc: 'Listar usuários', role: null },
         { method: 'GET',    path: '/api/users/:id', desc: 'Buscar por ID', role: null },
-        { method: 'POST',   path: '/api/users',     desc: 'Criar usuário', role: 'admin' },
-        { method: 'PATCH',  path: '/api/users/:id', desc: 'Atualizar usuário', role: 'admin' },
+        { method: 'POST',   path: '/api/users',     desc: 'Supervisores criam operadores/visualizadores; papéis elevados exigem admin', role: 'admin/supervisor' },
+        { method: 'PATCH',  path: '/api/users/:id', desc: 'Supervisores atualizam perfil; alteração de papel exige admin', role: 'admin/supervisor' },
         { method: 'DELETE', path: '/api/users/:id', desc: 'Remover usuário', role: 'admin' },
       ]
     },
@@ -464,7 +464,7 @@ app.get('/', (_req, res) => {
       endpoints: [
         { method: 'GET',  path: '/api/movements',     desc: 'Listar movimentações (filtros + paginação)', role: null },
         { method: 'GET',  path: '/api/movements/:id', desc: 'Buscar por ID', role: null },
-        { method: 'POST', path: '/api/movements',     desc: 'Registrar movimentação (entrada/saída)', role: null },
+        { method: 'POST', path: '/api/movements',     desc: 'Registrar movimentação (admin/supervisor/operator)', role: 'admin/supervisor/operator' },
       ]
     },
     {

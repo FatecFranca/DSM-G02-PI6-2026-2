@@ -14,7 +14,7 @@ export async function register(data: RegisterInput) {
       name: data.name,
       email: data.email,
       password,
-      role: data.role ?? 'operator',
+      role: 'operator',
       department: data.department,
       status: 'active',
     },

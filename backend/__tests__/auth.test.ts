@@ -17,6 +17,7 @@ describe('POST /api/auth/register', () => {
       name: 'Test User',
       email: 'test-jest-register@example.com',
       password: 'password123',
+      role: 'admin',
       department: 'TI',
     })
 
