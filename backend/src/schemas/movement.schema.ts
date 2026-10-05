@@ -13,7 +13,7 @@ export const createMovementSchema = z.object({
   notes: z.string().optional(),
   supplierId: z.string().cuid().optional(),
   manufacturingDate: z.string().datetime().optional(),
-  customerId: z.string().optional(),
+  customerId: z.string().cuid().optional(),
   customerName: z.string().optional(),
   fromAddressId: z.string().cuid().optional(),
   toAddressId: z.string().cuid().optional(),

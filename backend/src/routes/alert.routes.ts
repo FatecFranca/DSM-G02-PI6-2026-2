@@ -1,4 +1,6 @@
 import { Router } from 'express'
+import { z } from 'zod'
+import { lotAlertsQuerySchema } from '../schemas/lot.schema'
 import { authenticate } from '../middleware/auth.middleware'
 import * as alertService from '../services/alert.service'
 
@@ -12,6 +14,11 @@ import * as alertService from '../services/alert.service'
 const router = Router()
 
 router.use(authenticate)
+
+const parseDays = (query: unknown) => lotAlertsQuerySchema.parse(query).days
+const markAlertsReadSchema = z.object({
+  alertKeys: z.array(z.string().min(1)).max(500),
+})
 
 /**
  * @swagger
@@ -31,7 +38,7 @@ router.use(authenticate)
 router.get('/', async (req, res, next) => {
   try {
     const userId = req.user!.sub
-    const days = req.query.days ? Number(req.query.days) : 30
+    const days = parseDays(req.query)
     res.json(await alertService.getAllAlerts(userId, days))
   } catch (err) {
     next(err)
@@ -73,7 +80,7 @@ router.get('/stock', async (_req, res, next) => {
  */
 router.get('/expiring', async (req, res, next) => {
   try {
-    const days = req.query.days ? Number(req.query.days) : 30
+    const days = parseDays(req.query)
     res.json(await alertService.getExpiringLots(days))
   } catch (err) {
     next(err)
@@ -104,11 +111,7 @@ router.get('/expiring', async (req, res, next) => {
 router.patch('/read-all', async (req, res, next) => {
   try {
     const userId = req.user!.sub
-    const { alertKeys } = req.body as { alertKeys: string[] }
-    if (!Array.isArray(alertKeys)) {
-      res.status(400).json({ message: 'alertKeys deve ser um array de strings' })
-      return
-    }
+    const { alertKeys } = markAlertsReadSchema.parse(req.body)
     res.json(await alertService.markAllAlertsAsRead(userId, alertKeys))
   } catch (err) {
     next(err)

@@ -9,6 +9,15 @@ const INCLUDE = {
   user: { select: { id: true, name: true } },
   fromAddress: { select: { id: true, code: true } },
   toAddress: { select: { id: true, code: true } },
+  lot: { select: { id: true, lotNumber: true } },
+}
+
+function mapMovement<T extends { unitCost: Prisma.Decimal | number; totalValue: Prisma.Decimal | number }>(movement: T) {
+  return {
+    ...movement,
+    unitCost: Number(movement.unitCost),
+    totalValue: Number(movement.totalValue),
+  }
 }
 
 export async function findAll(query: MovementQuery) {
@@ -47,13 +56,13 @@ export async function findAll(query: MovementQuery) {
     prisma.movement.count({ where }),
   ])
 
-  return { data: movements, total, page, limit, totalPages: Math.ceil(total / limit) }
+  return { data: movements.map(mapMovement), total, page, limit, totalPages: Math.ceil(total / limit) }
 }
 
 export async function findById(id: string) {
   const movement = await prisma.movement.findUnique({ where: { id }, include: INCLUDE })
   if (!movement) throw new AppError('Movement not found', 404)
-  return movement
+  return mapMovement(movement)
 }
 
 export async function create(data: CreateMovementInput, userId: string) {
@@ -200,12 +209,13 @@ export async function create(data: CreateMovementInput, userId: string) {
           manufacturingDate: new Date(data.manufacturingDate!),
           expirationDate: new Date(data.expirationDate!),
           address: destinationAddress.code,
+          addressId: destinationAddress.id,
         },
       })
     } else if (transfer && lot && destinationAddress) {
       const updated = await tx.lot.updateMany({
         where: { id: lot.id, quantity: lot.quantity, address: sourceAddress!.code },
-        data: { address: destinationAddress.code },
+        data: { address: destinationAddress.code, addressId: destinationAddress.id },
       })
       if (updated.count === 0) {
         throw new AppError('Lot location changed concurrently; retry the transfer', 409)
@@ -244,13 +254,13 @@ export async function create(data: CreateMovementInput, userId: string) {
       }
     }
 
-    return tx.movement.create({
+    const createdMovement = await tx.movement.create({
       data: {
         type: data.type,
         productId: data.productId,
         quantity: data.quantity,
         unitCost: data.unitCost ?? 0,
-        totalValue: data.quantity * (data.unitCost ?? 0),
+        totalValue: new Prisma.Decimal(data.quantity).mul(data.unitCost ?? 0),
         invoiceNumber: data.invoiceNumber,
         lotNumber,
         expirationDate: data.expirationDate ? new Date(data.expirationDate) : undefined,
@@ -259,12 +269,14 @@ export async function create(data: CreateMovementInput, userId: string) {
         supplierId: data.supplierId,
         customerId: data.customerId,
         customerName: data.customerName,
+        lotId: lot?.id,
         fromAddressId: data.fromAddressId,
         toAddressId: data.toAddressId,
         userId,
       },
       include: INCLUDE,
     })
+    return mapMovement(createdMovement)
   })
 }
 

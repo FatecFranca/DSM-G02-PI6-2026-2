@@ -4,13 +4,8 @@ import { prisma } from './prisma/client'
 const PORT = Number(process.env.PORT) || 3001
 
 async function main() {
-  try {
-    await prisma.$connect()
-    console.log('Database connected')
-  } catch (err) {
-    console.error('Database unavailable, starting server without a database connection:')
-    console.error(err instanceof Error ? err.message : err)
-  }
+  await prisma.$connect()
+  console.log('Database connected')
 
   app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`)
@@ -20,5 +15,6 @@ async function main() {
 
 main().catch((err) => {
   console.error('Fatal error:', err)
+  void prisma.$disconnect()
   process.exit(1)
 })

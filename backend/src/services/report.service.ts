@@ -52,19 +52,19 @@ export async function getMovementReport(period: ReportPeriod) {
     totals: {
       count: totals._count.id,
       quantity: totals._sum.quantity ?? 0,
-      value: Math.round((totals._sum.totalValue ?? 0) * 100) / 100,
+      value: Math.round(Number(totals._sum.totalValue ?? 0) * 100) / 100,
     },
     byType: byType.map((t) => ({
       type: t.type,
       count: t._count.id,
       quantity: t._sum.quantity ?? 0,
-      value: Math.round((t._sum.totalValue ?? 0) * 100) / 100,
+      value: Math.round(Number(t._sum.totalValue ?? 0) * 100) / 100,
     })),
     topProducts: byProduct.map((p) => ({
       product: productMap[p.productId],
       count: p._count.id,
       quantity: p._sum.quantity ?? 0,
-      value: Math.round((p._sum.totalValue ?? 0) * 100) / 100,
+      value: Math.round(Number(p._sum.totalValue ?? 0) * 100) / 100,
     })),
   }
 }
@@ -90,8 +90,8 @@ export async function getStockReport() {
     return {
       ...p,
       stockStatus,
-      stockValue: Math.round(p.currentStock * p.purchasePrice * 100) / 100,
-      saleValue: Math.round(p.currentStock * p.salePrice * 100) / 100,
+      stockValue: Math.round(p.currentStock * Number(p.purchasePrice) * 100) / 100,
+      saleValue: Math.round(p.currentStock * Number(p.salePrice) * 100) / 100,
     }
   })
 
@@ -166,10 +166,20 @@ export async function getAbcReport() {
   })
 
   if (movements.length === 0) {
-    return { summary: { A: { count: 0, percentage: 0 }, B: { count: 0, percentage: 0 }, C: { count: 0, percentage: 0 } }, items: [] }
+    return {
+      summary: {
+        totalValue: 0,
+        A: { count: 0, percentage: 0 },
+        B: { count: 0, percentage: 0 },
+        C: { count: 0, percentage: 0 },
+      },
+      A: [],
+      B: [],
+      C: [],
+    }
   }
 
-  const totalValue = movements.reduce((acc, m) => acc + (m._sum.totalValue ?? 0), 0)
+  const totalValue = movements.reduce((acc, m) => acc + Number(m._sum.totalValue ?? 0), 0)
   const productIds = movements.map((m) => m.productId)
 
   const products = await prisma.product.findMany({
@@ -180,17 +190,18 @@ export async function getAbcReport() {
 
   let accumulated = 0
   const items = movements.map((m) => {
-    accumulated += m._sum.totalValue ?? 0
+    const movementValue = Number(m._sum.totalValue ?? 0)
+    accumulated += movementValue
     const accPct = totalValue > 0 ? (accumulated / totalValue) * 100 : 0
-    const cls = accPct <= 80 ? 'A' : accPct <= 95 ? 'B' : 'C'
+    const cls = totalValue <= 0 ? 'C' : accPct <= 80 ? 'A' : accPct <= 95 ? 'B' : 'C'
     return {
       class: cls,
       product: productMap[m.productId],
-      totalValue: Math.round((m._sum.totalValue ?? 0) * 100) / 100,
+      totalValue: Math.round(movementValue * 100) / 100,
       accumulatedPercentage: Math.round(accPct * 10) / 10,
       individualPercentage:
         totalValue > 0
-          ? Math.round(((m._sum.totalValue ?? 0) / totalValue) * 1000) / 10
+          ? Math.round((movementValue / totalValue) * 1000) / 10
           : 0,
     }
   })
@@ -198,13 +209,16 @@ export async function getAbcReport() {
   const groupA = items.filter((i) => i.class === 'A')
   const groupB = items.filter((i) => i.class === 'B')
   const groupC = items.filter((i) => i.class === 'C')
+  const percentageByValue = (group: typeof items) => totalValue > 0
+    ? Math.round((group.reduce((sum, item) => sum + item.totalValue, 0) / totalValue) * 1000) / 10
+    : 0
 
   return {
     summary: {
       totalValue: Math.round(totalValue * 100) / 100,
-      A: { count: groupA.length, percentage: Math.round((groupA.length / items.length) * 100) },
-      B: { count: groupB.length, percentage: Math.round((groupB.length / items.length) * 100) },
-      C: { count: groupC.length, percentage: Math.round((groupC.length / items.length) * 100) },
+      A: { count: groupA.length, percentage: percentageByValue(groupA) },
+      B: { count: groupB.length, percentage: percentageByValue(groupB) },
+      C: { count: groupC.length, percentage: percentageByValue(groupC) },
     },
     A: groupA,
     B: groupB,
@@ -271,7 +285,7 @@ export async function getSupplierReport(period: ReportPeriod) {
       supplier: supplierMap[s.supplierId!] ?? { id: s.supplierId, name: 'Desconhecido' },
       entryCount: s._count.id,
       totalQuantity: s._sum.quantity ?? 0,
-      totalValue: Math.round((s._sum.totalValue ?? 0) * 100) / 100,
+      totalValue: Math.round(Number(s._sum.totalValue ?? 0) * 100) / 100,
     }))
     .sort((a, b) => b.totalValue - a.totalValue)
 

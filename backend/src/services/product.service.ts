@@ -16,6 +16,14 @@ const INCLUDE = {
   supplier: { select: { id: true, name: true } },
 }
 
+function mapProduct<T extends { purchasePrice: Prisma.Decimal | number; salePrice: Prisma.Decimal | number }>(product: T) {
+  return {
+    ...product,
+    purchasePrice: Number(product.purchasePrice),
+    salePrice: Number(product.salePrice),
+  }
+}
+
 export async function findAll(query: ProductQuery) {
   const { page, limit, search, categoryId, brandId, status, stockStatus: ss } = query
   const skip = (page - 1) * limit
@@ -63,7 +71,7 @@ export async function findAll(query: ProductQuery) {
     const data = matchingIds.flatMap(({ id }) => {
       const product = productsById.get(id)
       return product
-        ? [{ ...product, stockStatus: stockStatus(product.currentStock, product.minStock) }]
+        ? [{ ...mapProduct(product), stockStatus: stockStatus(product.currentStock, product.minStock) }]
         : []
     })
 
@@ -94,7 +102,7 @@ export async function findAll(query: ProductQuery) {
   const total = await prisma.product.count({ where })
 
   const mapped = products.map((p) => ({
-    ...p,
+    ...mapProduct(p),
     stockStatus: stockStatus(p.currentStock, p.minStock),
   }))
 
@@ -118,7 +126,7 @@ export async function findById(id: string) {
     },
   })
   if (!product) throw new AppError('Product not found', 404)
-  return { ...product, stockStatus: stockStatus(product.currentStock, product.minStock) }
+  return { ...mapProduct(product), stockStatus: stockStatus(product.currentStock, product.minStock) }
 }
 
 export async function create(data: CreateProductInput) {
@@ -153,13 +161,13 @@ export async function create(data: CreateProductInput) {
     include: INCLUDE,
   })
 
-  return { ...product, stockStatus: stockStatus(product.currentStock, product.minStock) }
+  return { ...mapProduct(product), stockStatus: stockStatus(product.currentStock, product.minStock) }
 }
 
 export async function update(id: string, data: UpdateProductInput) {
   await findById(id)
   const product = await prisma.product.update({ where: { id }, data, include: INCLUDE })
-  return { ...product, stockStatus: stockStatus(product.currentStock, product.minStock) }
+  return { ...mapProduct(product), stockStatus: stockStatus(product.currentStock, product.minStock) }
 }
 
 export async function remove(id: string) {

@@ -26,7 +26,11 @@ import { InventoryCountStatus } from '@prisma/client'
 export async function list(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const status = req.query.status as InventoryCountStatus | undefined
-    res.json(await inventoryService.findAll(status))
+    res.json(await inventoryService.findAll(
+      status,
+      Number(req.query.page ?? 1),
+      Number(req.query.limit ?? 20),
+    ))
   } catch (err) {
     next(err)
   }
@@ -116,6 +120,19 @@ export async function create(req: Request, res: Response, next: NextFunction): P
 export async function update(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     res.json(await inventoryService.update(req.params.id as string, req.body))
+  } catch (err) {
+    next(err)
+  }
+}
+
+export async function recordItemCount(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    res.json(await inventoryService.recordItemCount(
+      req.params.id as string,
+      req.params.itemId as string,
+      req.body.countedQuantity as number,
+      req.user!.sub,
+    ))
   } catch (err) {
     next(err)
   }

@@ -1,4 +1,5 @@
 import { prisma } from '../prisma/client'
+import * as reportService from './report.service'
 
 export async function getSummary() {
   const todayStart = new Date()
@@ -12,7 +13,6 @@ export async function getSummary() {
     totalUsers,
     recentMovements,
     warehouseStats,
-    stockValue,
     criticalProducts,
   ] = await Promise.all([
     prisma.product.count(),
@@ -32,10 +32,6 @@ export async function getSummary() {
       by: ['status'],
       _count: { status: true },
     }),
-    prisma.product.findMany({
-      where: { status: 'active' },
-      select: { currentStock: true, purchasePrice: true, salePrice: true },
-    }),
     prisma.$queryRaw<Array<{ count: number }>>`
       SELECT COUNT(*)::int AS "count"
       FROM "products"
@@ -51,14 +47,13 @@ export async function getSummary() {
   )
   const totalPositions = Object.values(warehouseMap).reduce((a, b) => a + b, 0)
 
-  const totalStockValue = stockValue.reduce(
-    (acc, p) => acc + p.currentStock * p.purchasePrice,
-    0,
-  )
-  const totalSaleValue = stockValue.reduce(
-    (acc, p) => acc + p.currentStock * p.salePrice,
-    0,
-  )
+  const [{ purchaseValue, saleValue }] = await prisma.$queryRaw<Array<{ purchaseValue: number; saleValue: number }>>`
+    SELECT
+      COALESCE(SUM("currentStock" * "purchasePrice"), 0)::float8 AS "purchaseValue",
+      COALESCE(SUM("currentStock" * "salePrice"), 0)::float8 AS "saleValue"
+    FROM "products"
+    WHERE "status" = 'active'
+  `
 
   return {
     products: {
@@ -80,86 +75,69 @@ export async function getSummary() {
           : 0,
     },
     stock: {
-      totalPurchaseValue: Math.round(totalStockValue * 100) / 100,
-      totalSaleValue: Math.round(totalSaleValue * 100) / 100,
+      totalPurchaseValue: Math.round(purchaseValue * 100) / 100,
+      totalSaleValue: Math.round(saleValue * 100) / 100,
     },
     recentMovements,
   }
 }
 
 export async function getMovementTrend(months = 12) {
+  const monthCount = Math.max(1, Math.min(24, months))
+  const firstMonth = new Date()
+  firstMonth.setDate(1)
+  firstMonth.setMonth(firstMonth.getMonth() - monthCount + 1)
+  firstMonth.setHours(0, 0, 0, 0)
+  const monthlyTotals = await prisma.$queryRaw<Array<{ month: Date; entries: number; exits: number }>>`
+    SELECT date_trunc('month', "createdAt") AS "month",
+      COALESCE(SUM("quantity") FILTER (WHERE "type" = 'entry'), 0)::int AS "entries",
+      COALESCE(SUM("quantity") FILTER (WHERE "type" IN ('exit', 'loss')), 0)::int AS "exits"
+    FROM "movements"
+    WHERE "createdAt" >= ${firstMonth}
+      AND "type" IN ('entry', 'exit', 'loss')
+    GROUP BY date_trunc('month', "createdAt")
+    ORDER BY "month" ASC
+  `
+  const totalsByMonth = new Map(monthlyTotals.map((row) => [
+    `${row.month.getFullYear()}-${row.month.getMonth()}`,
+    row,
+  ]))
   const results: { month: string; entries: number; exits: number; balance: number }[] = []
 
-  for (let i = months - 1; i >= 0; i--) {
-    const date = new Date()
-    date.setDate(1)
-    date.setMonth(date.getMonth() - i)
-    date.setHours(0, 0, 0, 0)
-
-    const nextDate = new Date(date)
-    nextDate.setMonth(nextDate.getMonth() + 1)
-
-    const [entries, exits] = await Promise.all([
-      prisma.movement.aggregate({
-        where: {
-          type: { in: ['entry', 'adjustment'] },
-          createdAt: { gte: date, lt: nextDate },
-        },
-        _sum: { quantity: true },
-      }),
-      prisma.movement.aggregate({
-        where: {
-          type: { in: ['exit', 'loss', 'transfer'] },
-          createdAt: { gte: date, lt: nextDate },
-        },
-        _sum: { quantity: true },
-      }),
-    ])
-
-    const entryQty = entries._sum.quantity ?? 0
-    const exitQty = exits._sum.quantity ?? 0
-
+  for (let i = 0; i < monthCount; i++) {
+    const date = new Date(firstMonth)
+    date.setMonth(date.getMonth() + i)
+    const monthTotals = totalsByMonth.get(`${date.getFullYear()}-${date.getMonth()}`)
+    const entries = monthTotals?.entries ?? 0
+    const exits = monthTotals?.exits ?? 0
     results.push({
       month: date.toLocaleString('pt-BR', { month: 'short', year: '2-digit' }),
-      entries: entryQty,
-      exits: exitQty,
-      balance: entryQty - exitQty,
+      entries,
+      exits,
+      balance: entries - exits,
     })
   }
-
   return results
 }
 
 export async function getCategoryDistribution() {
-  const categories = await prisma.category.findMany({
-    include: {
-      _count: { select: { products: true } },
-      products: {
-        where: { status: 'active' },
-        select: { currentStock: true, salePrice: true },
-      },
-    },
-  })
-
-  const total = categories.reduce((acc, c) => acc + c._count.products, 0)
-
-  return categories
-    .filter((c) => c._count.products > 0)
-    .map((c) => {
-      const stockValue = c.products.reduce(
-        (acc, p) => acc + p.currentStock * p.salePrice,
-        0,
-      )
-      return {
-        id: c.id,
-        name: c.name,
-        color: c.color,
-        productCount: c._count.products,
-        percentage: total > 0 ? Math.round((c._count.products / total) * 100) : 0,
-        stockValue: Math.round(stockValue * 100) / 100,
-      }
-    })
-    .sort((a, b) => b.productCount - a.productCount)
+  const categories = await prisma.$queryRaw<Array<{
+    id: string; name: string; color: string; productCount: number; stockValue: number
+  }>>`
+    SELECT c."id", c."name", c."color",
+      COUNT(p."id")::int AS "productCount",
+      COALESCE(SUM(p."currentStock" * p."salePrice"), 0)::float8 AS "stockValue"
+    FROM "categories" c
+    INNER JOIN "products" p ON p."categoryId" = c."id" AND p."status" = 'active'
+    GROUP BY c."id", c."name", c."color"
+    ORDER BY COUNT(p."id") DESC, c."name" ASC
+  `
+  const total = categories.reduce((acc, category) => acc + category.productCount, 0)
+  return categories.map((category) => ({
+    ...category,
+    percentage: total > 0 ? Math.round((category.productCount / total) * 100) : 0,
+    stockValue: Math.round(category.stockValue * 100) / 100,
+  }))
 }
 
 export async function getTopProducts(limit = 10) {
@@ -185,50 +163,11 @@ export async function getTopProducts(limit = 10) {
     product: productMap[m.productId],
     movementCount: m._count.id,
     totalQuantity: m._sum.quantity ?? 0,
-    totalValue: Math.round((m._sum.totalValue ?? 0) * 100) / 100,
+    totalValue: Math.round(Number(m._sum.totalValue ?? 0) * 100) / 100,
   }))
 }
 
 export async function getAbcCurve() {
-  const products = await prisma.movement.groupBy({
-    by: ['productId'],
-    _sum: { totalValue: true },
-    orderBy: { _sum: { totalValue: 'desc' } },
-  })
-
-  if (products.length === 0) return { A: [], B: [], C: [] }
-
-  const totalValue = products.reduce((acc, p) => acc + (p._sum.totalValue ?? 0), 0)
-  const productIds = products.map((p) => p.productId)
-
-  const productDetails = await prisma.product.findMany({
-    where: { id: { in: productIds } },
-    select: { id: true, name: true, internalCode: true, currentStock: true },
-  })
-  const productMap = Object.fromEntries(productDetails.map((p) => [p.id, p]))
-
-  let accumulated = 0
-  const classified = products.map((p) => {
-    accumulated += p._sum.totalValue ?? 0
-    const percentage = totalValue > 0 ? (accumulated / totalValue) * 100 : 0
-    const classLabel = percentage <= 80 ? 'A' : percentage <= 95 ? 'B' : 'C'
-    return {
-      product: productMap[p.productId],
-      totalValue: Math.round((p._sum.totalValue ?? 0) * 100) / 100,
-      accumulatedPercentage: Math.round(percentage * 10) / 10,
-      class: classLabel,
-    }
-  })
-
-  return {
-    A: classified.filter((p) => p.class === 'A'),
-    B: classified.filter((p) => p.class === 'B'),
-    C: classified.filter((p) => p.class === 'C'),
-    summary: {
-      totalValue: Math.round(totalValue * 100) / 100,
-      classA: { count: 0, percentage: 0 },
-      classB: { count: 0, percentage: 0 },
-      classC: { count: 0, percentage: 0 },
-    },
-  }
+  const report = await reportService.getAbcReport()
+  return { A: report.A, B: report.B, C: report.C, summary: report.summary }
 }

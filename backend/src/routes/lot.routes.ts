@@ -1,16 +1,16 @@
 import { Router } from 'express'
 import { authenticate, authorize } from '../middleware/auth.middleware'
 import { audit } from '../middleware/audit.middleware'
-import { validate } from '../middleware/validate.middleware'
-import { createLotSchema, updateLotSchema } from '../schemas/lot.schema'
+import { validate, validateQuery } from '../middleware/validate.middleware'
+import { createLotSchema, lotAlertsQuerySchema, lotQuerySchema, updateLotSchema } from '../schemas/lot.schema'
 import * as ctrl from '../controllers/lot.controller'
 
 const router = Router()
 
 router.use(authenticate)
 
-router.get('/alerts', ctrl.alerts)
-router.get('/', ctrl.list)
+router.get('/alerts', validateQuery(lotAlertsQuerySchema), ctrl.alerts)
+router.get('/', validateQuery(lotQuerySchema), ctrl.list)
 router.get('/:id', ctrl.getById)
 router.post('/', authorize('admin', 'supervisor', 'operator'), validate(createLotSchema), audit('Lot', 'CREATE'), ctrl.create)
 router.patch('/:id', authorize('admin', 'supervisor'), validate(updateLotSchema), audit('Lot', 'UPDATE'), ctrl.update)

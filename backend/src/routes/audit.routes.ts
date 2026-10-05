@@ -1,4 +1,5 @@
 import { Router } from 'express'
+import { z } from 'zod'
 import { authenticate, authorize } from '../middleware/auth.middleware'
 import { prisma } from '../prisma/client'
 
@@ -12,6 +13,20 @@ import { prisma } from '../prisma/client'
 const router = Router()
 
 router.use(authenticate, authorize('admin', 'supervisor'))
+
+const auditQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(50),
+  entity: z.string().optional(),
+  userId: z.string().optional(),
+  action: z.string().optional(),
+  search: z.string().trim().optional(),
+  from: z.string().datetime().optional(),
+  to: z.string().datetime().optional(),
+}).refine(
+  ({ from, to }) => !from || !to || new Date(from) <= new Date(to),
+  { message: '"from" must be earlier than or equal to "to"', path: ['to'] },
+)
 
 /**
  * @swagger
@@ -52,16 +67,14 @@ router.use(authenticate, authorize('admin', 'supervisor'))
  */
 router.get('/', async (req, res, next) => {
   try {
-    const page = Math.max(1, Number(req.query.page) || 1)
-    const limit = Math.min(100, Math.max(1, Number(req.query.limit) || 50))
+    const { page, limit, entity, userId, action, search, from, to } = auditQuerySchema.parse(req.query)
     const skip = (page - 1) * limit
 
     const where: Record<string, unknown> = {}
-    if (req.query.entity) where.entity = req.query.entity
-    if (req.query.userId) where.userId = req.query.userId
-    if (typeof req.query.action === 'string') where.action = req.query.action
-    if (typeof req.query.search === 'string' && req.query.search.trim()) {
-      const search = req.query.search.trim()
+    if (entity) where.entity = entity
+    if (userId) where.userId = userId
+    if (action) where.action = action
+    if (search) {
       where.OR = [
         { entity: { contains: search, mode: 'insensitive' } },
         { entityName: { contains: search, mode: 'insensitive' } },
@@ -69,10 +82,10 @@ router.get('/', async (req, res, next) => {
         { user: { name: { contains: search, mode: 'insensitive' } } },
       ]
     }
-    if (req.query.from || req.query.to) {
+    if (from || to) {
       where.createdAt = {
-        ...(req.query.from ? { gte: new Date(req.query.from as string) } : {}),
-        ...(req.query.to ? { lte: new Date(req.query.to as string) } : {}),
+        ...(from ? { gte: new Date(from) } : {}),
+        ...(to ? { lte: new Date(to) } : {}),
       }
     }
 

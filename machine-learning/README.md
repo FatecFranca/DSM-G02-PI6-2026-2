@@ -57,14 +57,18 @@ Propositalmente simples, para servir de baseline:
 1. Carrega o histórico diário de saídas (`data/raw/train.csv`).
 2. Agrega a quantidade por categoria em janelas semanais.
 3. Descarta a última semana (sempre incompleta no dataset).
-4. Para cada categoria, ajusta uma **regressão linear simples** (`numpy.polyfit`,
-   grau 1) sobre as últimas 12 semanas e projeta a demanda da semana seguinte.
-5. Classifica a tendência em alta / queda / estável e salva o resultado em
-   `data/previsao_demanda.csv`.
+4. Para cada categoria com pelo menos quatro semanas, ajusta uma **regressão
+   linear simples** (`numpy.polyfit`, grau 1) sobre as últimas 12 semanas e
+   projeta a demanda da semana seguinte. Categorias com menos histórico são
+   mantidas no resultado com estado `historico_insuficiente` e sem previsão.
+5. Avalia a regressão por validação temporal expansiva nas últimas quatro
+   semanas possíveis, comparando MAE com um baseline de média histórica.
+6. Classifica a tendência em alta / queda / estável e salva a previsão em
+   `data/previsao_demanda.csv` e a avaliação em `data/avaliacao_temporal.csv`.
 
-Não há validação cruzada, tuning de hiperparâmetros nem comparação entre
-modelos — isso fica para uma próxima sprint, depois que o pipeline básico
-estiver validado com dados reais do StockIQ.
+Os resultados da avaliação são métricas do dataset escolhido e não garantem
+desempenho em produção; a validação por janela temporal evita treinar com
+semanas posteriores ao período avaliado.
 
 ## Como rodar
 

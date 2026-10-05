@@ -1,4 +1,5 @@
 import { Router } from 'express'
+import { z } from 'zod'
 import { authenticate } from '../middleware/auth.middleware'
 import * as reportService from '../services/report.service'
 
@@ -12,6 +13,17 @@ import * as reportService from '../services/report.service'
 const router = Router()
 
 router.use(authenticate)
+
+const periodQuerySchema = z.object({
+  from: z.string().datetime().optional(),
+  to: z.string().datetime().optional(),
+}).refine(
+  ({ from, to }) => !from || !to || new Date(from) <= new Date(to),
+  { message: '"from" must be earlier than or equal to "to"', path: ['to'] },
+)
+const lotExpirationQuerySchema = z.object({
+  days: z.coerce.number().int().min(1).max(365).default(90),
+})
 
 /**
  * @swagger
@@ -32,12 +44,9 @@ router.use(authenticate)
  */
 router.get('/movements', async (req, res, next) => {
   try {
-    const { from, to } = req.query
+    const { from, to } = periodQuerySchema.parse(req.query)
     res.json(
-      await reportService.getMovementReport({
-        from: from as string | undefined,
-        to: to as string | undefined,
-      }),
+      await reportService.getMovementReport({ from, to }),
     )
   } catch (err) {
     next(err)
@@ -79,7 +88,7 @@ router.get('/stock', async (_req, res, next) => {
  */
 router.get('/lots', async (req, res, next) => {
   try {
-    const days = req.query.days ? Number(req.query.days) : 90
+    const { days } = lotExpirationQuerySchema.parse(req.query)
     res.json(await reportService.getLotExpirationReport(days))
   } catch (err) {
     next(err)
@@ -159,12 +168,9 @@ router.get('/inventory', async (_req, res, next) => {
  */
 router.get('/suppliers', async (req, res, next) => {
   try {
-    const { from, to } = req.query
+    const { from, to } = periodQuerySchema.parse(req.query)
     res.json(
-      await reportService.getSupplierReport({
-        from: from as string | undefined,
-        to: to as string | undefined,
-      }),
+      await reportService.getSupplierReport({ from, to }),
     )
   } catch (err) {
     next(err)

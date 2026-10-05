@@ -1,5 +1,13 @@
 import { Request, Response, NextFunction } from 'express'
+import { z } from 'zod'
 import * as dashboardService from '../services/dashboard.service'
+
+const movementTrendQuerySchema = z.object({
+  months: z.coerce.number().int().min(1).max(24).default(12),
+})
+const topProductsQuerySchema = z.object({
+  limit: z.coerce.number().int().min(1).max(100).default(10),
+})
 
 /**
  * @swagger
@@ -43,7 +51,7 @@ export async function summary(_req: Request, res: Response, next: NextFunction):
  */
 export async function movementTrend(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const months = req.query.months ? Number(req.query.months) : 12
+    const { months } = movementTrendQuerySchema.parse(req.query)
     res.json(await dashboardService.getMovementTrend(months))
   } catch (err) {
     next(err)
@@ -88,7 +96,7 @@ export async function categoryDistribution(
  */
 export async function topProducts(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const limit = req.query.limit ? Number(req.query.limit) : 10
+    const { limit } = topProductsQuerySchema.parse(req.query)
     res.json(await dashboardService.getTopProducts(limit))
   } catch (err) {
     next(err)

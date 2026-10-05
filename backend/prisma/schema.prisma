@@ -94,10 +94,11 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  movements       Movement[]
-  auditLogs       AuditLog[]
-  inventoryCounts InventoryCount[]
-  notifications   Notification[]
+  movements             Movement[]
+  auditLogs             AuditLog[]
+  inventoryCounts       InventoryCount[]
+  notifications         Notification[]
+  countedInventoryItems InventoryCountItem[] @relation("InventoryItemCounter")
 
   @@map("users")
 }
@@ -151,26 +152,26 @@ model Supplier {
 }
 
 model Product {
-  id           String        @id @default(cuid())
-  name         String
-  internalCode String        @unique
-  sku          String        @unique
-  barcode      String        @unique
-  unit         String
-  weight       Float         @default(0)
-  width        Float         @default(0)
-  height       Float         @default(0)
-  depth        Float         @default(0)
-  description  String?
-  purchasePrice Float        @default(0)
-  salePrice    Float         @default(0)
-  minStock     Int           @default(0)
-  maxStock     Int           @default(0)
-  currentStock Int           @default(0)
-  status       ProductStatus @default(active)
-  imageUrl     String?
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+  id            String        @id @default(cuid())
+  name          String
+  internalCode  String        @unique
+  sku           String        @unique
+  barcode       String        @unique
+  unit          String
+  weight        Float         @default(0)
+  width         Float         @default(0)
+  height        Float         @default(0)
+  depth         Float         @default(0)
+  description   String?
+  purchasePrice Decimal       @default(0) @db.Decimal(12, 2)
+  salePrice     Decimal       @default(0) @db.Decimal(12, 2)
+  minStock      Int           @default(0)
+  maxStock      Int           @default(0)
+  currentStock  Int           @default(0)
+  status        ProductStatus @default(active)
+  imageUrl      String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
 
   categoryId String
   category   Category @relation(fields: [categoryId], references: [id])
@@ -181,10 +182,13 @@ model Product {
   supplierId String
   supplier   Supplier @relation(fields: [supplierId], references: [id])
 
-  movements         Movement[]
-  warehouseAddresses WarehouseAddress[]
-  lots              Lot[]
+  movements           Movement[]
+  warehouseAddresses  WarehouseAddress[]
+  lots                Lot[]
+  inventoryCountItems InventoryCountItem[]
 
+  @@index([status, currentStock, minStock])
+  @@index([createdAt])
   @@map("products")
 }
 
@@ -209,7 +213,10 @@ model WarehouseAddress {
 
   fromMovements Movement[] @relation("FromAddress")
   toMovements   Movement[] @relation("ToAddress")
+  lots          Lot[]      @relation("LotAddress")
 
+  @@index([aisle, street, shelf])
+  @@index([status, code])
   @@map("warehouse_addresses")
 }
 
@@ -217,8 +224,8 @@ model Movement {
   id             String       @id @default(cuid())
   type           MovementType
   quantity       Int
-  unitCost       Float        @default(0)
-  totalValue     Float        @default(0)
+  unitCost       Decimal      @default(0) @db.Decimal(12, 2)
+  totalValue     Decimal      @default(0) @db.Decimal(14, 2)
   invoiceNumber  String?
   lotNumber      String?
   expirationDate DateTime?
@@ -233,7 +240,11 @@ model Movement {
   supplier   Supplier? @relation(fields: [supplierId], references: [id])
 
   customerId   String?
+  customer     Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
   customerName String?
+
+  lotId String?
+  lot   Lot?    @relation("MovementLot", fields: [lotId], references: [id], onDelete: SetNull)
 
   fromAddressId String?
   fromAddress   WarehouseAddress? @relation("FromAddress", fields: [fromAddressId], references: [id])
@@ -244,6 +255,11 @@ model Movement {
   userId String
   user   User   @relation(fields: [userId], references: [id])
 
+  @@index([createdAt, type])
+  @@index([productId, createdAt])
+  @@index([supplierId, createdAt])
+  @@index([customerId])
+  @@index([lotId])
   @@map("movements")
 }
 
@@ -254,6 +270,7 @@ model Lot {
   manufacturingDate DateTime
   expirationDate    DateTime
   address           String
+  addressId         String?
   status            LotStatus @default(valid)
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
@@ -264,26 +281,56 @@ model Lot {
   supplierId String
   supplier   Supplier @relation(fields: [supplierId], references: [id])
 
+  warehouseAddress WarehouseAddress? @relation("LotAddress", fields: [addressId], references: [id], onDelete: Restrict)
+  movements        Movement[]        @relation("MovementLot")
+
+  @@index([productId, status])
+  @@index([expirationDate, status])
+  @@index([addressId])
   @@map("lots")
 }
 
 model InventoryCount {
-  id          String               @id @default(cuid())
-  name        String
-  type        InventoryCountType
-  status      InventoryCountStatus @default(planned)
-  startDate   DateTime
-  endDate     DateTime?
-  totalItems  Int                  @default(0)
-  countedItems Int                 @default(0)
-  divergences Int                  @default(0)
-  createdAt   DateTime             @default(now())
-  updatedAt   DateTime             @updatedAt
+  id           String               @id @default(cuid())
+  name         String
+  type         InventoryCountType
+  status       InventoryCountStatus @default(planned)
+  startDate    DateTime
+  endDate      DateTime?
+  totalItems   Int                  @default(0)
+  countedItems Int                  @default(0)
+  divergences  Int                  @default(0)
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
 
   responsibleId String
   responsible   User   @relation(fields: [responsibleId], references: [id])
 
+  items InventoryCountItem[]
+
+  @@index([status, createdAt])
   @@map("inventory_counts")
+}
+
+model InventoryCountItem {
+  id               String    @id @default(cuid())
+  expectedQuantity Int
+  countedQuantity  Int?
+  discrepancy      Int       @default(0)
+  countedAt        DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  inventoryCountId String
+  inventoryCount   InventoryCount @relation(fields: [inventoryCountId], references: [id], onDelete: Cascade)
+  productId        String
+  product          Product        @relation(fields: [productId], references: [id], onDelete: Restrict)
+  countedById      String?
+  countedBy        User?          @relation("InventoryItemCounter", fields: [countedById], references: [id], onDelete: SetNull)
+
+  @@unique([inventoryCountId, productId])
+  @@index([inventoryCountId, countedQuantity])
+  @@map("inventory_count_items")
 }
 
 model Customer {
@@ -300,6 +347,8 @@ model Customer {
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
 
+  movements Movement[]
+
   @@map("customers")
 }
 
@@ -312,11 +361,12 @@ model Notification {
   user   User   @relation(fields: [userId], references: [id])
 
   @@unique([alertKey, userId])
+  @@index([userId])
   @@map("notifications")
 }
 
 model AuditLog {
-  id         String  @id @default(cuid())
+  id         String @id @default(cuid())
   action     String
   entity     String
   entityId   String
@@ -325,10 +375,13 @@ model AuditLog {
   newValue   Json?
   ip         String
 
-  userId   String
-  user     User   @relation(fields: [userId], references: [id])
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
 
   createdAt DateTime @default(now())
 
+  @@index([createdAt])
+  @@index([userId, createdAt])
+  @@index([entity, createdAt])
   @@map("audit_logs")
 }

@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express'
 import * as lotService from '../services/lot.service'
+import { LotQueryInput } from '../schemas/lot.schema'
 
 /**
  * @swagger
@@ -31,12 +32,14 @@ import * as lotService from '../services/lot.service'
  */
 export async function list(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const { productId, status, expiringSoonDays } = req.query
     res.json(
       await lotService.findAll({
-        productId: productId as string | undefined,
-        status: status as string | undefined,
-        expiringSoonDays: expiringSoonDays ? Number(expiringSoonDays) : undefined,
+        page: Number(req.query.page ?? 1),
+        limit: Number(req.query.limit ?? 20),
+        productId: req.query.productId as string | undefined,
+        status: req.query.status as LotQueryInput['status'],
+        search: req.query.search as string | undefined,
+        expiringSoonDays: req.query.expiringSoonDays ? Number(req.query.expiringSoonDays) : undefined,
       }),
     )
   } catch (err) {

@@ -8,6 +8,7 @@ import swaggerUi from 'swagger-ui-express'
 import { swaggerSpec } from './config/swagger'
 import { errorHandler } from './middleware/error.middleware'
 import { globalLimiter } from './middleware/rate-limit.middleware'
+import { prisma } from './prisma/client'
 
 import authRoutes from './routes/auth.routes'
 import userRoutes from './routes/user.routes'
@@ -32,6 +33,20 @@ app.use(cors())
 app.use(express.json())
 app.use(morgan(process.env.NODE_ENV === 'test' ? 'silent' : 'dev'))
 app.use(globalLimiter)
+
+app.get('/health/live', (_req, res) => {
+  res.status(200).json({ status: 'alive' })
+})
+
+app.get('/health/ready', async (_req, res) => {
+  try {
+    await prisma.$queryRaw`SELECT 1`
+    res.status(200).json({ status: 'ready', database: 'connected' })
+  } catch (err) {
+    console.error('Readiness check failed:', err)
+    res.status(503).json({ status: 'not_ready', database: 'unavailable' })
+  }
+})
 
 app.get('/', (_req, res) => {
   const port = process.env.PORT ?? 3001
