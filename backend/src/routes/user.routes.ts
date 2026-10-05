@@ -1,5 +1,6 @@
 import { Router } from 'express'
 import { authenticate, authorize, authorizeUserRoleChange } from '../middleware/auth.middleware'
+import { audit } from '../middleware/audit.middleware'
 import { validate, validateQuery } from '../middleware/validate.middleware'
 import { createUserSchema, paginationSchema, updateUserSchema, updateUserStatusSchema } from '../schemas/user.schema'
 import * as ctrl from '../controllers/user.controller'
@@ -15,6 +16,7 @@ router.post(
   authorize('admin', 'supervisor'),
   validate(createUserSchema),
   authorizeUserRoleChange('operator', 'viewer'),
+  audit('User', 'CREATE'),
   ctrl.create,
 )
 router.patch(
@@ -22,9 +24,10 @@ router.patch(
   authorize('admin', 'supervisor'),
   validate(updateUserSchema),
   authorizeUserRoleChange(),
+  audit('User', 'UPDATE'),
   ctrl.update,
 )
-router.patch('/:id/status', authorize('admin'), validate(updateUserStatusSchema), ctrl.updateStatus)
-router.delete('/:id', authorize('admin'), ctrl.remove)
+router.patch('/:id/status', authorize('admin'), validate(updateUserStatusSchema), audit('User', 'UPDATE'), ctrl.updateStatus)
+router.delete('/:id', authorize('admin'), audit('User', 'DELETE'), ctrl.remove)
 
 export default router

@@ -1,5 +1,6 @@
 import { Router } from 'express'
 import { authenticate, authorize } from '../middleware/auth.middleware'
+import { audit } from '../middleware/audit.middleware'
 import { validate, validateQuery } from '../middleware/validate.middleware'
 import {
   createCustomerSchema,
@@ -91,7 +92,13 @@ router.get('/:id', ctrl.getById)
  *       201:
  *         description: Customer created
  */
-router.post('/', authorize('admin', 'supervisor'), validate(createCustomerSchema), ctrl.create)
+router.post(
+  '/',
+  authorize('admin', 'supervisor'),
+  validate(createCustomerSchema),
+  audit('Customer', 'CREATE'),
+  ctrl.create,
+)
 
 /**
  * @swagger
@@ -112,6 +119,7 @@ router.patch(
   '/:id',
   authorize('admin', 'supervisor'),
   validate(updateCustomerSchema),
+  audit('Customer', 'UPDATE'),
   ctrl.update,
 )
 
@@ -130,6 +138,6 @@ router.patch(
  *       204:
  *         description: Customer deleted
  */
-router.delete('/:id', authorize('admin'), ctrl.remove)
+router.delete('/:id', authorize('admin'), audit('Customer', 'DELETE'), ctrl.remove)
 
 export default router

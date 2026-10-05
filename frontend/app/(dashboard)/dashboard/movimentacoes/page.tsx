@@ -1,18 +1,19 @@
 'use client'
-import { useState, useMemo } from 'react'
+import { useEffect, useState } from 'react'
 import {
-  Search, Filter, Download, ArrowDownToLine, ArrowUpFromLine,
-  RefreshCw, AlertTriangle, ChevronDown,
+  Search, Download, ArrowDownToLine, ArrowUpFromLine,
+  RefreshCw, AlertTriangle,
 } from 'lucide-react'
 import { Breadcrumb } from '@/components/ui/Breadcrumb'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { Input } from '@/components/ui/Input'
 import { Pagination } from '@/components/ui/Pagination'
-import { mockMovements } from '@/mocks/movements'
 import { MOVEMENT_TYPE_LABELS } from '@/constants/status'
 import { formatCurrency, formatNumber, formatDateTime } from '@/lib/utils'
 import { cn } from '@/lib/cn'
+import { api } from '@/lib/api'
+import type { MovementRecord } from '@/types/movement'
 
 type MType = 'entry' | 'exit' | 'transfer' | 'loss' | 'adjustment' | 'inventory'
 
@@ -25,25 +26,47 @@ const TYPE_CONFIG: Record<MType, { icon: React.ElementType; iconColor: string; i
   inventory:  { icon: ArrowDownToLine, iconColor: 'text-[color:var(--brand)]',   iconBg: 'bg-[color:var(--brand-subtle)]',   variant: 'brand' },
 }
 
-const PER_PAGE = 8
+const PER_PAGE = 20
+
+interface MovementResult {
+  data: MovementRecord[]
+  total: number
+  page: number
+  limit: number
+  totalPages: number
+}
 
 export default function MovimentacoesPage() {
   const [search, setSearch] = useState('')
   const [typeFilter, setTypeFilter] = useState('')
   const [page, setPage] = useState(1)
+  const [result, setResult] = useState<MovementResult | null>(null)
+  const [error, setError] = useState('')
+  const [fromDate, setFromDate] = useState('')
+  const [toDate, setToDate] = useState('')
 
-  const filtered = useMemo(() => {
-    let list = [...mockMovements]
-    if (search) list = list.filter(m =>
-      m.productName.toLowerCase().includes(search.toLowerCase()) ||
-      m.productCode.toLowerCase().includes(search.toLowerCase()) ||
-      m.userName.toLowerCase().includes(search.toLowerCase())
-    )
-    if (typeFilter) list = list.filter(m => m.type === typeFilter)
-    return list
-  }, [search, typeFilter])
+  useEffect(() => {
+    let active = true
+    api.get<MovementResult>('/movements', {
+      page,
+      limit: PER_PAGE,
+      search,
+      type: typeFilter || undefined,
+      from: fromDate ? `${fromDate}T00:00:00.000Z` : undefined,
+      to: toDate ? `${toDate}T23:59:59.999Z` : undefined,
+    }).then((data) => {
+      if (active) {
+        setResult(data)
+        setError('')
+      }
+    }).catch((err: unknown) => {
+      if (active) setError(err instanceof Error ? err.message : 'Falha ao carregar movimentações')
+    })
+    return () => { active = false }
+  }, [page, search, typeFilter, fromDate, toDate])
 
-  const paginated = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE)
+  const movements = result?.data ?? []
+  const total = result?.total ?? 0
 
   return (
     <div className="space-y-5">
@@ -61,8 +84,8 @@ export default function MovimentacoesPage() {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {(['entry', 'exit', 'transfer', 'loss'] as MType[]).map(t => {
           const cfg = TYPE_CONFIG[t]
-          const count = mockMovements.filter(m => m.type === t).length
-          const total = mockMovements.filter(m => m.type === t).reduce((a, m) => a + m.totalValue, 0)
+          const count = movements.filter(m => m.type === t).length
+          const amount = movements.filter(m => m.type === t).reduce((sum, m) => sum + m.totalValue, 0)
           const Icon = cfg.icon
           return (
             <button
@@ -79,7 +102,7 @@ export default function MovimentacoesPage() {
               <div>
                 <p className="text-xs text-[color:var(--text-tertiary)] uppercase tracking-wide">{MOVEMENT_TYPE_LABELS[t]}</p>
                 <p className="text-lg font-bold text-[color:var(--text-primary)]">{count}</p>
-                <p className="text-[10px] text-[color:var(--text-tertiary)]">{formatCurrency(total)}</p>
+                <p className="text-[10px] text-[color:var(--text-tertiary)]">{formatCurrency(amount)} nesta página</p>
               </div>
             </button>
           )
@@ -99,10 +122,11 @@ export default function MovimentacoesPage() {
           <option value="">Todos os tipos</option>
           {Object.entries(MOVEMENT_TYPE_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
         </select>
-        <input type="date" className="h-9 px-3 rounded-[var(--radius-md)] border border-[color:var(--border)] bg-[color:var(--bg-base)] text-sm text-[color:var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[color:var(--brand)]" />
-        <input type="date" className="h-9 px-3 rounded-[var(--radius-md)] border border-[color:var(--border)] bg-[color:var(--bg-base)] text-sm text-[color:var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[color:var(--brand)]" />
+        <input aria-label="Data inicial" type="date" value={fromDate} onChange={e => { setFromDate(e.target.value); setPage(1) }} className="h-9 px-3 rounded-[var(--radius-md)] border border-[color:var(--border)] bg-[color:var(--bg-base)] text-sm text-[color:var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[color:var(--brand)]" />
+        <input aria-label="Data final" type="date" value={toDate} onChange={e => { setToDate(e.target.value); setPage(1) }} className="h-9 px-3 rounded-[var(--radius-md)] border border-[color:var(--border)] bg-[color:var(--bg-base)] text-sm text-[color:var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[color:var(--brand)]" />
       </div>
 
+      {error && <p role="alert" className="text-sm text-[color:var(--danger)]">{error}</p>}
       {/* Timeline / Table */}
       <div className="bg-[color:var(--bg-base)] border border-[color:var(--border)] rounded-[var(--radius-lg)] overflow-hidden shadow-[var(--shadow-sm)]">
         <table className="w-full text-sm">
@@ -114,10 +138,10 @@ export default function MovimentacoesPage() {
             </tr>
           </thead>
           <tbody>
-            {paginated.length === 0 && (
+            {movements.length === 0 && !error && (
               <tr><td colSpan={8} className="px-5 py-12 text-center text-sm text-[color:var(--text-tertiary)]">Nenhuma movimentação encontrada.</td></tr>
             )}
-            {paginated.map(m => {
+            {movements.map(m => {
               const cfg = TYPE_CONFIG[m.type as MType] ?? TYPE_CONFIG.adjustment
               const Icon = cfg.icon
               return (
@@ -131,16 +155,16 @@ export default function MovimentacoesPage() {
                     </div>
                   </td>
                   <td className="px-5 py-3.5">
-                    <span className="font-medium text-[color:var(--text-primary)] truncate block max-w-[150px]">{m.productName}</span>
+                    <span className="font-medium text-[color:var(--text-primary)] truncate block max-w-[150px]">{m.product.name}</span>
                   </td>
-                  <td className="px-5 py-3.5"><span className="font-mono text-xs text-[color:var(--text-tertiary)]">{m.productCode}</span></td>
+                  <td className="px-5 py-3.5"><span className="font-mono text-xs text-[color:var(--text-tertiary)]">{m.product.internalCode}</span></td>
                   <td className="px-5 py-3.5">
                     <span className={cn('font-semibold', m.type === 'entry' ? 'text-[color:var(--success)]' : m.type === 'loss' ? 'text-[color:var(--danger)]' : 'text-[color:var(--text-primary)]')}>
                       {m.type === 'entry' ? '+' : m.type === 'exit' || m.type === 'loss' ? '−' : ''}{formatNumber(Math.abs(m.quantity))}
                     </span>
                   </td>
                   <td className="px-5 py-3.5"><span className="font-semibold text-[color:var(--text-primary)]">{formatCurrency(m.totalValue)}</span></td>
-                  <td className="px-5 py-3.5"><span className="text-[color:var(--text-secondary)]">{m.userName}</span></td>
+                  <td className="px-5 py-3.5"><span className="text-[color:var(--text-secondary)]">{m.user.name}</span></td>
                   <td className="px-5 py-3.5">
                     <div className="text-xs space-y-0.5">
                       {m.invoiceNumber && <p className="text-[color:var(--text-primary)]">{m.invoiceNumber}</p>}
@@ -155,7 +179,7 @@ export default function MovimentacoesPage() {
           </tbody>
         </table>
         <div className="px-5 py-4 border-t border-[color:var(--border)]">
-          <Pagination page={page} totalPages={Math.ceil(filtered.length / PER_PAGE)} total={filtered.length} perPage={PER_PAGE} onPage={setPage} />
+          <Pagination page={page} totalPages={result?.totalPages ?? 0} total={total} perPage={PER_PAGE} onPage={setPage} />
         </div>
       </div>
     </div>

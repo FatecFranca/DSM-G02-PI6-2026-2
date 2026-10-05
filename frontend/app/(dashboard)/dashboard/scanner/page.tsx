@@ -1,11 +1,12 @@
 'use client'
 import { useState } from 'react'
+import Link from 'next/link'
 import { ScanLine, Search, Package, ArrowDownToLine, ArrowUpFromLine, RefreshCw, CheckCircle2 } from 'lucide-react'
 import { Breadcrumb } from '@/components/ui/Breadcrumb'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { Input } from '@/components/ui/Input'
-import { mockProducts } from '@/mocks/products'
+import { api } from '@/lib/api'
 import { formatCurrency, formatNumber } from '@/lib/utils'
 import { cn } from '@/lib/cn'
 
@@ -16,24 +17,47 @@ const MODES = [
   { id: 'transfer', label: 'Transferência', icon: RefreshCw, color: 'text-[color:var(--warning)]', bg: 'bg-[color:var(--warning-subtle)]' },
 ]
 
-const RECENT_SCANS = [
-  { code: '7891234567890', product: 'Cabo HDMI 2.0 2m', action: 'entry', qty: 50, time: '14:32' },
-  { code: '7891234567891', product: 'Luva de Segurança CA', action: 'exit', qty: 24, time: '14:15' },
-  { code: '7891234567893', product: 'Parafuso M8×50', action: 'transfer', qty: 500, time: '12:30' },
-]
+interface ScannedProduct {
+  id: string
+  name: string
+  internalCode: string
+  sku: string
+  barcode: string
+  currentStock: number
+  unit: string
+  salePrice: number
+  stockStatus: 'ok' | 'low' | 'critical' | 'out'
+  category: { name: string } | null
+}
 
 export default function ScannerPage() {
   const [mode, setMode] = useState('query')
   const [input, setInput] = useState('')
-  const [found, setFound] = useState<(typeof mockProducts)[0] | null>(null)
+  const [found, setFound] = useState<ScannedProduct | null>(null)
   const [scanned, setScanned] = useState(false)
+  const [searching, setSearching] = useState(false)
+  const [error, setError] = useState('')
+  const [recentScans, setRecentScans] = useState<ScannedProduct[]>([])
 
-  const handleSearch = () => {
-    const product = mockProducts.find(p =>
-      p.barcode === input || p.internalCode === input || p.sku === input
-    )
-    setFound(product ?? null)
-    setScanned(true)
+  const handleSearch = async () => {
+    if (!input.trim()) return
+    setSearching(true)
+    setError('')
+    setScanned(false)
+    try {
+      const result = await api.get<{ data: ScannedProduct[] }>('/products', { search: input.trim(), limit: 100 })
+      const product = result.data.find((item) =>
+        item.barcode === input.trim() || item.internalCode === input.trim() || item.sku === input.trim()
+      ) ?? null
+      setFound(product)
+      setScanned(true)
+      if (product) setRecentScans((current) => [product, ...current.filter((item) => item.id !== product.id)].slice(0, 8))
+    } catch (err) {
+      setFound(null)
+      setError(err instanceof Error ? err.message : 'Falha ao consultar produto')
+    } finally {
+      setSearching(false)
+    }
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -107,12 +131,9 @@ export default function ScannerPage() {
                 leftIcon={<ScanLine className="w-4 h-4" />}
                 className="flex-1"
               />
-              <Button onClick={handleSearch}>Buscar</Button>
+              <Button onClick={handleSearch} loading={searching} disabled={!input.trim()}>Buscar</Button>
             </div>
-            <p className="text-center text-xs text-[color:var(--text-tertiary)]">
-              Tente: <button onClick={() => setInput('7891234567890')} className="text-[color:var(--brand)] underline">7891234567890</button>{' '}
-              ou <button onClick={() => setInput('EL-0042')} className="text-[color:var(--brand)] underline">EL-0042</button>
-            </p>
+            {error && <p role="alert" className="text-center text-xs text-[color:var(--danger)]">{error}</p>}
           </div>
 
           {/* Result */}
@@ -133,7 +154,7 @@ export default function ScannerPage() {
               <div className="grid grid-cols-3 gap-3">
                 {[
                   { label: 'Estoque', value: `${formatNumber(found.currentStock)} ${found.unit}` },
-                  { label: 'Categoria', value: found.categoryName },
+                  { label: 'Categoria', value: found.category?.name ?? '—' },
                   { label: 'Preço Venda', value: formatCurrency(found.salePrice) },
                 ].map(d => (
                   <div key={d.label} className="bg-white/50 rounded-[var(--radius-md)] p-2 text-center">
@@ -143,10 +164,9 @@ export default function ScannerPage() {
                 ))}
               </div>
               {mode !== 'query' && (
-                <div className="flex gap-2">
-                  <Input type="number" placeholder="Quantidade" className="flex-1" />
-                  <Button size="sm">{MODES.find(m => m.id === mode)?.label}</Button>
-                </div>
+                <Link href={`/dashboard/${mode === 'entry' ? 'entradas' : mode === 'exit' ? 'saidas' : 'movimentacoes'}?productId=${encodeURIComponent(found.id)}`} className="inline-flex">
+                  <Button size="sm">{mode === 'entry' ? 'Registrar entrada' : mode === 'exit' ? 'Registrar saída' : 'Abrir movimentações'}</Button>
+                </Link>
               )}
             </div>
           )}
@@ -154,9 +174,9 @@ export default function ScannerPage() {
           {scanned && !found && (
             <div className="bg-[color:var(--danger-subtle)] border border-[color:var(--danger-muted)] rounded-[var(--radius-lg)] p-4 animate-fade-in">
               <p className="text-sm font-semibold text-[color:var(--danger)]">Produto não encontrado</p>
-              <p className="text-xs text-[color:var(--text-secondary)] mt-1">O código "{input}" não corresponde a nenhum produto cadastrado.</p>
+              <p className="text-xs text-[color:var(--text-secondary)] mt-1">O código &quot;{input}&quot; não corresponde a nenhum produto cadastrado.</p>
               <div className="flex gap-2 mt-3">
-                <Button size="sm" variant="outline">Cadastrar produto</Button>
+                <Link href="/dashboard/produtos/novo"><Button size="sm" variant="outline">Cadastrar produto</Button></Link>
                 <Button size="sm" variant="ghost" onClick={() => { setScanned(false); setInput('') }}>Tentar novamente</Button>
               </div>
             </div>
@@ -165,27 +185,20 @@ export default function ScannerPage() {
 
         {/* Recent scans */}
         <div className="bg-[color:var(--bg-base)] border border-[color:var(--border)] rounded-[var(--radius-lg)] p-5">
-          <h3 className="text-sm font-semibold text-[color:var(--text-primary)] mb-4">Leituras Recentes</h3>
+          <h3 className="text-sm font-semibold text-[color:var(--text-primary)] mb-4">Consultas Recentes nesta Sessão</h3>
           <div className="space-y-3">
-            {RECENT_SCANS.map((s, i) => (
-              <div key={i} className="flex items-center gap-3 p-3 bg-[color:var(--bg-subtle)] rounded-[var(--radius-md)]">
-                <div className={cn('w-8 h-8 rounded-[var(--radius-md)] flex items-center justify-center flex-shrink-0',
-                  s.action === 'entry' ? 'bg-[color:var(--success-subtle)]' : s.action === 'exit' ? 'bg-[color:var(--danger-subtle)]' : 'bg-[color:var(--warning-subtle)]'
-                )}>
-                  {s.action === 'entry'
-                    ? <ArrowDownToLine className="w-4 h-4 text-[color:var(--success)]" />
-                    : s.action === 'exit'
-                    ? <ArrowUpFromLine className="w-4 h-4 text-[color:var(--danger)]" />
-                    : <RefreshCw className="w-4 h-4 text-[color:var(--warning)]" />
-                  }
+            {recentScans.map((product) => (
+              <button key={product.id} onClick={() => { setInput(product.barcode || product.internalCode); setFound(product); setScanned(true) }} className="flex w-full items-center gap-3 rounded-[var(--radius-md)] bg-[color:var(--bg-subtle)] p-3 text-left">
+                <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-[var(--radius-md)] bg-[color:var(--brand-subtle)]">
+                  <Package className="h-4 w-4 text-[color:var(--brand)]" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-[color:var(--text-primary)] truncate">{s.product}</p>
-                  <p className="text-xs font-mono text-[color:var(--text-tertiary)]">{s.code} · {s.qty} un</p>
+                  <p className="truncate text-sm font-medium text-[color:var(--text-primary)]">{product.name}</p>
+                  <p className="font-mono text-xs text-[color:var(--text-tertiary)]">{product.barcode || product.internalCode}</p>
                 </div>
-                <span className="text-xs text-[color:var(--text-tertiary)]">{s.time}</span>
-              </div>
+              </button>
             ))}
+            {recentScans.length === 0 && <p className="py-8 text-center text-xs text-[color:var(--text-tertiary)]">Os produtos consultados aparecerão aqui.</p>}
           </div>
         </div>
       </div>

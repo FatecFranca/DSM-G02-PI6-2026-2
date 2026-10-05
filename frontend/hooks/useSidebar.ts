@@ -6,8 +6,11 @@ export function useSidebar() {
   const [mobileOpen, setMobileOpen] = useState(false)
 
   useEffect(() => {
-    const stored = localStorage.getItem('sidebar-collapsed')
-    if (stored) setCollapsed(stored === 'true')
+    const frame = window.requestAnimationFrame(() => {
+      const stored = localStorage.getItem('sidebar-collapsed')
+      if (stored) setCollapsed(stored === 'true')
+    })
+    return () => window.cancelAnimationFrame(frame)
   }, [])
 
   const toggle = () => {

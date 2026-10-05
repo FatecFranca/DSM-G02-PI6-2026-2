@@ -1,3 +1,4 @@
+import { Prisma } from '@prisma/client'
 import { prisma } from '../prisma/client'
 import { AppError } from '../middleware/error.middleware'
 import { CreateProductInput, ProductQuery, UpdateProductInput } from '../schemas/product.schema'
@@ -19,6 +20,56 @@ export async function findAll(query: ProductQuery) {
   const { page, limit, search, categoryId, brandId, status, stockStatus: ss } = query
   const skip = (page - 1) * limit
 
+  if (ss) {
+    const conditions: Prisma.Sql[] = []
+    if (search) {
+      conditions.push(Prisma.sql`(
+        position(lower(${search}) in lower("name")) > 0 OR
+        position(lower(${search}) in lower("internalCode")) > 0 OR
+        position(lower(${search}) in lower("sku")) > 0 OR
+        position(lower(${search}) in lower("barcode")) > 0
+      )`)
+    }
+    if (categoryId) conditions.push(Prisma.sql`"categoryId" = ${categoryId}`)
+    if (brandId) conditions.push(Prisma.sql`"brandId" = ${brandId}`)
+    if (status) conditions.push(Prisma.sql`"status" = ${status}::"ProductStatus"`)
+    if (ss === 'out') conditions.push(Prisma.sql`"currentStock" = 0`)
+    if (ss === 'critical') {
+      conditions.push(Prisma.sql`"currentStock" > 0 AND "minStock" > 0 AND "currentStock" * 2 <= "minStock"`)
+    }
+    if (ss === 'low') {
+      conditions.push(Prisma.sql`"currentStock" > 0 AND "minStock" > 0 AND "currentStock" * 2 > "minStock" AND "currentStock" <= "minStock"`)
+    }
+    if (ss === 'ok') conditions.push(Prisma.sql`"currentStock" > "minStock"`)
+    const whereSql = Prisma.sql`WHERE ${Prisma.join(conditions, ' AND ')}`
+    const [matchingIds, [{ total }]] = await Promise.all([
+      prisma.$queryRaw<Array<{ id: string }>>(Prisma.sql`
+        SELECT "id" FROM "products"
+        ${whereSql}
+        ORDER BY "createdAt" DESC, "id" ASC
+        LIMIT ${limit} OFFSET ${skip}
+      `),
+      prisma.$queryRaw<Array<{ total: number }>>(Prisma.sql`
+        SELECT COUNT(*)::int AS "total" FROM "products" ${whereSql}
+      `),
+    ])
+    const products = matchingIds.length
+      ? await prisma.product.findMany({
+          where: { id: { in: matchingIds.map(({ id }) => id) } },
+          include: INCLUDE,
+        })
+      : []
+    const productsById = new Map(products.map((product) => [product.id, product]))
+    const data = matchingIds.flatMap(({ id }) => {
+      const product = productsById.get(id)
+      return product
+        ? [{ ...product, stockStatus: stockStatus(product.currentStock, product.minStock) }]
+        : []
+    })
+
+    return { data, total, page, limit, totalPages: Math.ceil(total / limit) }
+  }
+
   const where: Record<string, unknown> = {}
   if (search) {
     where.OR = [
@@ -32,7 +83,7 @@ export async function findAll(query: ProductQuery) {
   if (brandId) where.brandId = brandId
   if (status) where.status = status
 
-  let products = await prisma.product.findMany({
+  const products = await prisma.product.findMany({
     where,
     skip,
     take: limit,
@@ -47,13 +98,25 @@ export async function findAll(query: ProductQuery) {
     stockStatus: stockStatus(p.currentStock, p.minStock),
   }))
 
-  const filtered = ss ? mapped.filter((p) => p.stockStatus === ss) : mapped
-
-  return { data: filtered, total, page, limit, totalPages: Math.ceil(total / limit) }
+  return { data: mapped, total, page, limit, totalPages: Math.ceil(total / limit) }
 }
 
 export async function findById(id: string) {
-  const product = await prisma.product.findUnique({ where: { id }, include: INCLUDE })
+  const product = await prisma.product.findUnique({
+    where: { id },
+    include: {
+      ...INCLUDE,
+      warehouseAddresses: {
+        where: { status: 'occupied' },
+        select: { id: true, code: true, quantity: true, lotNumber: true },
+      },
+      lots: {
+        where: { quantity: { gt: 0 }, status: { in: ['valid', 'expiring'] } },
+        select: { id: true, lotNumber: true, quantity: true },
+        orderBy: { expirationDate: 'asc' },
+      },
+    },
+  })
   if (!product) throw new AppError('Product not found', 404)
   return { ...product, stockStatus: stockStatus(product.currentStock, product.minStock) }
 }

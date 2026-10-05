@@ -1,15 +1,17 @@
-import { notFound } from 'next/navigation'
+'use client'
+
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { useParams } from 'next/navigation'
 import {
-  ChevronLeft, Edit, Package, Barcode, Tag, Truck, TrendingDown,
+  ChevronLeft, Edit, Package, TrendingDown,
   TrendingUp, ArrowDownToLine, ArrowUpFromLine, History,
 } from 'lucide-react'
 import { Breadcrumb } from '@/components/ui/Breadcrumb'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { Card, CardHeader, CardTitle } from '@/components/ui/Card'
-import { mockProducts } from '@/mocks/products'
-import { mockMovements } from '@/mocks/movements'
+import { api } from '@/lib/api'
 import { formatCurrency, formatNumber, formatDate } from '@/lib/utils'
 import { cn } from '@/lib/cn'
 
@@ -25,13 +27,87 @@ const PRODUCT_STATUS = {
   discontinued: { label: 'Descontinuado', variant: 'secondary' as const },
 }
 
-export default async function ProdutoDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params
-  const product = mockProducts.find(p => p.id === id)
-  if (!product) notFound()
+interface ProductDetail {
+  id: string
+  name: string
+  internalCode: string
+  sku: string
+  barcode: string
+  categoryName: string
+  brandName: string
+  unit: string
+  weight: number
+  dimensions: { width: number; height: number; depth: number }
+  description: string | null
+  purchasePrice: number
+  salePrice: number
+  supplierName: string
+  minStock: number
+  maxStock: number
+  currentStock: number
+  status: keyof typeof PRODUCT_STATUS
+  stockStatus: keyof typeof STOCK_STATUS
+  createdAt: string
+  updatedAt: string
+  warehouseAddresses: Array<{ id: string; code: string; quantity: number; lotNumber: string | null }>
+  lots: Array<{ id: string; lotNumber: string; quantity: number }>
+}
 
-  const movements = mockMovements.filter(m => m.productId === id).slice(0, 5)
-  const margin = ((product.salePrice - product.purchasePrice) / product.purchasePrice * 100)
+type ProductApiRecord = Omit<ProductDetail, 'categoryName' | 'brandName' | 'supplierName' | 'dimensions'> & {
+  category: { name: string } | null
+  brand: { name: string } | null
+  supplier: { name: string } | null
+  width: number
+  height: number
+  depth: number
+}
+
+interface MovementItem {
+  id: string
+  type: string
+  quantity: number
+  totalValue: number
+  createdAt: string
+  user: { name: string }
+}
+
+export default function ProdutoDetailPage() {
+  const { id } = useParams<{ id: string }>()
+  const [product, setProduct] = useState<ProductDetail | null>(null)
+  const [movements, setMovements] = useState<MovementItem[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    let active = true
+    Promise.all([
+      api.get<ProductApiRecord>(`/products/${id}`),
+      api.get<{ data: MovementItem[] }>('/movements', { productId: id, page: 1, limit: 5 }),
+    ]).then(([record, movementResult]) => {
+      if (!active) return
+      setProduct({
+        ...record,
+        categoryName: record.category?.name ?? '—',
+        brandName: record.brand?.name ?? '—',
+        supplierName: record.supplier?.name ?? '—',
+        dimensions: {
+          width: record.width,
+          height: record.height,
+          depth: record.depth,
+        },
+      })
+      setMovements(movementResult.data)
+    }).catch((err: unknown) => {
+      if (active) setError(err instanceof Error ? err.message : 'Falha ao carregar o produto')
+    }).finally(() => {
+      if (active) setLoading(false)
+    })
+    return () => { active = false }
+  }, [id])
+
+  if (loading) return <p className="py-12 text-center text-sm text-[color:var(--text-tertiary)]">Carregando produto…</p>
+  if (error || !product) return <div role="alert" className="space-y-3 py-12 text-center"><p className="text-sm text-[color:var(--danger)]">{error || 'Produto não encontrado'}</p><Link className="text-sm text-[color:var(--brand)] underline" href="/dashboard/produtos">Voltar aos produtos</Link></div>
+  const margin = product.purchasePrice > 0 ? ((product.salePrice - product.purchasePrice) / product.purchasePrice * 100) : 0
 
   return (
     <div className="space-y-5 max-w-6xl">
@@ -200,7 +276,7 @@ export default async function ProdutoDetailPage({ params }: { params: Promise<{ 
                       <p className="text-sm font-medium text-[color:var(--text-primary)]">
                         {m.type === 'entry' ? 'Entrada' : m.type === 'exit' ? 'Saída' : 'Transferência'} de {formatNumber(Math.abs(m.quantity))} {product.unit}
                       </p>
-                      <p className="text-xs text-[color:var(--text-tertiary)]">{m.userName} · {new Date(m.createdAt).toLocaleString('pt-BR')}</p>
+                      <p className="text-xs text-[color:var(--text-tertiary)]">{m.user.name} · {new Date(m.createdAt).toLocaleString('pt-BR')}</p>
                     </div>
                     <p className="text-sm font-semibold text-[color:var(--text-primary)]">{formatCurrency(m.totalValue)}</p>
                   </div>

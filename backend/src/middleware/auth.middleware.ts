@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express'
 import jwt from 'jsonwebtoken'
+import { prisma } from '../prisma/client'
 import { AppError } from './error.middleware'
 
 export interface JwtPayload {
@@ -16,19 +17,53 @@ declare global {
   }
 }
 
-export function authenticate(req: Request, _res: Response, next: NextFunction): void {
+export async function authenticate(
+  req: Request,
+  _res: Response,
+  next: NextFunction,
+): Promise<void> {
   const authHeader = req.headers.authorization
   if (!authHeader?.startsWith('Bearer ')) {
-    return next(new AppError('Missing or invalid token', 401))
+    next(new AppError('Missing or invalid token', 401))
+    return
   }
 
   const token = authHeader.slice(7)
+  let payload: string | jwt.JwtPayload
   try {
-    const payload = jwt.verify(token, process.env.JWT_SECRET!) as JwtPayload
-    req.user = payload
-    next()
+    payload = jwt.verify(token, process.env.JWT_SECRET!)
   } catch {
     next(new AppError('Invalid or expired token', 401))
+    return
+  }
+
+  if (
+    typeof payload !== 'object' ||
+    typeof payload.sub !== 'string' ||
+    typeof payload.role !== 'string'
+  ) {
+    next(new AppError('Invalid or expired token', 401))
+    return
+  }
+
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: payload.sub },
+      select: { id: true, email: true, role: true, status: true },
+    })
+    if (!user || user.status !== 'active') {
+      next(new AppError('Account is not active', 401))
+      return
+    }
+    if (user.role !== payload.role) {
+      next(new AppError('Permissions changed; please sign in again', 401))
+      return
+    }
+
+    req.user = { sub: user.id, email: user.email, role: user.role }
+    next()
+  } catch (err) {
+    next(err)
   }
 }
 

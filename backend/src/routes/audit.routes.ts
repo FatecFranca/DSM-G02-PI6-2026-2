@@ -34,6 +34,13 @@ router.use(authenticate, authorize('admin', 'supervisor'))
  *         name: userId
  *         schema: { type: string }
  *       - in: query
+ *         name: action
+ *         schema: { type: string }
+ *       - in: query
+ *         name: search
+ *         schema: { type: string }
+ *         description: Search by user, action, entity or record name
+ *       - in: query
  *         name: from
  *         schema: { type: string, format: date-time }
  *       - in: query
@@ -52,6 +59,16 @@ router.get('/', async (req, res, next) => {
     const where: Record<string, unknown> = {}
     if (req.query.entity) where.entity = req.query.entity
     if (req.query.userId) where.userId = req.query.userId
+    if (typeof req.query.action === 'string') where.action = req.query.action
+    if (typeof req.query.search === 'string' && req.query.search.trim()) {
+      const search = req.query.search.trim()
+      where.OR = [
+        { entity: { contains: search, mode: 'insensitive' } },
+        { entityName: { contains: search, mode: 'insensitive' } },
+        { action: { contains: search, mode: 'insensitive' } },
+        { user: { name: { contains: search, mode: 'insensitive' } } },
+      ]
+    }
     if (req.query.from || req.query.to) {
       where.createdAt = {
         ...(req.query.from ? { gte: new Date(req.query.from as string) } : {}),

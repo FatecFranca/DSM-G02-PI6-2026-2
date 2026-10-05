@@ -76,7 +76,7 @@ export default function IAPage() {
                   <Button size="sm" leftIcon={<ImageIcon className="w-3.5 h-3.5" />} onClick={e => { e.stopPropagation(); simulate() }}>Selecionar Imagem</Button>
                   <Button size="sm" variant="outline" onClick={e => { e.stopPropagation(); simulate() }}>Usar Câmera</Button>
                 </div>
-                <p className="text-xs text-[color:var(--text-tertiary)]">Clique em "Selecionar Imagem" para simular uma análise de demonstração</p>
+                <p className="text-xs text-[color:var(--text-tertiary)]">Clique em &quot;Selecionar Imagem&quot; para simular uma análise de demonstração</p>
               </div>
             </Card>
           )}

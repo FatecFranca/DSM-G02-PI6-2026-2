@@ -47,7 +47,16 @@ export default function UsuariosPage() {
     }
   }
 
-  useEffect(() => { load() }, [])
+  useEffect(() => {
+    let active = true
+    api.get<{ data: User[] }>('/users', { limit: 100 })
+      .then((result) => { if (active) setUsers(result.data) })
+      .catch((err: unknown) => {
+        if (active) setError(err instanceof ApiError ? err.message : 'Falha ao carregar usuários')
+      })
+      .finally(() => { if (active) setLoading(false) })
+    return () => { active = false }
+  }, [])
 
   const filtered = users.filter(u =>
     u.name.toLowerCase().includes(search.toLowerCase()) ||

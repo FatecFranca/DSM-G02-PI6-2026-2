@@ -49,7 +49,16 @@ export default function CategoriasPage() {
     }
   }
 
-  useEffect(() => { load() }, [])
+  useEffect(() => {
+    let active = true
+    api.get<Category[]>('/categories')
+      .then((data) => { if (active) setCategories(data) })
+      .catch((err: unknown) => {
+        if (active) setError(err instanceof ApiError ? err.message : 'Falha ao carregar categorias')
+      })
+      .finally(() => { if (active) setLoading(false) })
+    return () => { active = false }
+  }, [])
 
   const filtered = categories.filter(c =>
     c.name.toLowerCase().includes(search.toLowerCase())

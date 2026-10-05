@@ -1,6 +1,26 @@
 export type MovementType = 'entry' | 'exit' | 'transfer' | 'loss' | 'adjustment' | 'inventory'
 export type ExitReason = 'sale' | 'transfer' | 'loss' | 'break' | 'internal'
 
+export interface MovementRecord {
+  id: string
+  type: MovementType
+  quantity: number
+  unitCost: number
+  totalValue: number
+  invoiceNumber?: string | null
+  lotNumber?: string | null
+  expirationDate?: string | null
+  exitReason?: ExitReason | null
+  notes?: string | null
+  customerName?: string | null
+  createdAt: string
+  product: { id: string; name: string; internalCode: string }
+  supplier?: { id: string; name: string } | null
+  user: { id: string; name: string }
+  fromAddress?: { id: string; code: string } | null
+  toAddress?: { id: string; code: string } | null
+}
+
 export interface Movement {
   id: string
   type: MovementType

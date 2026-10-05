@@ -1,13 +1,14 @@
 'use client'
-import { useState } from 'react'
-import { Plus, ClipboardList, CheckCircle2, Clock, AlertTriangle, Play } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Plus, CheckCircle2, Clock, AlertTriangle, Play } from 'lucide-react'
 import { Breadcrumb } from '@/components/ui/Breadcrumb'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { Modal } from '@/components/ui/Modal'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
-import { mockInventories } from '@/mocks/movements'
+import { api } from '@/lib/api'
+import { useAuth } from '@/lib/auth-context'
 import { formatDate, formatNumber } from '@/lib/utils'
 import { cn } from '@/lib/cn'
 
@@ -20,8 +21,76 @@ const STATUS_CONFIG = {
 
 const TYPE_LABELS = { full: 'Completo', partial: 'Parcial', cyclic: 'Cíclico' }
 
+type InventoryStatus = keyof typeof STATUS_CONFIG
+type InventoryType = keyof typeof TYPE_LABELS
+interface InventoryRecord {
+  id: string
+  name: string
+  type: InventoryType
+  status: InventoryStatus
+  startDate: string
+  endDate: string | null
+  totalItems: number
+  countedItems: number
+  divergences: number
+  responsible: { id: string; name: string }
+}
+
 export default function InventarioPage() {
+  const { user } = useAuth()
   const [showModal, setShowModal] = useState(false)
+  const [inventories, setInventories] = useState<InventoryRecord[]>([])
+  const [name, setName] = useState('')
+  const [type, setType] = useState<InventoryType>('full')
+  const [startDate, setStartDate] = useState(new Date().toISOString().slice(0, 10))
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    let active = true
+    api.get<InventoryRecord[]>('/inventory')
+      .then((data) => { if (active) setInventories(data) })
+      .catch((err: unknown) => {
+        if (active) setError(err instanceof Error ? err.message : 'Falha ao carregar inventários')
+      })
+      .finally(() => { if (active) setLoading(false) })
+    return () => { active = false }
+  }, [])
+
+  const createInventory = async () => {
+    if (!user || !name.trim()) return
+    setSaving(true)
+    setError('')
+    try {
+      const inventory = await api.post<InventoryRecord>('/inventory', {
+        name: name.trim(),
+        type,
+        startDate: new Date(`${startDate}T00:00:00`).toISOString(),
+        responsibleId: user.id,
+      })
+      setInventories((current) => [inventory, ...current])
+      setName('')
+      setShowModal(false)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Falha ao criar inventário')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const updateStatus = async (inventory: InventoryRecord, status: InventoryStatus) => {
+    setError('')
+    try {
+      const updated = await api.patch<InventoryRecord>(`/inventory/${inventory.id}`, {
+        status,
+        ...(status === 'completed' ? { endDate: new Date().toISOString() } : {}),
+      })
+      setInventories((current) => current.map((item) => item.id === updated.id ? updated : item))
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Falha ao atualizar inventário')
+    }
+  }
 
   return (
     <div className="space-y-5">
@@ -38,7 +107,7 @@ export default function InventarioPage() {
       {/* Summary */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {(Object.entries(STATUS_CONFIG) as [string, typeof STATUS_CONFIG['planned']][]).map(([k, v]) => {
-          const count = mockInventories.filter(i => i.status === k).length
+          const count = inventories.filter(i => i.status === k).length
           const Icon = v.icon
           return (
             <div key={k} className="bg-[color:var(--bg-base)] border border-[color:var(--border)] rounded-[var(--radius-lg)] p-4 flex items-center gap-3">
@@ -56,7 +125,10 @@ export default function InventarioPage() {
 
       {/* Inventories list */}
       <div className="space-y-3">
-        {mockInventories.map(inv => {
+        {error && <p role="alert" className="text-sm text-[color:var(--danger)]">{error}</p>}
+        {loading && <p className="py-8 text-center text-sm text-[color:var(--text-tertiary)]">Carregando inventários…</p>}
+        {!loading && inventories.length === 0 && <p className="py-8 text-center text-sm text-[color:var(--text-tertiary)]">Nenhum inventário cadastrado.</p>}
+        {inventories.map(inv => {
           const cfg = STATUS_CONFIG[inv.status]
           const Icon = cfg.icon
           const progress = inv.totalItems > 0 ? Math.round((inv.countedItems / inv.totalItems) * 100) : 0
@@ -74,7 +146,7 @@ export default function InventarioPage() {
                       <Badge variant="default" size="sm">{TYPE_LABELS[inv.type]}</Badge>
                     </div>
                     <div className="flex items-center gap-4 text-xs text-[color:var(--text-tertiary)] flex-wrap">
-                      <span>Responsável: <strong className="text-[color:var(--text-primary)]">{inv.responsibleName}</strong></span>
+                      <span>Responsável: <strong className="text-[color:var(--text-primary)]">{inv.responsible.name}</strong></span>
                       <span>Início: {formatDate(inv.startDate)}</span>
                       {inv.endDate && <span>Fim: {formatDate(inv.endDate)}</span>}
                     </div>
@@ -82,11 +154,12 @@ export default function InventarioPage() {
                 </div>
                 <div className="flex items-center gap-3 flex-shrink-0">
                   {inv.status === 'in_progress' && (
-                    <Button size="xs" variant="outline">Continuar contagem</Button>
+                    <Button size="xs" variant="outline" onClick={() => updateStatus(inv, 'review')}>Enviar para revisão</Button>
                   )}
                   {inv.status === 'planned' && (
-                    <Button size="xs">Iniciar</Button>
+                    <Button size="xs" onClick={() => updateStatus(inv, 'in_progress')}>Iniciar</Button>
                   )}
+                  {inv.status === 'review' && <Button size="xs" onClick={() => updateStatus(inv, 'completed')}>Concluir</Button>}
                   {inv.status === 'completed' && (
                     <Button size="xs" variant="ghost">Ver relatório</Button>
                   )}
@@ -139,22 +212,21 @@ export default function InventarioPage() {
         footer={
           <>
             <Button variant="outline" size="sm" onClick={() => setShowModal(false)}>Cancelar</Button>
-            <Button size="sm" onClick={() => setShowModal(false)}>Criar Inventário</Button>
+            <Button size="sm" loading={saving} disabled={!name.trim() || !user} onClick={createInventory}>Criar Inventário</Button>
           </>
         }
       >
         <div className="space-y-4">
-          <Input label="Nome do inventário *" placeholder="Ex: Inventário Geral Julho 2026" />
+          <Input label="Nome do inventário *" placeholder="Ex: Inventário Geral Julho 2026" value={name} onChange={(event) => setName(event.target.value)} />
           <Select label="Tipo" options={[
             { value: 'full', label: 'Completo — todos os produtos' },
             { value: 'partial', label: 'Parcial — categorias selecionadas' },
             { value: 'cyclic', label: 'Cíclico — rotativo por endereço' },
-          ]} />
+          ]} value={type} onChange={(event) => setType(event.target.value as InventoryType)} />
           <div className="grid grid-cols-2 gap-4">
-            <Input label="Data de início" type="date" />
-            <Input label="Responsável" placeholder="Nome do responsável" />
+            <Input label="Data de início" type="date" value={startDate} onChange={(event) => setStartDate(event.target.value)} />
+            <Input label="Responsável" value={user?.name ?? ''} disabled />
           </div>
-          <Input label="Observações" placeholder="Instrução para a equipe de contagem…" />
         </div>
       </Modal>
     </div>

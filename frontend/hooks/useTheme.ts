@@ -7,11 +7,14 @@ export function useTheme() {
   const [theme, setTheme] = useState<Theme>('light')
 
   useEffect(() => {
-    const stored = localStorage.getItem('theme') as Theme | null
-    const system = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
-    const initial = stored ?? system
-    setTheme(initial)
-    document.documentElement.classList.toggle('dark', initial === 'dark')
+    const frame = window.requestAnimationFrame(() => {
+      const stored = localStorage.getItem('theme') as Theme | null
+      const system = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+      const initial = stored ?? system
+      setTheme(initial)
+      document.documentElement.classList.toggle('dark', initial === 'dark')
+    })
+    return () => window.cancelAnimationFrame(frame)
   }, [])
 
   const toggle = () => {

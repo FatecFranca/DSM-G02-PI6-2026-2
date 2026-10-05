@@ -36,13 +36,14 @@ export async function getSummary() {
       where: { status: 'active' },
       select: { currentStock: true, purchasePrice: true, salePrice: true },
     }),
-    prisma.product.count({
-      where: {
-        status: 'active',
-        currentStock: { gt: 0 },
-        minStock: { gt: 0 },
-      },
-    }),
+    prisma.$queryRaw<Array<{ count: number }>>`
+      SELECT COUNT(*)::int AS "count"
+      FROM "products"
+      WHERE "status" = 'active'
+        AND "currentStock" > 0
+        AND "minStock" > 0
+        AND "currentStock" <= "minStock"
+    `,
   ])
 
   const warehouseMap = Object.fromEntries(
@@ -63,7 +64,7 @@ export async function getSummary() {
     products: {
       total: totalProducts,
       active: activeProducts,
-      lowStock: criticalProducts,
+      lowStock: criticalProducts[0]?.count ?? 0,
       outStock: outStockProducts,
     },
     movements: { today: totalMovementsToday },

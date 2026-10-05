@@ -40,7 +40,16 @@ export default function MarcasPage() {
     }
   }
 
-  useEffect(() => { load() }, [])
+  useEffect(() => {
+    let active = true
+    api.get<Brand[]>('/brands')
+      .then((data) => { if (active) setBrands(data) })
+      .catch((err: unknown) => {
+        if (active) setError(err instanceof ApiError ? err.message : 'Falha ao carregar marcas')
+      })
+      .finally(() => { if (active) setLoading(false) })
+    return () => { active = false }
+  }, [])
 
   const filtered = brands.filter(b => b.name.toLowerCase().includes(search.toLowerCase()))
 

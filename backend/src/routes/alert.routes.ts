@@ -30,7 +30,7 @@ router.use(authenticate)
  */
 router.get('/', async (req, res, next) => {
   try {
-    const userId = (req as any).user.id
+    const userId = req.user!.sub
     const days = req.query.days ? Number(req.query.days) : 30
     res.json(await alertService.getAllAlerts(userId, days))
   } catch (err) {
@@ -103,7 +103,7 @@ router.get('/expiring', async (req, res, next) => {
  */
 router.patch('/read-all', async (req, res, next) => {
   try {
-    const userId = (req as any).user.id
+    const userId = req.user!.sub
     const { alertKeys } = req.body as { alertKeys: string[] }
     if (!Array.isArray(alertKeys)) {
       res.status(400).json({ message: 'alertKeys deve ser um array de strings' })
@@ -133,7 +133,7 @@ router.patch('/read-all', async (req, res, next) => {
  */
 router.patch('/:id/read', async (req, res, next) => {
   try {
-    const userId = (req as any).user.id
+    const userId = req.user!.sub
     res.json(await alertService.markAlertAsRead(userId, req.params.id))
   } catch (err) {
     next(err)

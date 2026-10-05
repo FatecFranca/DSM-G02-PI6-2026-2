@@ -1,5 +1,6 @@
 import { Router } from 'express'
 import { authenticate, authorize } from '../middleware/auth.middleware'
+import { audit } from '../middleware/audit.middleware'
 import { validate, validateQuery } from '../middleware/validate.middleware'
 import { createMovementSchema, movementQuerySchema } from '../schemas/movement.schema'
 import * as ctrl from '../controllers/movement.controller'
@@ -14,6 +15,7 @@ router.post(
   '/',
   authorize('admin', 'supervisor', 'operator'),
   validate(createMovementSchema),
+  audit('Movement', 'CREATE'),
   ctrl.create,
 )
 
