@@ -8,6 +8,8 @@ interface AuthContextValue {
   loading: boolean
   login: (email: string, password: string) => Promise<void>
   logout: () => void
+  /** Re-reads the profile from the API (after editing it). */
+  refresh: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined)
@@ -34,13 +36,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(result.user)
   }
 
+  async function refresh() {
+    setUser(await api.get<User>('/auth/profile'))
+  }
+
   function logout() {
     setToken(null)
     setUser(null)
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, refresh }}>
       {children}
     </AuthContext.Provider>
   )

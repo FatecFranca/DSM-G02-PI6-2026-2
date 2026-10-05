@@ -3,6 +3,10 @@ export interface NavItem {
   href: string
   icon: string
   badge?: number | string
+  /** Roles allowed to see this entry; omitted = everyone. */
+  roles?: ('admin' | 'supervisor' | 'operator' | 'viewer')[]
+  /** Marks the entry whose badge shows the unread alerts count. */
+  alertsBadge?: boolean
   children?: NavItem[]
 }
 
@@ -16,7 +20,7 @@ export const NAV_GROUPS: NavGroup[] = [
     label: 'Principal',
     items: [
       { label: 'Dashboard', href: '/dashboard', icon: 'LayoutDashboard' },
-      { label: 'Alertas', href: '/dashboard/alertas', icon: 'Bell', badge: 5 },
+      { label: 'Alertas', href: '/dashboard/alertas', icon: 'Bell', alertsBadge: true },
     ],
   },
   {
@@ -57,8 +61,8 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     label: 'Administração',
     items: [
-      { label: 'Usuários', href: '/dashboard/usuarios', icon: 'UserCog' },
-      { label: 'Auditoria', href: '/dashboard/auditoria', icon: 'ShieldCheck' },
+      { label: 'Usuários', href: '/dashboard/usuarios', icon: 'UserCog', roles: ['admin', 'supervisor'] },
+      { label: 'Auditoria', href: '/dashboard/auditoria', icon: 'ShieldCheck', roles: ['admin', 'supervisor'] },
       { label: 'Configurações', href: '/dashboard/configuracoes', icon: 'Settings' },
     ],
   },

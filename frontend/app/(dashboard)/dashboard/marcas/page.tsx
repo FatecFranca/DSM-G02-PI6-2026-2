@@ -8,6 +8,9 @@ import { Modal } from '@/components/ui/Modal'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { formatNumber, slugify } from '@/lib/utils'
 import { api, ApiError } from '@/lib/api'
+import { useAuth } from '@/lib/auth-context'
+import { ADMIN, hasRole, STAFF } from '@/lib/permissions'
+import { Alert } from '@/components/ui/Alert'
 
 interface Brand {
   id: string
@@ -18,6 +21,9 @@ interface Brand {
 }
 
 export default function MarcasPage() {
+  const { user } = useAuth()
+  const canManage = hasRole(user?.role, STAFF)
+  const canDelete = hasRole(user?.role, ADMIN)
   const [brands, setBrands] = useState<Brand[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -41,14 +47,8 @@ export default function MarcasPage() {
   }
 
   useEffect(() => {
-    let active = true
-    api.get<Brand[]>('/brands')
-      .then((data) => { if (active) setBrands(data) })
-      .catch((err: unknown) => {
-        if (active) setError(err instanceof ApiError ? err.message : 'Falha ao carregar marcas')
-      })
-      .finally(() => { if (active) setLoading(false) })
-    return () => { active = false }
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void load()
   }, [])
 
   const filtered = brands.filter(b => b.name.toLowerCase().includes(search.toLowerCase()))
@@ -80,7 +80,7 @@ export default function MarcasPage() {
       await api.delete(`/brands/${b.id}`)
       await load()
     } catch (err) {
-      alert(err instanceof ApiError ? err.message : 'Falha ao remover marca')
+      setError(err instanceof ApiError ? err.message : 'Falha ao remover marca')
     }
   }
 
@@ -93,21 +93,19 @@ export default function MarcasPage() {
           <h1 className="text-xl font-bold text-[color:var(--text-primary)]">Marcas</h1>
           <p className="text-sm text-[color:var(--text-tertiary)] mt-0.5">{formatNumber(brands.length)} marcas cadastradas</p>
         </div>
-        <Button size="sm" leftIcon={<Plus className="w-3.5 h-3.5" />} onClick={openNew}>Nova Marca</Button>
+        {canManage && <Button size="sm" leftIcon={<Plus className="w-3.5 h-3.5" />} onClick={openNew}>Nova Marca</Button>}
       </div>
 
       <div className="max-w-sm">
         <Input placeholder="Buscar marca…" value={search} onChange={e => setSearch(e.target.value)} leftIcon={<Search className="w-4 h-4" />} />
       </div>
 
-      {error && (
-        <p className="text-sm text-[color:var(--danger)] bg-[color:var(--danger-subtle)] border border-[color:var(--danger)]/30 rounded-[var(--radius-md)] px-3 py-2">{error}</p>
-      )}
+      {error && <Alert>{error}</Alert>}
 
       {loading ? (
         <p className="text-sm text-[color:var(--text-tertiary)]">Carregando…</p>
       ) : filtered.length === 0 ? (
-        <EmptyState icon={<Award className="w-6 h-6" />} title="Nenhuma marca encontrada" action={<Button size="sm" leftIcon={<Plus className="w-3.5 h-3.5" />} onClick={openNew}>Nova Marca</Button>} />
+        <EmptyState icon={<Award className="w-6 h-6" />} title="Nenhuma marca encontrada" action={canManage ? <Button size="sm" leftIcon={<Plus className="w-3.5 h-3.5" />} onClick={openNew}>Nova Marca</Button> : undefined} />
       ) : (
         <div className="bg-[color:var(--bg-base)] border border-[color:var(--border)] rounded-[var(--radius-lg)] overflow-hidden shadow-[var(--shadow-sm)]">
           <table className="w-full text-sm">
@@ -140,12 +138,12 @@ export default function MarcasPage() {
                   </td>
                   <td className="px-5 py-3.5">
                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button onClick={() => openEdit(brand)} className="w-7 h-7 flex items-center justify-center rounded-[var(--radius-md)] hover:bg-[color:var(--bg-muted)] text-[color:var(--text-tertiary)] hover:text-[color:var(--text-primary)] transition-colors">
+                      {canManage && (<button onClick={() => openEdit(brand)} className="w-7 h-7 flex items-center justify-center rounded-[var(--radius-md)] hover:bg-[color:var(--bg-muted)] text-[color:var(--text-tertiary)] hover:text-[color:var(--text-primary)] transition-colors">
                         <Edit className="w-3.5 h-3.5" />
-                      </button>
-                      <button onClick={() => handleDelete(brand)} className="w-7 h-7 flex items-center justify-center rounded-[var(--radius-md)] hover:bg-[color:var(--danger-subtle)] text-[color:var(--text-tertiary)] hover:text-[color:var(--danger)] transition-colors">
+                      </button>)}
+                      {canDelete && (<button onClick={() => handleDelete(brand)} className="w-7 h-7 flex items-center justify-center rounded-[var(--radius-md)] hover:bg-[color:var(--danger-subtle)] text-[color:var(--text-tertiary)] hover:text-[color:var(--danger)] transition-colors">
                         <Trash2 className="w-3.5 h-3.5" />
-                      </button>
+                      </button>)}
                     </div>
                   </td>
                 </tr>
@@ -168,9 +166,7 @@ export default function MarcasPage() {
         }
       >
         <div className="space-y-4">
-          {formError && (
-            <p className="text-sm text-[color:var(--danger)] bg-[color:var(--danger-subtle)] border border-[color:var(--danger)]/30 rounded-[var(--radius-md)] px-3 py-2">{formError}</p>
-          )}
+          {formError && <Alert>{formError}</Alert>}
           <Input label="Nome da marca *" placeholder="Ex: Nexus Pro" value={name} onChange={e => setName(e.target.value)} />
         </div>
       </Modal>

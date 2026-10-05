@@ -5,11 +5,12 @@ interface CardProps {
   className?: string
   padding?: boolean
   hover?: boolean
+  id?: string
 }
 
-export function Card({ children, className, padding = true, hover = false }: CardProps) {
+export function Card({ children, className, padding = true, hover = false, id }: CardProps) {
   return (
-    <div className={cn(
+    <div id={id} className={cn(
       'bg-[color:var(--bg-base)] border border-[color:var(--border)] rounded-[var(--radius-lg)]',
       'shadow-[var(--shadow-sm)]',
       padding && 'p-5',

@@ -2,11 +2,13 @@
 import { Sidebar } from './Sidebar'
 import { Topbar } from './Topbar'
 import { useSidebar } from '@/hooks/useSidebar'
+import { AlertsProvider } from '@/lib/alerts-context'
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { collapsed, toggle, mobileOpen, setMobileOpen } = useSidebar()
 
   return (
+    <AlertsProvider>
     <div className="flex h-screen overflow-hidden bg-[color:var(--bg-subtle)]">
       <Sidebar
         collapsed={collapsed}
@@ -23,5 +25,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </main>
       </div>
     </div>
+    </AlertsProvider>
   )
 }

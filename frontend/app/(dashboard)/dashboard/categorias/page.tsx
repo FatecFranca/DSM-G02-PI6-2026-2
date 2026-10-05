@@ -10,6 +10,9 @@ import { formatNumber } from '@/lib/utils'
 import { slugify } from '@/lib/utils'
 import { cn } from '@/lib/cn'
 import { api, ApiError } from '@/lib/api'
+import { useAuth } from '@/lib/auth-context'
+import { ADMIN, hasRole, STAFF } from '@/lib/permissions'
+import { Alert } from '@/components/ui/Alert'
 
 interface Category {
   id: string
@@ -25,6 +28,9 @@ const COLORS = [
 ]
 
 export default function CategoriasPage() {
+  const { user } = useAuth()
+  const canManage = hasRole(user?.role, STAFF)
+  const canDelete = hasRole(user?.role, ADMIN)
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -50,14 +56,8 @@ export default function CategoriasPage() {
   }
 
   useEffect(() => {
-    let active = true
-    api.get<Category[]>('/categories')
-      .then((data) => { if (active) setCategories(data) })
-      .catch((err: unknown) => {
-        if (active) setError(err instanceof ApiError ? err.message : 'Falha ao carregar categorias')
-      })
-      .finally(() => { if (active) setLoading(false) })
-    return () => { active = false }
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void load()
   }, [])
 
   const filtered = categories.filter(c =>
@@ -91,7 +91,7 @@ export default function CategoriasPage() {
       await api.delete(`/categories/${c.id}`)
       await load()
     } catch (err) {
-      alert(err instanceof ApiError ? err.message : 'Falha ao remover categoria')
+      setError(err instanceof ApiError ? err.message : 'Falha ao remover categoria')
     }
   }
 
@@ -104,7 +104,7 @@ export default function CategoriasPage() {
           <h1 className="text-xl font-bold text-[color:var(--text-primary)]">Categorias</h1>
           <p className="text-sm text-[color:var(--text-tertiary)] mt-0.5">{formatNumber(categories.length)} categorias cadastradas</p>
         </div>
-        <Button size="sm" leftIcon={<Plus className="w-3.5 h-3.5" />} onClick={openNew}>Nova Categoria</Button>
+        {canManage && <Button size="sm" leftIcon={<Plus className="w-3.5 h-3.5" />} onClick={openNew}>Nova Categoria</Button>}
       </div>
 
       <div className="max-w-sm">
@@ -116,9 +116,7 @@ export default function CategoriasPage() {
         />
       </div>
 
-      {error && (
-        <p className="text-sm text-[color:var(--danger)] bg-[color:var(--danger-subtle)] border border-[color:var(--danger)]/30 rounded-[var(--radius-md)] px-3 py-2">{error}</p>
-      )}
+      {error && <Alert>{error}</Alert>}
 
       {loading ? (
         <p className="text-sm text-[color:var(--text-tertiary)]">Carregando…</p>
@@ -126,7 +124,7 @@ export default function CategoriasPage() {
         <EmptyState
           icon={<Tag className="w-6 h-6" />}
           title="Nenhuma categoria encontrada"
-          action={<Button size="sm" leftIcon={<Plus className="w-3.5 h-3.5" />} onClick={openNew}>Nova Categoria</Button>}
+          action={canManage ? <Button size="sm" leftIcon={<Plus className="w-3.5 h-3.5" />} onClick={openNew}>Nova Categoria</Button> : undefined}
         />
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -140,12 +138,12 @@ export default function CategoriasPage() {
                   <Tag className="w-5 h-5" style={{ color: cat.color }} />
                 </div>
                 <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button onClick={() => openEdit(cat)} className="w-7 h-7 flex items-center justify-center rounded-[var(--radius-md)] hover:bg-[color:var(--bg-muted)] text-[color:var(--text-tertiary)] hover:text-[color:var(--text-primary)] transition-colors">
+                  {canManage && (<button onClick={() => openEdit(cat)} className="w-7 h-7 flex items-center justify-center rounded-[var(--radius-md)] hover:bg-[color:var(--bg-muted)] text-[color:var(--text-tertiary)] hover:text-[color:var(--text-primary)] transition-colors">
                     <Edit className="w-3.5 h-3.5" />
-                  </button>
-                  <button onClick={() => handleDelete(cat)} className="w-7 h-7 flex items-center justify-center rounded-[var(--radius-md)] hover:bg-[color:var(--danger-subtle)] text-[color:var(--text-tertiary)] hover:text-[color:var(--danger)] transition-colors">
+                  </button>)}
+                  {canDelete && (<button onClick={() => handleDelete(cat)} className="w-7 h-7 flex items-center justify-center rounded-[var(--radius-md)] hover:bg-[color:var(--danger-subtle)] text-[color:var(--text-tertiary)] hover:text-[color:var(--danger)] transition-colors">
                     <Trash2 className="w-3.5 h-3.5" />
-                  </button>
+                  </button>)}
                 </div>
               </div>
               <p className="text-sm font-semibold text-[color:var(--text-primary)] mb-1">{cat.name}</p>
@@ -154,15 +152,17 @@ export default function CategoriasPage() {
                 <span className="text-xs text-[color:var(--text-tertiary)]">{formatNumber(cat._count.products)} produtos</span>
               </div>
               <div className="mt-3 h-1 rounded-full" style={{ background: cat.color + '30' }}>
-                <div className="h-full rounded-full" style={{ background: cat.color, width: `${Math.min(100, (cat._count.products / 500) * 100)}%` }} />
+                <div className="h-full rounded-full" style={{ background: cat.color, width: `${Math.min(100, (cat._count.products / Math.max(1, ...categories.map(c => c._count.products))) * 100)}%` }} />
               </div>
             </div>
           ))}
           {/* Add card */}
+          {canManage && (
           <button onClick={openNew} className="border-2 border-dashed border-[color:var(--border)] rounded-[var(--radius-lg)] p-5 flex flex-col items-center justify-center gap-2 hover:border-[color:var(--brand)] hover:bg-[color:var(--brand-subtle)] transition-all cursor-pointer min-h-[140px]">
             <Plus className="w-6 h-6 text-[color:var(--text-tertiary)]" />
             <span className="text-sm text-[color:var(--text-tertiary)]">Nova categoria</span>
           </button>
+          )}
         </div>
       )}
 
@@ -182,9 +182,7 @@ export default function CategoriasPage() {
         }
       >
         <div className="space-y-4">
-          {formError && (
-            <p className="text-sm text-[color:var(--danger)] bg-[color:var(--danger-subtle)] border border-[color:var(--danger)]/30 rounded-[var(--radius-md)] px-3 py-2">{formError}</p>
-          )}
+          {formError && <Alert>{formError}</Alert>}
           <Input
             label="Nome da categoria *"
             placeholder="Ex: Eletrônicos"

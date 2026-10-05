@@ -1,14 +1,18 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { Search, Bell, Sun, Moon, Menu, HelpCircle, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import { Avatar } from '@/components/ui/Avatar'
-import { alerts } from '@/mocks/dashboard'
 import { useTheme } from '@/hooks/useTheme'
 import { useAuth } from '@/lib/auth-context'
 import { NAV_GROUPS } from '@/constants/navigation'
+import { useAlerts } from '@/lib/alerts-context'
+import { useDebounce } from '@/hooks/useDebounce'
+import { api } from '@/lib/api'
+import { relativeTime } from '@/lib/utils'
+import type { ApiProduct, Paginated } from '@/types/api'
 
 const ICON_STROKE = 1.75
 
@@ -37,7 +41,10 @@ export function Topbar({ onMobileMenuOpen }: TopbarProps) {
   const [search, setSearch] = useState('')
   const searchRef = useRef<HTMLInputElement>(null)
 
-  const unread = alerts.filter(a => !a.read).length
+  const router = useRouter()
+  const { alerts, unread, markRead, markAllRead } = useAlerts()
+  const [results, setResults] = useState<ApiProduct[]>([])
+  const debouncedSearch = useDebounce(search, 250)
   const pageLabel = currentPageLabel(pathname)
 
   useEffect(() => {
@@ -55,6 +62,26 @@ export function Topbar({ onMobileMenuOpen }: TopbarProps) {
   useEffect(() => {
     if (showSearch) searchRef.current?.focus()
   }, [showSearch])
+
+  useEffect(() => {
+    const term = debouncedSearch.trim()
+    if (term.length < 2) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setResults([])
+      return
+    }
+    let cancelled = false
+    api.get<Paginated<ApiProduct>>('/products', { search: term, limit: 6 })
+      .then(res => { if (!cancelled) setResults(res.data) })
+      .catch(() => { if (!cancelled) setResults([]) })
+    return () => { cancelled = true }
+  }, [debouncedSearch])
+
+  function openProduct(id: string) {
+    setShowSearch(false)
+    setSearch('')
+    router.push(`/dashboard/produtos/${id}`)
+  }
 
   return (
     <header className="h-[var(--topbar-height)] bg-[color:var(--bg-base)] border-b border-[color:var(--border)] flex items-center gap-3 px-4 flex-shrink-0">
@@ -98,14 +125,24 @@ export function Topbar({ onMobileMenuOpen }: TopbarProps) {
                     ref={searchRef}
                     value={search}
                     onChange={e => setSearch(e.target.value)}
-                    placeholder="Buscar produtos, pedidos, fornecedores…"
+                    placeholder="Buscar por nome, SKU, código ou código de barras…"
                     className="w-full h-8 pl-8 pr-2 rounded-[var(--radius-sm)] bg-[color:var(--bg-subtle)] text-sm text-[color:var(--text-primary)] placeholder:text-[color:var(--text-tertiary)] focus:outline-none"
                   />
                 </div>
-                {search && (
+                {search.trim().length >= 2 && (
                   <div className="border-t border-[color:var(--border)] pt-1 mt-1">
-                    {['Cabo HDMI 2.0 2m', 'Cabide de Parede', 'Cabo PP 2×2.5mm²'].filter(p => p.toLowerCase().includes(search.toLowerCase())).map(p => (
-                      <button key={p} className="w-full text-left px-2 py-1.5 text-sm hover:bg-[color:var(--bg-subtle)] rounded-[var(--radius-sm)] text-[color:var(--text-primary)]">{p}</button>
+                    {results.length === 0 && (
+                      <p className="px-2 py-2 text-xs text-[color:var(--text-tertiary)]">Nenhum produto encontrado</p>
+                    )}
+                    {results.map(p => (
+                      <button
+                        key={p.id}
+                        onClick={() => openProduct(p.id)}
+                        className="w-full text-left px-2 py-1.5 text-sm hover:bg-[color:var(--bg-subtle)] rounded-[var(--radius-sm)] text-[color:var(--text-primary)]"
+                      >
+                        <span className="block truncate">{p.name}</span>
+                        <span className="block text-[11px] font-mono text-[color:var(--text-tertiary)]">{p.internalCode} · {p.sku}</span>
+                      </button>
                     ))}
                   </div>
                 )}
@@ -141,11 +178,19 @@ export function Topbar({ onMobileMenuOpen }: TopbarProps) {
               <div className="absolute right-0 top-full mt-2 w-80 bg-[color:var(--bg-base)] border border-[color:var(--border)] rounded-[var(--radius-lg)] shadow-[var(--shadow-lg)] z-40 animate-fade-in overflow-hidden">
                 <div className="flex items-center justify-between px-4 py-3 border-b border-[color:var(--border)]">
                   <p className="text-sm font-semibold text-[color:var(--text-primary)]">Notificações</p>
-                  <span className="text-xs bg-[color:var(--danger)] text-white px-1.5 py-0.5 rounded-full font-semibold">{unread}</span>
+                  <div className="flex items-center gap-2">
+                    {unread > 0 && (
+                      <button onClick={markAllRead} className="text-xs text-[color:var(--brand)] hover:underline">Marcar todas</button>
+                    )}
+                    <span className="text-xs bg-[color:var(--danger)] text-white px-1.5 py-0.5 rounded-full font-semibold">{unread}</span>
+                  </div>
                 </div>
                 <div className="max-h-72 overflow-y-auto">
-                  {alerts.map(alert => (
-                    <div key={alert.id} className={cn(
+                  {alerts.length === 0 && (
+                    <p className="px-4 py-6 text-center text-sm text-[color:var(--text-tertiary)]">Nenhum alerta ativo 🎉</p>
+                  )}
+                  {alerts.slice(0, 20).map(alert => (
+                    <div key={alert.id} onClick={() => markRead(alert.id)} className={cn(
                       'flex gap-3 px-4 py-3 border-b border-[color:var(--border)] last:border-0 hover:bg-[color:var(--bg-subtle)] cursor-pointer transition-colors',
                       !alert.read && 'bg-[color:var(--brand-subtle)]',
                     )}>
@@ -156,7 +201,7 @@ export function Topbar({ onMobileMenuOpen }: TopbarProps) {
                       )} />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm text-[color:var(--text-primary)] leading-tight">{alert.title}</p>
-                        <p className="text-xs text-[color:var(--text-tertiary)] mt-0.5">{alert.time} atrás</p>
+                        <p className="text-xs text-[color:var(--text-tertiary)] mt-0.5">{relativeTime(alert.createdAt)}</p>
                       </div>
                     </div>
                   ))}

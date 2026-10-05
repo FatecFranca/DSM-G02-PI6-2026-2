@@ -14,6 +14,8 @@ import type { NavGroup } from '@/constants/navigation'
 import { NAV_GROUPS } from '@/constants/navigation'
 import { Avatar } from '@/components/ui/Avatar'
 import { useAuth } from '@/lib/auth-context'
+import { useAlerts } from '@/lib/alerts-context'
+import { ROLE_LABELS } from '@/lib/permissions'
 
 const ICONS: Record<string, React.ElementType> = {
   LayoutDashboard, Bell, Package, Tag, Award, Truck, Users,
@@ -31,10 +33,11 @@ interface SidebarProps {
   onMobileClose: () => void
 }
 
-function NavItem({ item, collapsed, pathname }: {
+function NavItem({ item, collapsed, pathname, badge }: {
   item: NavGroup['items'][0]
   collapsed: boolean
   pathname: string
+  badge?: number | string
 }) {
   const Icon = ICONS[item.icon] ?? Package
   const active = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href))
@@ -55,17 +58,17 @@ function NavItem({ item, collapsed, pathname }: {
       {!collapsed && (
         <>
           <span className="truncate flex-1">{item.label}</span>
-          {item.badge !== undefined && (
+          {badge !== undefined && (
             <span className={cn(
               'text-[10px] font-semibold px-1.5 py-0.5 rounded-full min-w-[18px] text-center',
               active ? 'bg-[color:var(--bg-base)] text-[color:var(--text-primary)]' : 'bg-[color:var(--danger)] text-white',
             )}>
-              {item.badge}
+              {badge}
             </span>
           )}
         </>
       )}
-      {collapsed && item.badge !== undefined && (
+      {collapsed && badge !== undefined && (
         <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-[color:var(--danger)]" />
       )}
     </Link>
@@ -78,13 +81,19 @@ export function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: Side
   const { user, logout } = useAuth()
   const [query, setQuery] = useState('')
 
+  const { unread } = useAlerts()
+
   const filteredGroups = useMemo(() => {
     const q = query.trim().toLowerCase()
-    if (!q) return NAV_GROUPS
     return NAV_GROUPS
-      .map(group => ({ ...group, items: group.items.filter(i => i.label.toLowerCase().includes(q)) }))
+      .map(group => ({
+        ...group,
+        items: group.items.filter(i =>
+          (!i.roles || (user && i.roles.includes(user.role))) && (!q || i.label.toLowerCase().includes(q)),
+        ),
+      }))
       .filter(group => group.items.length > 0)
-  }, [query])
+  }, [query, user])
 
   const mainGroups = filteredGroups.filter(g => g.label !== 'Administração')
   const adminGroup = filteredGroups.find(g => g.label === 'Administração')
@@ -164,7 +173,7 @@ export function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: Side
             )}
             <div className="space-y-0.5">
               {group.items.map(item => (
-                <NavItem key={item.href} item={item} collapsed={collapsed} pathname={pathname} />
+                <NavItem key={item.href} item={item} collapsed={collapsed} pathname={pathname} badge={item.alertsBadge && unread > 0 ? unread : undefined} />
               ))}
             </div>
           </div>
@@ -179,7 +188,7 @@ export function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: Side
         {adminGroup && (
           <div className="space-y-0.5">
             {adminGroup.items.map(item => (
-              <NavItem key={item.href} item={item} collapsed={collapsed} pathname={pathname} />
+              <NavItem key={item.href} item={item} collapsed={collapsed} pathname={pathname} badge={item.alertsBadge && unread > 0 ? unread : undefined} />
             ))}
           </div>
         )}
@@ -197,7 +206,7 @@ export function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: Side
             <>
               <div className="min-w-0 flex-1 text-left">
                 <p className="text-[12.5px] font-semibold text-[color:var(--sidebar-text-active)] leading-none truncate">{user?.name}</p>
-                <p className="text-[11px] text-[color:var(--sidebar-text)] mt-1 truncate">{user?.role === 'admin' ? 'Administrador' : user?.role}</p>
+                <p className="text-[11px] text-[color:var(--sidebar-text)] mt-1 truncate">{user ? ROLE_LABELS[user.role] : ''}</p>
               </div>
               <ChevronLeft strokeWidth={ICON_STROKE} className="w-3.5 h-3.5 text-[color:var(--sidebar-text)] rotate-[-90deg] flex-shrink-0" />
             </>

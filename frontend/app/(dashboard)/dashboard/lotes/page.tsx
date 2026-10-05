@@ -39,8 +39,8 @@ export default function LotesPage() {
 
   useEffect(() => {
     let active = true
-    api.get<LotRecord[]>('/lots')
-      .then((result) => { if (active) setLots(result) })
+    api.get<{ data: LotRecord[] }>('/lots', { limit: 100 })
+      .then((result) => { if (active) setLots(result.data) })
       .catch((err: unknown) => {
         if (active) setError(err instanceof Error ? err.message : 'Falha ao carregar lotes')
       })

@@ -1,50 +1,29 @@
 'use client'
-import { useState, useMemo, useEffect } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
 import {
   Plus, Search, Filter, LayoutGrid, List, Download,
-  Package, MoreHorizontal, Eye, Edit, Trash2, ArrowUpDown,
-  ChevronDown,
+  Package, Eye, Edit, Trash2, ChevronDown,
 } from 'lucide-react'
 import { Breadcrumb } from '@/components/ui/Breadcrumb'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { Input } from '@/components/ui/Input'
+import { Alert } from '@/components/ui/Alert'
 import { Pagination } from '@/components/ui/Pagination'
 import { EmptyState } from '@/components/ui/EmptyState'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
+import { PageLoading } from '@/components/ui/Loading'
 import { formatCurrency, formatNumber } from '@/lib/utils'
 import { cn } from '@/lib/cn'
-import { api, ApiError } from '@/lib/api'
-import type { Product } from '@/types/product'
-
-interface ApiCategory { id: string; name: string; slug: string; color: string }
-interface ApiProduct {
-  id: string; name: string; internalCode: string; sku: string; barcode: string
-  categoryId: string; brandId: string; supplierId: string; unit: string
-  weight: number; width: number; height: number; depth: number
-  description?: string; purchasePrice: number; salePrice: number
-  minStock: number; maxStock: number; currentStock: number
-  status: Product['status']; stockStatus: Product['stockStatus']
-  imageUrl?: string; createdAt: string; updatedAt: string
-  category: { id: string; name: string }
-  brand: { id: string; name: string }
-  supplier: { id: string; name: string }
-}
-
-function mapProduct(p: ApiProduct): Product {
-  return {
-    id: p.id, name: p.name, internalCode: p.internalCode, sku: p.sku, barcode: p.barcode,
-    categoryId: p.categoryId, categoryName: p.category?.name ?? '—',
-    brandId: p.brandId, brandName: p.brand?.name ?? '—',
-    unit: p.unit, weight: p.weight,
-    dimensions: { width: p.width, height: p.height, depth: p.depth },
-    description: p.description ?? '', purchasePrice: p.purchasePrice, salePrice: p.salePrice,
-    supplierId: p.supplierId, supplierName: p.supplier?.name ?? '—',
-    minStock: p.minStock, maxStock: p.maxStock, currentStock: p.currentStock,
-    status: p.status, stockStatus: p.stockStatus, imageUrl: p.imageUrl,
-    createdAt: p.createdAt, updatedAt: p.updatedAt,
-  }
-}
+import { api } from '@/lib/api'
+import { fetchAll } from '@/lib/fetch-all'
+import { downloadCsv } from '@/lib/csv'
+import { useAuth } from '@/lib/auth-context'
+import { ADMIN, hasRole, STAFF } from '@/lib/permissions'
+import { useDebounce } from '@/hooks/useDebounce'
+import { errorMessage, useFetch } from '@/hooks/useFetch'
+import type { ApiCategory, ApiProduct, Paginated } from '@/types/api'
 
 const STOCK_STATUS = {
   ok:       { label: 'Em Estoque',   variant: 'success' as const },
@@ -58,13 +37,13 @@ const PRODUCT_STATUS = {
   discontinued: { label: 'Descontinuado',  variant: 'secondary' as const },
 }
 
-const PER_PAGE = 10
+const PER_PAGE = 12
+const selectCls = 'h-8 px-3 rounded-[var(--radius-md)] border border-[color:var(--border)] bg-[color:var(--bg-base)] text-sm text-[color:var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[color:var(--brand)]'
 
 export default function ProdutosPage() {
-  const [products, setProducts] = useState<Product[]>([])
-  const [categories, setCategories] = useState<ApiCategory[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
+  const { user } = useAuth()
+  const canEdit = hasRole(user?.role, STAFF)
+  const canDelete = hasRole(user?.role, ADMIN)
   const [view, setView] = useState<'table' | 'card'>('table')
   const [search, setSearch] = useState('')
   const [catFilter, setCatFilter] = useState('')
@@ -72,52 +51,48 @@ export default function ProdutosPage() {
   const [stockFilter, setStockFilter] = useState('')
   const [page, setPage] = useState(1)
   const [showFilters, setShowFilters] = useState(false)
-  const [sortKey, setSortKey] = useState('name')
-  const [sortDir, setSortDir] = useState<'asc'|'desc'>('asc')
+  const [toDelete, setToDelete] = useState<ApiProduct | null>(null)
+  const [busy, setBusy] = useState(false)
+  const [actionError, setActionError] = useState('')
+  const debouncedSearch = useDebounce(search, 300)
 
-  useEffect(() => {
-    Promise.all([
-      api.get<{ data: ApiProduct[] }>('/products', { limit: 100 }),
-      api.get<ApiCategory[]>('/categories'),
-    ])
-      .then(([prodRes, cats]) => {
-        setProducts(prodRes.data.map(mapProduct))
-        setCategories(cats)
-      })
-      .catch(err => setError(err instanceof ApiError ? err.message : 'Falha ao carregar produtos'))
-      .finally(() => setLoading(false))
-  }, [])
+  const { data: categories } = useFetch<ApiCategory[]>('/categories')
+  const { data, loading, error, reload } = useFetch<Paginated<ApiProduct>>('/products', {
+    page, limit: PER_PAGE,
+    search: debouncedSearch.trim() || undefined,
+    categoryId: catFilter || undefined,
+    status: statusFilter || undefined,
+    stockStatus: stockFilter || undefined,
+  })
 
-  async function handleDelete(p: Product) {
-    if (!confirm(`Remover o produto "${p.name}"?`)) return
+  const products = data?.data ?? []
+  const total = data?.total ?? 0
+
+  async function handleDelete() {
+    if (!toDelete) return
+    setBusy(true)
     try {
-      await api.delete(`/products/${p.id}`)
-      setProducts(prev => prev.filter(x => x.id !== p.id))
+      await api.delete(`/products/${toDelete.id}`)
+      setToDelete(null)
+      await reload()
     } catch (err) {
-      alert(err instanceof ApiError ? err.message : 'Falha ao remover produto')
+      setActionError(errorMessage(err, 'Falha ao remover produto'))
+      setToDelete(null)
+    } finally {
+      setBusy(false)
     }
   }
 
-  const filtered = useMemo(() => {
-    let list = [...products]
-    if (search) list = list.filter(p => p.name.toLowerCase().includes(search.toLowerCase()) || p.internalCode.toLowerCase().includes(search.toLowerCase()) || p.sku.toLowerCase().includes(search.toLowerCase()))
-    if (catFilter) list = list.filter(p => p.categoryId === catFilter)
-    if (statusFilter) list = list.filter(p => p.status === statusFilter)
-    if (stockFilter) list = list.filter(p => p.stockStatus === stockFilter)
-    list.sort((a, b) => {
-      const va = String(a[sortKey as keyof typeof a] ?? '')
-      const vb = String(b[sortKey as keyof typeof b] ?? '')
-      return sortDir === 'asc' ? va.localeCompare(vb) : vb.localeCompare(va)
+  async function exportCsv() {
+    const all = await fetchAll<ApiProduct>('/products', {
+      search: debouncedSearch.trim() || undefined, categoryId: catFilter || undefined, status: statusFilter || undefined, stockStatus: stockFilter || undefined,
     })
-    return list
-  }, [products, search, catFilter, statusFilter, stockFilter, sortKey, sortDir])
-
-  const paginated = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE)
-
-  const toggleSort = (key: string) => {
-    if (sortKey === key) setSortDir(d => d === 'asc' ? 'desc' : 'asc')
-    else { setSortKey(key); setSortDir('asc') }
+    downloadCsv('produtos.csv',
+      ['Código', 'SKU', 'Código de barras', 'Produto', 'Categoria', 'Marca', 'Fornecedor', 'Unidade', 'Estoque', 'Mínimo', 'Máximo', 'Preço compra', 'Preço venda', 'Status'],
+      all.map(p => [p.internalCode, p.sku, p.barcode, p.name, p.category.name, p.brand.name, p.supplier.name, p.unit, p.currentStock, p.minStock, p.maxStock, p.purchasePrice, p.salePrice, PRODUCT_STATUS[p.status].label]))
   }
+
+  const resetPage = () => setPage(1)
 
   return (
     <div className="space-y-5">
@@ -126,13 +101,15 @@ export default function ProdutosPage() {
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-xl font-bold text-[color:var(--text-primary)]">Produtos</h1>
-          <p className="text-sm text-[color:var(--text-tertiary)] mt-0.5">{formatNumber(products.length)} produtos cadastrados</p>
+          <p className="text-sm text-[color:var(--text-tertiary)] mt-0.5">{formatNumber(total)} produtos {debouncedSearch || catFilter || statusFilter || stockFilter ? 'encontrados' : 'cadastrados'}</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" leftIcon={<Download className="w-3.5 h-3.5" />}>Exportar</Button>
-          <Link href="/dashboard/produtos/novo">
-            <Button size="sm" leftIcon={<Plus className="w-3.5 h-3.5" />}>Novo Produto</Button>
-          </Link>
+          <Button variant="outline" size="sm" leftIcon={<Download className="w-3.5 h-3.5" />} onClick={exportCsv}>Exportar</Button>
+          {canEdit && (
+            <Link href="/dashboard/produtos/novo">
+              <Button size="sm" leftIcon={<Plus className="w-3.5 h-3.5" />}>Novo Produto</Button>
+            </Link>
+          )}
         </div>
       </div>
 
@@ -141,9 +118,9 @@ export default function ProdutosPage() {
         <div className="flex gap-3 flex-wrap">
           <div className="flex-1 min-w-[200px]">
             <Input
-              placeholder="Buscar por nome, código, SKU…"
+              placeholder="Buscar por nome, código, SKU ou código de barras…"
               value={search}
-              onChange={e => { setSearch(e.target.value); setPage(1) }}
+              onChange={e => { setSearch(e.target.value); resetPage() }}
               leftIcon={<Search className="w-4 h-4" />}
             />
           </div>
@@ -170,16 +147,16 @@ export default function ProdutosPage() {
           <div className="flex gap-3 flex-wrap pt-2 border-t border-[color:var(--border)] animate-fade-in">
             <select
               value={catFilter}
-              onChange={e => { setCatFilter(e.target.value); setPage(1) }}
-              className="h-8 px-3 rounded-[var(--radius-md)] border border-[color:var(--border)] bg-[color:var(--bg-base)] text-sm text-[color:var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[color:var(--brand)]"
+              onChange={e => { setCatFilter(e.target.value); resetPage() }}
+              className={selectCls}
             >
               <option value="">Todas as categorias</option>
-              {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+              {(categories ?? []).map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
             <select
               value={statusFilter}
-              onChange={e => { setStatusFilter(e.target.value); setPage(1) }}
-              className="h-8 px-3 rounded-[var(--radius-md)] border border-[color:var(--border)] bg-[color:var(--bg-base)] text-sm text-[color:var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[color:var(--brand)]"
+              onChange={e => { setStatusFilter(e.target.value); resetPage() }}
+              className={selectCls}
             >
               <option value="">Todos os status</option>
               <option value="active">Ativo</option>
@@ -188,8 +165,8 @@ export default function ProdutosPage() {
             </select>
             <select
               value={stockFilter}
-              onChange={e => { setStockFilter(e.target.value); setPage(1) }}
-              className="h-8 px-3 rounded-[var(--radius-md)] border border-[color:var(--border)] bg-[color:var(--bg-base)] text-sm text-[color:var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[color:var(--brand)]"
+              onChange={e => { setStockFilter(e.target.value); resetPage() }}
+              className={selectCls}
             >
               <option value="">Qualquer estoque</option>
               <option value="ok">Em Estoque</option>
@@ -198,7 +175,7 @@ export default function ProdutosPage() {
               <option value="out">Sem Estoque</option>
             </select>
             {(catFilter || statusFilter || stockFilter) && (
-              <Button variant="ghost" size="sm" onClick={() => { setCatFilter(''); setStatusFilter(''); setStockFilter('') }}>
+              <Button variant="ghost" size="sm" onClick={() => { setCatFilter(''); setStatusFilter(''); setStockFilter(''); resetPage() }}>
                 Limpar filtros
               </Button>
             )}
@@ -206,19 +183,17 @@ export default function ProdutosPage() {
         )}
       </div>
 
-      {error && (
-        <p className="text-sm text-[color:var(--danger)] bg-[color:var(--danger-subtle)] border border-[color:var(--danger)]/30 rounded-[var(--radius-md)] px-3 py-2">{error}</p>
-      )}
+      {(error || actionError) && <Alert>{error || actionError}</Alert>}
 
       {/* Content */}
-      {loading ? (
-        <p className="text-sm text-[color:var(--text-tertiary)]">Carregando…</p>
-      ) : filtered.length === 0 ? (
+      {loading && !data ? (
+        <PageLoading />
+      ) : products.length === 0 ? (
         <EmptyState
           icon={<Package className="w-6 h-6" />}
           title="Nenhum produto encontrado"
           description="Tente ajustar seus filtros ou cadastre um novo produto."
-          action={<Link href="/dashboard/produtos/novo"><Button size="sm" leftIcon={<Plus className="w-3.5 h-3.5" />}>Novo Produto</Button></Link>}
+          action={canEdit ? <Link href="/dashboard/produtos/novo"><Button size="sm" leftIcon={<Plus className="w-3.5 h-3.5" />}>Novo Produto</Button></Link> : undefined}
         />
       ) : view === 'table' ? (
         <div className="bg-[color:var(--bg-base)] border border-[color:var(--border)] rounded-[var(--radius-lg)] overflow-hidden shadow-[var(--shadow-sm)]">
@@ -226,37 +201,15 @@ export default function ProdutosPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-[color:var(--border)]">
-                  <th className="px-4 py-3 w-10">
-                    <input type="checkbox" className="rounded" />
-                  </th>
-                  {[
-                    { key: 'name', label: 'Produto' },
-                    { key: 'categoryName', label: 'Categoria' },
-                    { key: 'currentStock', label: 'Estoque Atual' },
-                    { key: 'salePrice', label: 'Preço Venda' },
-                    { key: 'status', label: 'Status' },
-                    { key: 'stockStatus', label: 'Estoque' },
-                  ].map(col => (
-                    <th
-                      key={col.key}
-                      onClick={() => toggleSort(col.key)}
-                      className="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-wide text-[color:var(--text-tertiary)] cursor-pointer hover:text-[color:var(--text-primary)] transition-colors whitespace-nowrap"
-                    >
-                      <span className="flex items-center gap-1">
-                        {col.label}
-                        <ArrowUpDown className="w-3 h-3 opacity-50" />
-                      </span>
-                    </th>
+                  {['Produto', 'Categoria', 'Estoque Atual', 'Preço Venda', 'Status', 'Estoque'].map(h => (
+                    <th key={h} className="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-wide text-[color:var(--text-tertiary)] whitespace-nowrap">{h}</th>
                   ))}
                   <th className="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-wide text-[color:var(--text-tertiary)]">Ações</th>
                 </tr>
               </thead>
               <tbody>
-                {paginated.map(p => (
+                {products.map(p => (
                   <tr key={p.id} className="border-b border-[color:var(--border)] last:border-0 hover:bg-[color:var(--bg-subtle)] transition-colors group">
-                    <td className="px-4 py-3">
-                      <input type="checkbox" className="rounded" />
-                    </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
                         <div className="w-9 h-9 rounded-[var(--radius-md)] bg-[color:var(--bg-muted)] flex items-center justify-center flex-shrink-0">
@@ -271,7 +224,7 @@ export default function ProdutosPage() {
                       </div>
                     </td>
                     <td className="px-4 py-3">
-                      <span className="text-sm text-[color:var(--text-secondary)]">{p.categoryName}</span>
+                      <span className="text-sm text-[color:var(--text-secondary)]">{p.category.name}</span>
                     </td>
                     <td className="px-4 py-3">
                       <div>
@@ -290,21 +243,20 @@ export default function ProdutosPage() {
                       <Badge variant={STOCK_STATUS[p.stockStatus].variant} dot>{STOCK_STATUS[p.stockStatus].label}</Badge>
                     </td>
                     <td className="px-4 py-3">
-                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Link href={`/dashboard/produtos/${p.id}`}>
-                          <button className="w-7 h-7 flex items-center justify-center rounded-[var(--radius-md)] hover:bg-[color:var(--bg-muted)] text-[color:var(--text-tertiary)] hover:text-[color:var(--text-primary)] transition-colors" title="Ver detalhes">
-                            <Eye className="w-3.5 h-3.5" />
-                          </button>
+                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
+                        <Link href={`/dashboard/produtos/${p.id}`} title="Ver detalhes">
+                          <span className="w-7 h-7 flex items-center justify-center rounded-[var(--radius-md)] hover:bg-[color:var(--bg-muted)] text-[color:var(--text-tertiary)] hover:text-[color:var(--text-primary)] transition-colors"><Eye className="w-3.5 h-3.5" /></span>
                         </Link>
-                        <button className="w-7 h-7 flex items-center justify-center rounded-[var(--radius-md)] hover:bg-[color:var(--bg-muted)] text-[color:var(--text-tertiary)] hover:text-[color:var(--text-primary)] transition-colors" title="Editar">
-                          <Edit className="w-3.5 h-3.5" />
-                        </button>
-                        <button onClick={() => handleDelete(p)} className="w-7 h-7 flex items-center justify-center rounded-[var(--radius-md)] hover:bg-[color:var(--danger-subtle)] text-[color:var(--text-tertiary)] hover:text-[color:var(--danger)] transition-colors" title="Excluir">
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                        <button className="w-7 h-7 flex items-center justify-center rounded-[var(--radius-md)] hover:bg-[color:var(--bg-muted)] text-[color:var(--text-tertiary)] transition-colors">
-                          <MoreHorizontal className="w-4 h-4" />
-                        </button>
+                        {canEdit && (
+                          <Link href={`/dashboard/produtos/${p.id}/editar`} title="Editar">
+                            <span className="w-7 h-7 flex items-center justify-center rounded-[var(--radius-md)] hover:bg-[color:var(--bg-muted)] text-[color:var(--text-tertiary)] hover:text-[color:var(--text-primary)] transition-colors"><Edit className="w-3.5 h-3.5" /></span>
+                          </Link>
+                        )}
+                        {canDelete && (
+                          <button title="Excluir" onClick={() => setToDelete(p)} className="w-7 h-7 flex items-center justify-center rounded-[var(--radius-md)] hover:bg-[color:var(--danger-subtle)] text-[color:var(--text-tertiary)] hover:text-[color:var(--danger)] transition-colors">
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -313,19 +265,13 @@ export default function ProdutosPage() {
             </table>
           </div>
           <div className="px-5 py-4 border-t border-[color:var(--border)]">
-            <Pagination
-              page={page}
-              totalPages={Math.ceil(filtered.length / PER_PAGE)}
-              total={filtered.length}
-              perPage={PER_PAGE}
-              onPage={setPage}
-            />
+            <Pagination page={page} totalPages={data?.totalPages ?? 1} total={total} perPage={PER_PAGE} onPage={setPage} />
           </div>
         </div>
       ) : (
         <div>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-            {paginated.map(p => (
+            {products.map(p => (
               <Link key={p.id} href={`/dashboard/produtos/${p.id}`}>
                 <div className="bg-[color:var(--bg-base)] border border-[color:var(--border)] rounded-[var(--radius-lg)] p-4 hover:shadow-[var(--shadow-md)] hover:border-[color:var(--brand-muted)] transition-all group cursor-pointer">
                   <div className="w-full aspect-square rounded-[var(--radius-md)] bg-[color:var(--bg-muted)] flex items-center justify-center mb-3 group-hover:bg-[color:var(--brand-subtle)] transition-colors">
@@ -343,10 +289,11 @@ export default function ProdutosPage() {
             ))}
           </div>
           <div className="mt-4">
-            <Pagination page={page} totalPages={Math.ceil(filtered.length / PER_PAGE)} total={filtered.length} perPage={PER_PAGE} onPage={setPage} />
+            <Pagination page={page} totalPages={data?.totalPages ?? 1} total={total} perPage={PER_PAGE} onPage={setPage} />
           </div>
         </div>
       )}
+      <ConfirmDialog open={!!toDelete} title="Excluir produto" message={`Excluir "${toDelete?.name}"? Produtos com movimentações não podem ser excluídos — marque-os como inativos.`} confirmLabel="Excluir" loading={busy} onConfirm={handleDelete} onClose={() => setToDelete(null)} />
     </div>
   )
 }

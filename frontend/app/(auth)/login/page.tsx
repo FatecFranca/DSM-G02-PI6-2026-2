@@ -1,6 +1,5 @@
 'use client'
 import { useState } from 'react'
-import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Eye, EyeOff, Boxes, ArrowRight, ShieldCheck, Zap, BarChart3 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
@@ -14,11 +13,18 @@ const features = [
   { icon: BarChart3, title: 'Analytics Avançado', desc: 'Curva ABC, giro de estoque e mapa de calor' },
 ]
 
+const DEMO_USERS = [
+  { label: 'Administrador', email: 'admin@stockiq.com' },
+  { label: 'Supervisor', email: 'supervisor@stockiq.com' },
+  { label: 'Operador', email: 'operador@stockiq.com' },
+  { label: 'Visualizador', email: 'visualizador@stockiq.com' },
+]
+
 export default function LoginPage() {
   const router = useRouter()
   const { login } = useAuth()
-  const [email, setEmail] = useState('admin@wms.com')
-  const [password, setPassword] = useState('admin123')
+  const [email, setEmail] = useState('admin@stockiq.com')
+  const [password, setPassword] = useState('Senha@123')
   const [showPass, setShowPass] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -128,9 +134,9 @@ export default function LoginPage() {
                 }
               />
               <div className="flex justify-end mt-1.5">
-                <button type="button" className="text-xs text-[color:var(--brand)] hover:underline">
-                  Esqueci minha senha
-                </button>
+                <span className="text-xs text-[color:var(--text-tertiary)]">
+                  Esqueceu a senha? Peça a um administrador para redefinir.
+                </span>
               </div>
             </div>
 
@@ -152,11 +158,20 @@ export default function LoginPage() {
           </form>
 
           <div className="mt-6 p-4 rounded-[var(--radius-lg)] bg-[color:var(--brand-subtle)] border border-[color:var(--brand-muted)]">
-            <p className="text-xs text-[color:var(--brand)] font-medium mb-1">Acesso de demonstração</p>
-            <p className="text-xs text-[color:var(--text-secondary)]">
-              E-mail: <span className="font-mono">admin@wms.com</span><br />
-              Senha: <span className="font-mono">admin123</span>
-            </p>
+            <p className="text-xs text-[color:var(--brand)] font-medium mb-2">Acesso de demonstração — senha <span className="font-mono">Senha@123</span></p>
+            <div className="grid grid-cols-2 gap-1.5">
+              {DEMO_USERS.map(u => (
+                <button
+                  key={u.email}
+                  type="button"
+                  onClick={() => { setEmail(u.email); setPassword('Senha@123') }}
+                  className="text-left px-2.5 py-1.5 rounded-[var(--radius-md)] bg-[color:var(--bg-base)] border border-[color:var(--border)] hover:border-[color:var(--brand)] transition-colors"
+                >
+                  <span className="block text-xs font-semibold text-[color:var(--text-primary)]">{u.label}</span>
+                  <span className="block text-[10px] font-mono text-[color:var(--text-tertiary)] truncate">{u.email}</span>
+                </button>
+              ))}
+            </div>
           </div>
 
           <p className="text-center text-xs text-[color:var(--text-tertiary)] mt-8">

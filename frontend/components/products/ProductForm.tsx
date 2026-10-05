@@ -1,0 +1,265 @@
+'use client'
+import { useState } from 'react'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { ChevronLeft, Save, Barcode, Tag } from 'lucide-react'
+import { Breadcrumb } from '@/components/ui/Breadcrumb'
+import { Button } from '@/components/ui/Button'
+import { Card, CardHeader, CardTitle } from '@/components/ui/Card'
+import { Input } from '@/components/ui/Input'
+import { Select } from '@/components/ui/Select'
+import { Textarea } from '@/components/ui/Textarea'
+import { Tabs } from '@/components/ui/Tabs'
+import { Alert } from '@/components/ui/Alert'
+import { cn } from '@/lib/cn'
+import { api } from '@/lib/api'
+import { errorMessage, useFetch } from '@/hooks/useFetch'
+import type { ApiBrand, ApiCategory, ApiProduct, ApiSupplier, Paginated } from '@/types/api'
+
+const TABS = [
+  { id: 'basic', label: 'Informações Básicas' },
+  { id: 'stock', label: 'Estoque e Preço' },
+  { id: 'logistics', label: 'Logística' },
+]
+
+const UNITS = [
+  { value: 'UN', label: 'Unidade (UN)' },
+  { value: 'CX', label: 'Caixa (CX)' },
+  { value: 'KG', label: 'Quilograma (KG)' },
+  { value: 'L', label: 'Litro (L)' },
+  { value: 'GL', label: 'Galão (GL)' },
+  { value: 'M', label: 'Metro (M)' },
+  { value: 'PAR', label: 'Par (PAR)' },
+  { value: 'RL', label: 'Rolo (RL)' },
+  { value: 'PCT', label: 'Pacote (PCT)' },
+]
+
+type Status = 'active' | 'inactive' | 'discontinued'
+
+/** Create/edit form shared by /produtos/novo and /produtos/[id]/editar. */
+export function ProductForm({ product }: { product?: ApiProduct }) {
+  const router = useRouter()
+  const editing = !!product
+  const [tab, setTab] = useState('basic')
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+
+  const { data: categories } = useFetch<ApiCategory[]>('/categories')
+  const { data: brands } = useFetch<ApiBrand[]>('/brands')
+  const { data: suppliers } = useFetch<Paginated<ApiSupplier>>('/suppliers', { limit: 100 })
+
+  const [name, setName] = useState(product?.name ?? '')
+  const [internalCode, setInternalCode] = useState(product?.internalCode ?? '')
+  const [sku, setSku] = useState(product?.sku ?? '')
+  const [barcode, setBarcode] = useState(product?.barcode ?? '')
+  const [description, setDescription] = useState(product?.description ?? '')
+  const [categoryId, setCategoryId] = useState(product?.categoryId ?? '')
+  const [brandId, setBrandId] = useState(product?.brandId ?? '')
+  const [supplierId, setSupplierId] = useState(product?.supplierId ?? '')
+  const [unit, setUnit] = useState(product?.unit ?? '')
+  const [status, setStatus] = useState<Status>(product?.status ?? 'active')
+  const [minStock, setMinStock] = useState(String(product?.minStock ?? 0))
+  const [maxStock, setMaxStock] = useState(String(product?.maxStock ?? 0))
+  const [purchasePrice, setPurchasePrice] = useState(product ? String(product.purchasePrice) : '')
+  const [salePrice, setSalePrice] = useState(product ? String(product.salePrice) : '')
+  const [weight, setWeight] = useState(String(product?.weight ?? 0))
+  const [width, setWidth] = useState(String(product?.width ?? 0))
+  const [height, setHeight] = useState(String(product?.height ?? 0))
+  const [depth, setDepth] = useState(String(product?.depth ?? 0))
+
+  const parseMoney = (v: string) => Number(v.replace(',', '.')) || 0
+  const backHref = editing ? `/dashboard/produtos/${product.id}` : '/dashboard/produtos'
+
+  function validate(): string | null {
+    if (name.trim().length < 2) return 'Informe o nome do produto (mínimo 2 caracteres).'
+    if (!internalCode.trim() || !sku.trim() || !barcode.trim()) return 'Código interno, SKU e código de barras são obrigatórios.'
+    if (!categoryId || !brandId || !supplierId || !unit) return 'Selecione categoria, marca, fornecedor e unidade.'
+    if (Number(maxStock) > 0 && Number(minStock) > Number(maxStock)) return 'O estoque mínimo não pode ser maior que o máximo.'
+    return null
+  }
+
+  async function handleSave() {
+    const problem = validate()
+    if (problem) {
+      setError(problem)
+      return
+    }
+    setSaving(true)
+    setError('')
+    const body = {
+      name: name.trim(),
+      internalCode: internalCode.trim(),
+      sku: sku.trim(),
+      barcode: barcode.trim(),
+      categoryId,
+      brandId,
+      supplierId,
+      unit,
+      description: description || undefined,
+      weight: parseMoney(weight),
+      width: parseMoney(width),
+      height: parseMoney(height),
+      depth: parseMoney(depth),
+      purchasePrice: parseMoney(purchasePrice),
+      salePrice: parseMoney(salePrice),
+      minStock: Number(minStock) || 0,
+      maxStock: Number(maxStock) || 0,
+      status,
+    }
+    try {
+      if (editing) {
+        await api.patch(`/products/${product.id}`, body)
+        router.push(`/dashboard/produtos/${product.id}`)
+      } else {
+        const created = await api.post<ApiProduct>('/products', body)
+        router.push(`/dashboard/produtos/${created.id}`)
+      }
+    } catch (err) {
+      setError(errorMessage(err, 'Falha ao salvar produto'))
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const margin =
+    parseMoney(salePrice) > 0
+      ? (((parseMoney(salePrice) - parseMoney(purchasePrice)) / parseMoney(salePrice)) * 100).toFixed(1) + '%'
+      : '—'
+
+  const title = editing ? 'Editar Produto' : 'Novo Produto'
+
+  return (
+    <div className="space-y-5 max-w-5xl">
+      <Breadcrumb items={[{ label: 'Produtos', href: '/dashboard/produtos' }, { label: title }]} />
+
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Link href={backHref}>
+            <button className="w-8 h-8 flex items-center justify-center rounded-[var(--radius-md)] border border-[color:var(--border)] hover:bg-[color:var(--bg-muted)] transition-colors text-[color:var(--text-secondary)]">
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+          </Link>
+          <div>
+            <h1 className="text-xl font-bold text-[color:var(--text-primary)]">{title}</h1>
+            <p className="text-sm text-[color:var(--text-tertiary)]">
+              {editing ? 'O estoque atual só muda por movimentações' : 'Preencha os dados do produto abaixo'}
+            </p>
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <Link href={backHref}><Button variant="outline" size="sm">Cancelar</Button></Link>
+          <Button size="sm" loading={saving} leftIcon={<Save className="w-3.5 h-3.5" />} onClick={handleSave}>
+            {saving ? 'Salvando…' : 'Salvar Produto'}
+          </Button>
+        </div>
+      </div>
+
+      {error && <Alert>{error}</Alert>}
+
+      <Tabs tabs={TABS} active={tab} onChange={setTab} />
+
+      {tab === 'basic' && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+          <div className="lg:col-span-2 space-y-5">
+            <Card>
+              <CardHeader><CardTitle description="Dados de identificação do produto">Informações Gerais</CardTitle></CardHeader>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="sm:col-span-2">
+                  <Input label="Nome do Produto *" placeholder="Ex: Cabo HDMI 2.0 4K Ultra HD 2m" value={name} onChange={e => setName(e.target.value)} />
+                </div>
+                <Input label="Código Interno *" placeholder="EX: EL-0042" leftIcon={<Tag className="w-3.5 h-3.5" />} value={internalCode} onChange={e => setInternalCode(e.target.value)} />
+                <Input label="SKU (Stock Keeping Unit) *" placeholder="EX: CAB-HDMI-2M-BK" value={sku} onChange={e => setSku(e.target.value)} />
+                <Input label="Código de Barras (EAN/GTIN) *" placeholder="7891234567890" leftIcon={<Barcode className="w-3.5 h-3.5" />} value={barcode} onChange={e => setBarcode(e.target.value)} />
+                <div className="sm:col-span-2">
+                  <Textarea label="Descrição" placeholder="Especificações técnicas, características…" value={description} onChange={e => setDescription(e.target.value)} />
+                </div>
+              </div>
+            </Card>
+
+            <Card>
+              <CardHeader><CardTitle description="Classificação e hierarquia">Categorização</CardTitle></CardHeader>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Select label="Categoria *" placeholder="Selecione a categoria" options={(categories ?? []).map(c => ({ value: c.id, label: c.name }))} value={categoryId} onChange={e => setCategoryId(e.target.value)} />
+                <Select label="Marca *" placeholder="Selecione a marca" options={(brands ?? []).map(b => ({ value: b.id, label: b.name }))} value={brandId} onChange={e => setBrandId(e.target.value)} />
+                <Select label="Unidade de Medida *" placeholder="Selecione a unidade" options={UNITS} value={unit} onChange={e => setUnit(e.target.value)} />
+                <Select label="Fornecedor Principal *" placeholder="Selecione o fornecedor" options={(suppliers?.data ?? []).map(s => ({ value: s.id, label: s.tradeName || s.name }))} value={supplierId} onChange={e => setSupplierId(e.target.value)} />
+                <Select
+                  label="Status"
+                  options={[
+                    { value: 'active', label: 'Ativo' },
+                    { value: 'inactive', label: 'Inativo' },
+                    { value: 'discontinued', label: 'Descontinuado' },
+                  ]}
+                  value={status}
+                  onChange={e => setStatus(e.target.value as Status)}
+                />
+              </div>
+            </Card>
+          </div>
+
+          <div className="space-y-5">
+            <Card>
+              <CardHeader><CardTitle>Progresso</CardTitle></CardHeader>
+              <div className="space-y-3">
+                {TABS.map((t, i) => (
+                  <div key={t.id} className="flex items-center gap-3">
+                    <div className={cn(
+                      'w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0',
+                      tab === t.id ? 'bg-[color:var(--brand)] text-white' : i < TABS.findIndex(x => x.id === tab) ? 'bg-[color:var(--success)] text-white' : 'bg-[color:var(--bg-muted)] text-[color:var(--text-tertiary)]',
+                    )}>{i + 1}</div>
+                    <span className={cn('text-sm', tab === t.id ? 'font-semibold text-[color:var(--text-primary)]' : 'text-[color:var(--text-secondary)]')}>{t.label}</span>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          </div>
+        </div>
+      )}
+
+      {tab === 'stock' && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+          <Card>
+            <CardHeader><CardTitle description="Configurações de controle de estoque">Controle de Estoque</CardTitle></CardHeader>
+            <div className="grid grid-cols-2 gap-4">
+              <Input label="Estoque Mínimo *" type="number" min={0} hint="Abaixo disso gera alerta" value={minStock} onChange={e => setMinStock(e.target.value)} />
+              <Input label="Estoque Máximo" type="number" min={0} hint="Quantidade máxima" value={maxStock} onChange={e => setMaxStock(e.target.value)} />
+            </div>
+          </Card>
+          <Card>
+            <CardHeader><CardTitle description="Preços e margens">Precificação</CardTitle></CardHeader>
+            <div className="grid grid-cols-2 gap-4">
+              <Input label="Preço de Compra *" placeholder="0,00" leftIcon={<span className="text-xs font-medium">R$</span>} value={purchasePrice} onChange={e => setPurchasePrice(e.target.value)} />
+              <Input label="Preço de Venda *" placeholder="0,00" leftIcon={<span className="text-xs font-medium">R$</span>} value={salePrice} onChange={e => setSalePrice(e.target.value)} />
+              <div className="col-span-2 p-4 rounded-[var(--radius-md)] bg-[color:var(--success-subtle)] border border-[color:var(--success-muted)]">
+                <p className="text-xs font-medium text-[color:var(--success)] mb-1">Margem estimada</p>
+                <p className="text-2xl font-bold text-[color:var(--success)]">{margin}</p>
+                <p className="text-xs text-[color:var(--text-tertiary)] mt-1">(venda − compra) ÷ venda</p>
+              </div>
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {tab === 'logistics' && (
+        <Card>
+          <CardHeader><CardTitle description="Dimensões e peso para WMS">Informações Logísticas</CardTitle></CardHeader>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <Input label="Peso (kg)" type="number" min={0} step="0.001" value={weight} onChange={e => setWeight(e.target.value)} />
+            <Input label="Largura (cm)" type="number" min={0} value={width} onChange={e => setWidth(e.target.value)} />
+            <Input label="Altura (cm)" type="number" min={0} value={height} onChange={e => setHeight(e.target.value)} />
+            <Input label="Profundidade (cm)" type="number" min={0} value={depth} onChange={e => setDepth(e.target.value)} />
+          </div>
+        </Card>
+      )}
+
+      <div className="flex items-center justify-between pt-2">
+        <Button variant="outline" size="sm" onClick={() => setTab(TABS[Math.max(0, TABS.findIndex(t => t.id === tab) - 1)].id)} disabled={tab === TABS[0].id}>← Anterior</Button>
+        {tab === TABS[TABS.length - 1].id ? (
+          <Button size="sm" loading={saving} leftIcon={<Save className="w-3.5 h-3.5" />} onClick={handleSave}>{saving ? 'Salvando…' : 'Salvar Produto'}</Button>
+        ) : (
+          <Button size="sm" onClick={() => setTab(TABS[Math.min(TABS.length - 1, TABS.findIndex(t => t.id === tab) + 1)].id)}>Próximo →</Button>
+        )}
+      </div>
+    </div>
+  )
+}
