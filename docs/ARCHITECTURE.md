@@ -15,7 +15,7 @@ Este documento consolida a arquitetura lógica da aplicação, o modelo de dados
 
 ## Visão lógica da aplicação
 
-Arquitetura cliente-servidor desacoplada: o front-end consome exclusivamente a API REST do back-end, que conversa com o banco relacional através do Prisma ORM. Front-end e back-end são publicados como serviços independentes.
+Arquitetura lógica pretendida: o front-end consome a API REST, que acessa o banco relacional pelo Prisma ORM. No código atual, a integração do front-end é parcial: há telas e componentes demonstrativos que ainda usam dados mockados. O diagrama descreve a separação de camadas, não comprova publicação ou implantação dos serviços.
 
 ```
 ┌────────────────┐  HTTPS/JSON  ┌──────────────────────────┐  Prisma   ┌──────────────┐  SQL  ┌────────────┐
@@ -29,28 +29,26 @@ Arquitetura cliente-servidor desacoplada: o front-end consome exclusivamente a A
 
 ## Casos de uso e perfis de acesso
 
-O acesso ao sistema é hierárquico: cada perfil herda as permissões do perfil imediatamente abaixo, acrescentando novas capacidades — refletindo diretamente as regras de autorização implementadas nas rotas da API (`authenticate`/`authorize` em [backend/src/middleware/auth.middleware.ts](../backend/src/middleware/auth.middleware.ts)).
+O acesso ao sistema é controlado por papel, com permissões configuradas explicitamente nas rotas da API por meio de `authenticate`/`authorize` em [backend/src/middleware/auth.middleware.ts](../backend/src/middleware/auth.middleware.ts). O diagrama abaixo representa os perfis definidos, não uma herança automática de permissões.
 
 ```
-Administrador ─┐
-               │ herda de
-Supervisor ─────┤
-               │ herda de
-Operador ───────┤
-               │ herda de
-Visualizador ───┘
+Administrador
+Supervisor
+Operador
+Visualizador
 
-Visualizador   → Autenticar-se · rastrear produto via scanner · consultar Dashboard/Relatórios/Alertas
-Operador       → + Registrar Movimentações (entrada · saída · transferência · ajuste · contagem)
-Supervisor     → + Gerenciar Produtos, Cadastros, Lotes e Endereços
-Administrador  → + Gerenciar Usuários e consultar Auditoria
+Exemplos de capacidades (a permissão final é definida por rota):
+- Visualizador: autenticar-se e consultar recursos liberados para leitura;
+- Operador: registrar operações de estoque nas rotas autorizadas;
+- Supervisor: gerenciar cadastros e inventários conforme os guards da rota;
+- Administrador: administrar usuários e acessar recursos administrativos autorizados.
 ```
 
 Detalhamento completo dos requisitos funcionais e não funcionais em [docs/REQUIREMENTS.md](REQUIREMENTS.md).
 
 ## Modelo de dados
 
-Modelo lógico implementado via **Prisma Schema** e versionado por migrations — 12 entidades e 11 enumerações de domínio (`backend/prisma/schema.prisma`).
+Modelo lógico definido no **Prisma Schema** e versionado por migrations — 13 modelos e 11 enumerações de domínio (`backend/prisma/schema.prisma`). A aplicação efetiva de cada migration depende de um banco PostgreSQL acessível.
 
 ### Entidades centrais e cardinalidades
 
@@ -87,7 +85,7 @@ Modelo lógico implementado via **Prisma Schema** e versionado por migrations �
 | `id` | String (cuid) | PK |
 | `name`, `internalCode`, `sku`, `barcode` | String | `sku`, `barcode` e `internalCode` únicos |
 | `unit`, `weight`, `width`, `height`, `depth` | String / Float | Dados logísticos do item |
-| `purchasePrice`, `salePrice` | Float | Precificação |
+| `purchasePrice`, `salePrice` | Decimal(12,2) | Precificação |
 | `minStock`, `maxStock`, `currentStock` | Int | Base para alertas de ruptura/excesso |
 | `status` | Enum `ProductStatus` | `active` · `inactive` · `discontinued` |
 | `categoryId`, `brandId`, `supplierId` | String | FK → Category, Brand, Supplier |
@@ -98,16 +96,18 @@ Modelo lógico implementado via **Prisma Schema** e versionado por migrations �
 |---|---|---|
 | `id` | String (cuid) | PK |
 | `type` | Enum `MovementType` | `entry` · `exit` · `transfer` · `loss` · `adjustment` · `inventory` |
-| `quantity`, `unitCost`, `totalValue` | Int / Float | Base para relatórios de valor e curva ABC |
+| `quantity`, `unitCost`, `totalValue` | Int / Decimal(12,2) / Decimal(14,2) | Base para relatórios de valor e curva ABC |
 | `exitReason` | Enum `ExitReason` | `sale` · `transfer` · `loss` · `break` · `internal` |
 | `productId`, `userId` | String | FK → Product, User |
-| `supplierId`, `customerId` | String? | FK opcionais conforme o tipo de movimentação |
+| `supplierId`, `customerId`, `lotId` | String? | Relações opcionais conforme o tipo de movimentação |
 | `fromAddressId`, `toAddressId` | String? | FK → WarehouseAddress (origem/destino) |
 | `createdAt` | DateTime | Base temporal para séries históricas (mineração de dados) |
 
-**`lots`** — `lotNumber`, `quantity`, `manufacturingDate`, `expirationDate`, `status` (`valid`·`expiring`·`expired`·`quarantine`), `productId`, `supplierId`.
+**`lots`** — `lotNumber`, `quantity`, `manufacturingDate`, `expirationDate`, `status` (`valid`·`expiring`·`expired`·`quarantine`), `productId`, `supplierId` e relação opcional com endereço. O código consulta validade para alertas, mas não há processo agendado que atualize automaticamente o enum `status`.
 
 **`warehouse_addresses`** — `code`, `aisle`, `street`, `shelf`, `level`, `position`, `status` (`free`·`occupied`·`blocked`·`reserved`), `capacity`, `occupied`, `productId`.
+
+**`inventory_count_items`** — associa produto e contagem; mantém quantidade esperada, quantidade contada, divergência, data e usuário da contagem.
 
 ### Demais entidades
 
@@ -118,7 +118,7 @@ Modelo lógico implementado via **Prisma Schema** e versionado por migrations �
 | `brands` | name, slug, logoUrl | 1:N com Product |
 | `suppliers` | name, tradeName, cnpj, email, phone, category, status | 1:N com Product, Movement, Lot |
 | `customers` | name, tradeName, cnpj, email, city, state, status | referenciado por Movement |
-| `inventory_counts` | type, status, startDate, endDate, totalItems, countedItems, divergences | N:1 com User (responsável) |
+| `inventory_counts` | type, status, startDate, endDate, totalItems, countedItems, divergences | N:1 com User (responsável); 1:N com InventoryCountItem |
 | `notifications` | alertKey, readAt | N:1 com User; único por (alertKey, userId) |
 | `audit_logs` | action, entity, entityId, oldValue (JSON), newValue (JSON), ip | N:1 com User |
 
@@ -132,7 +132,7 @@ Modelo lógico implementado via **Prisma Schema** e versionado por migrations �
 | `PositionStatus` | `free` · `occupied` · `blocked` · `reserved` |
 | `InventoryCountType` / `Status` | `full`·`partial`·`cyclic` / `planned`·`in_progress`·`review`·`completed` |
 
-> Próximo passo: modelagem de índices adicionais para consultas analíticas (relatórios e mineração de dados) e avaliação de particionamento da tabela `movements` conforme o volume de dados crescer.
+O schema inclui índices para consultas operacionais comuns. Próximo passo: medir planos e tempos de consultas analíticas com dados representativos e adicionar índices ou particionamento apenas se a medição justificar.
 
 ## Arquitetura em nuvem (AWS)
 
@@ -180,7 +180,7 @@ A infraestrutura do StockIQ será hospedada na AWS, utilizando instâncias **EC2
 | **CloudWatch** | Monitoramento de CPU/memória das instâncias, logs centralizados da API e alarmes (ex.: uso de disco do banco, filas SQS acumulando mensagens) |
 | **IAM** | Papéis com permissões mínimas necessárias para cada instância acessar S3/SQS, seguindo o princípio do menor privilégio |
 
-**Status:** arquitetura definida e justificada. Próximos passos: provisionamento efetivo dos recursos (idealmente via Infraestrutura como Código — Terraform ou CloudFormation), deploy das aplicações nas instâncias EC2 e configuração do Load Balancer e da primeira fila SQS.
+**Status:** proposta arquitetural, não implantação. Este repositório não contém evidência de provisionamento AWS, deploy das aplicações, Load Balancer ou filas SQS.
 
 ## Mensageria assíncrona (Amazon SQS)
 
@@ -194,7 +194,7 @@ Três usos concretos foram identificados para o projeto:
 
 ### Base de dados
 
-A base de dados para mineração é formada pelos próprios dados operacionais gerados pelo uso do StockIQ — não há uma base externa. As tabelas `movements`, `products`, `lots`, `suppliers` e `warehouse_addresses` concentram os atributos com maior potencial analítico.
+A base-alvo da mineração são os dados operacionais do StockIQ (`movements`, `products`, `lots`, `suppliers` e `warehouse_addresses`). O experimento Python atual ainda não consome essas tabelas: utiliza dataset externo de vendas para testar o pipeline. O uso de dados operacionais permanece pendente.
 
 Plano de trabalho em duas fases:
 1. Uso de **dados simulados** (seed/massa de testes, já presente em `backend/prisma/seed.ts`) para prototipar e validar as técnicas de mineração;
@@ -233,9 +233,9 @@ StockIQ (PostgreSQL operacional)
 
 | Técnica | Objetivo no StockIQ | Status |
 |---|---|---|
-| Curva ABC | Classificar produtos por valor acumulado de movimentação, priorizando controle sobre os itens de maior impacto financeiro | ✅ Endpoint pronto (`GET /api/reports/abc`) |
-| Classificação XYZ | Classificar produtos pela variabilidade/regularidade da demanda, complementando a curva ABC (matriz ABC/XYZ) | 🧪 Prototipado (mock) |
-| Previsão de demanda (séries temporais) | Estimar a quantidade de saída futura por produto/categoria, antecipando risco de ruptura | 🧪 Prototipado (mock) |
+| Curva ABC | Classificar produtos por valor acumulado de movimentação, priorizando controle sobre os itens de maior impacto financeiro | Endpoint disponível no backend; não equivale à matriz ABC/XYZ mockada da UI |
+| Classificação XYZ | Classificar produtos pela variabilidade/regularidade da demanda, complementando a curva ABC (matriz ABC/XYZ) | Protótipo visual com dados demonstrativos; cálculo não implementado |
+| Previsão de demanda (séries temporais) | Estimar a quantidade de saída futura por produto/categoria, antecipando risco de ruptura | Experimento Python por categoria com dataset externo e validação temporal; não integrado a dados reais ou à UI |
 | Regras de associação (Apriori/Market Basket) | Identificar produtos frequentemente movimentados juntos, apoiando decisões de slotting | 📋 Planejado |
 | Clustering de produtos (k-means) | Agrupar produtos por padrão de consumo para sugerir políticas de estoque mínimo/máximo | 📋 Planejado |
 | Detecção de anomalias | Sinalizar movimentações de ajuste/perda fora do padrão histórico, cruzando com o log de auditoria | 📋 Planejado |
@@ -251,15 +251,15 @@ StockIQ (PostgreSQL operacional)
 
 | Etapa | Situação na Sprint 1 |
 |---|---|
-| 1. Entendimento do negócio | ✅ Concluído — objetivos de negócio definidos em [docs/REQUIREMENTS.md](REQUIREMENTS.md) |
-| 2. Entendimento dos dados | ✅ Concluído — estrutura de dados definida acima |
-| 3. Preparação dos dados | ⏳ Próxima sprint — geração de massa simulada representativa |
-| 4. Modelagem | ⏳ Próxima sprint — primeiros protótipos de ABC/XYZ e forecast em notebook |
-| 5. Avaliação | 📋 Sprints seguintes |
-| 6. Implantação | 📋 Sprints seguintes — integração dos modelos ao módulo IA Analítica |
+| 1. Entendimento do negócio | Documentado em [docs/REQUIREMENTS.md](REQUIREMENTS.md) |
+| 2. Entendimento dos dados | Schema operacional documentado; experimento usa dataset externo |
+| 3. Preparação dos dados | Agregação semanal no experimento; integração com dados operacionais pendente |
+| 4. Modelagem | Regressão linear simples no experimento; ABC/XYZ da UI é apenas mock |
+| 5. Avaliação | Validação temporal expansiva implementada para o dataset externo; não certifica desempenho em produção |
+| 6. Implantação | Pendente — não integrado à API ou à interface |
 
 ---
 
 ## Maior risco identificado
 
-A integração entre as três frentes — aplicação, nuvem e mineração de dados — dentro do prazo do semestre. Por isso, os próximos passos priorizam primeiro a integração front-end/back-end e o provisionamento básico da nuvem, para então liberar tempo da equipe para os experimentos de mineração de dados sobre uma base de dados real e em produção.
+As principais pendências são completar fluxos de interface ainda demonstrativos, validar migrations em banco dedicado, ampliar testes e decidir se/como provisionar a arquitetura de nuvem e integrar a mineração de dados. A arquitetura descrita acima não significa que esses componentes estejam implantados.

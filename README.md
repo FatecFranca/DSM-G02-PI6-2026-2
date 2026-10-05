@@ -10,7 +10,7 @@ Autores: **Gabriel da Silveira Pessoni** e **Lívia Portela Ferreira**
 
 ## Sobre este documento
 
-Este README consolida as entregas mínimas da **1ª Sprint** do projeto e serve como ponto de entrada do monorepo. O conteúdo técnico reflete o estado atual do código em [`backend/`](backend) e [`frontend/`](frontend) — não é apenas um planejamento teórico.
+Este README é o ponto de entrada do monorepo e resume o estado conhecido do código e da documentação. A infraestrutura AWS e algumas telas continuam sendo protótipos/planejamento; os status abaixo distinguem o que está implementado do que ainda depende de integração ou implantação.
 
 ## Índice
 
@@ -19,7 +19,7 @@ Este README consolida as entregas mínimas da **1ª Sprint** do projeto e serve 
 - [Arquitetura da solução](#arquitetura-da-solução)
 - [Como rodar o projeto completo](#como-rodar-o-projeto-completo)
 - [Documentação](#documentação)
-- [Status consolidado da Sprint 1](#status-consolidado-da-sprint-1)
+- [Status atual conhecido](#status-atual-conhecido)
 - [Próximos passos (pós-Sprint 1)](#próximos-passos-pós-sprint-1)
 - [Considerações finais](#considerações-finais)
 
@@ -27,7 +27,7 @@ Este README consolida as entregas mínimas da **1ª Sprint** do projeto e serve 
 
 ## Visão geral
 
-O StockIQ cobre o ciclo completo de operação de um armazém de médio porte: cadastro de produtos e suas categorias, marcas, fornecedores e clientes; endereçamento físico do estoque; registro de movimentações (entrada, saída, transferência, perda, ajuste e inventário); controle de lotes com data de validade; contagens periódicas de inventário; alertas automáticos de estoque baixo e de vencimento; trilha de auditoria; dashboard e relatórios gerenciais (incluindo curva ABC); e um módulo de IA analítica voltado à previsão de demanda e sugestão de reposição.
+O StockIQ é um sistema em desenvolvimento para gestão de estoque e armazém. O backend oferece APIs para cadastros, movimentações, lotes, inventários, alertas, auditoria, dashboard e relatórios. O frontend consome a API em vários desses módulos, mas ainda mantém protótipos com dados estáticos em algumas telas e componentes. O módulo Python de previsão é experimental e ainda não está integrado à operação do sistema.
 
 | Item | Descrição |
 |---|---|
@@ -58,13 +58,13 @@ pi/
 
 | Repositório | Documentação | Responsabilidade |
 |---|---|---|
-| [`backend/`](backend) | [backend/README.md](backend/README.md) | API REST autenticada, validada, documentada (Swagger) e testada — 15 módulos / 67 endpoints |
-| [`frontend/`](frontend) | [frontend/README.md](frontend/README.md) | Protótipo navegável de todas as telas do sistema (Next.js/React), atualmente com dados mockados |
-| [`machine-learning/`](machine-learning) | [machine-learning/README.md](machine-learning/README.md) | Protótipo de previsão de demanda por categoria (regressão linear simples) |
+| [`backend/`](backend) | [backend/README.md](backend/README.md) | API REST com 15 módulos de rotas; `/docs` (Swagger) é a referência dos endpoints atuais |
+| [`frontend/`](frontend) | [frontend/README.md](frontend/README.md) | Aplicação Next.js parcialmente integrada à API; algumas telas e elementos ainda usam dados de demonstração |
+| [`machine-learning/`](machine-learning) | [machine-learning/README.md](machine-learning/README.md) | Experimento de previsão semanal por categoria com dados externos, avaliação temporal e sem integração com a API |
 
 ## Arquitetura da solução
 
-Arquitetura cliente-servidor desacoplada, hospedada em infraestrutura AWS (ver [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)):
+Arquitetura lógica cliente-servidor desacoplada; a infraestrutura AWS é uma proposta ainda não implantada (ver [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)):
 
 ```
 Front-end            API REST                Prisma ORM           PostgreSQL
@@ -73,7 +73,7 @@ Next.js 16/React ──► Node.js/Express/TS  ──►  Migrations     ──�
                       Rate limit
 ```
 
-O modelo de dados (12 entidades, 11 enumerações), o diagrama de casos de uso, a arquitetura AWS proposta e o planejamento de mineração de dados estão detalhados em [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+O modelo de dados (13 modelos, 11 enumerações), o diagrama de casos de uso, a arquitetura AWS proposta e o planejamento de mineração de dados estão detalhados em [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ## Como rodar o projeto completo
 
@@ -98,36 +98,31 @@ Instruções detalhadas, variáveis de ambiente e scripts em [backend/README.md]
 
 | Documento | Conteúdo |
 |---|---|
-| [backend/README.md](backend/README.md) | Stack, estrutura em camadas, setup, banco de dados, autenticação/RBAC, segurança, testes, tabela completa de endpoints |
+| [backend/README.md](backend/README.md) | Stack, estrutura em camadas, setup, banco de dados, autenticação/RBAC, segurança, testes e resumo de módulos (endpoints atuais no Swagger) |
 | [frontend/README.md](frontend/README.md) | Stack, estrutura de pastas, telas implementadas, componentes reutilizáveis, dados mockados, setup |
 | [machine-learning/README.md](machine-learning/README.md) | Dataset usado, mapeamento para o schema do StockIQ, algoritmo de previsão, como rodar |
-| [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md) | Escopo, requisitos funcionais (RF01–RF16), requisitos não funcionais (RNF01–RNF10) e hierarquia de perfis de acesso |
+| [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md) | Escopo, requisitos funcionais (RF01–RF16), requisitos não funcionais (RNF01–RNF10) e regras de acesso por papel |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Visão lógica, casos de uso, modelo de dados (ER), arquitetura AWS, mensageria (SQS) e planejamento de mineração de dados |
 
-## Status consolidado da Sprint 1
+## Status atual conhecido
 
-| Entrega mínima | Status | Observação |
+| Área | Status | Observação |
 |---|---|---|
-| Definição de escopo e requisitos | ✅ Concluído | 16 RF + 10 RNF documentados |
-| Modelagem inicial (casos de uso, arquitetura) | ✅ Concluído | Diagrama de classes/sequência ficam para a próxima sprint |
-| Estrutura inicial do back-end (framework + API configurada) | ✅ Concluído | 15 módulos / 67 endpoints, autenticado e testado |
-| Protótipo inicial do front-end (telas estáticas) | ✅ Concluído | 20+ telas navegáveis; integração real com a API pendente |
-| Banco de dados modelado (conceitual e lógico) | ✅ Concluído | 12 entidades, Prisma Migrate versionando o schema |
-| Computação em Nuvem II — serviços e justificativa | ✅ Concluído | Arquitetura AWS definida; provisionamento é próximo passo |
-| Mineração de Dados — base e planejamento inicial | ✅ Concluído | Base definida (dados do próprio sistema) + roteiro CRISP-DM |
+| Requisitos e arquitetura lógica | Documentados | Os documentos descrevem o escopo acordado; não significam que todos os requisitos estejam implementados. |
+| Backend | Implementado em parte e em evolução | Há rotas autenticadas e testes; veja `/docs`, os scripts e as ressalvas de testes em [backend/README.md](backend/README.md). |
+| Frontend | Integração parcial | Cadastros, produtos, movimentações, inventário, relatórios e outros módulos consomem a API; alertas da interface, IA e configurações ainda têm partes demonstrativas. |
+| Banco de dados | Schema e migrations versionados | A aplicação das migrations depende de um PostgreSQL configurado; não se afirma aqui que exista banco implantado ou migration aplicada em produção. |
+| Infraestrutura AWS | Planejada | Os serviços e diagramas em [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) são uma proposta, não evidência de provisionamento ou deploy. |
+| Mineração de dados | Experimento local | A previsão avalia dados históricos externos; ainda não lê movimentos reais nem alimenta a interface IA. |
 
 ## Próximos passos (pós-Sprint 1)
 
-1. Integrar o front-end à API real, substituindo os dados mockados por chamadas HTTP autenticadas;
-2. Provisionar a infraestrutura AWS descrita em [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) (VPC, EC2, Load Balancer, S3, primeira fila SQS);
-3. Automatizar o deploy do back-end e do front-end nas instâncias EC2 (CI/CD simples ou scripts de deploy);
-4. Gerar massa de dados simulada representativa para viabilizar os primeiros experimentos de mineração de dados;
-5. Prototipar, em notebook Python, os primeiros modelos de classificação ABC/XYZ e previsão de demanda;
-6. Elaborar diagrama de classes e diagramas de sequência dos fluxos críticos (movimentação, alerta, contagem de inventário);
-7. Escrever testes automatizados para os módulos ainda não cobertos (fornecedores, clientes, lotes, inventário, relatórios).
+1. Concluir a substituição dos dados demonstrativos e a integração das telas restantes, especialmente alertas, IA e configurações;
+2. Aplicar e verificar as migrations em um banco de desenvolvimento/teste dedicado antes de planejar qualquer implantação;
+3. Aumentar a cobertura dos fluxos ainda sem testes de integração e executar o workflow de CI com PostgreSQL;
+4. Decidir e provisionar a infraestrutura de nuvem; até lá, os diagramas AWS são apenas planejamento;
+5. Integrar o experimento de previsão a dados operacionais reais somente após validação do modelo e do acesso seguro aos dados.
 
 ## Considerações finais
 
-A Sprint 1 cumpriu seu objetivo de estruturar a base técnica do StockIQ: escopo e requisitos documentados, modelagem inicial produzida, back-end funcional com autenticação e mais de 60 endpoints, protótipo navegável do front-end, banco de dados modelado e implantado via migrations, além das definições de infraestrutura em nuvem e do plano inicial de mineração de dados — ambos diretamente conectados ao domínio real do sistema (estoque, movimentações e lotes), e não tratados como exercícios teóricos isolados.
-
-O maior risco identificado para as próximas sprints é a integração entre as três frentes — aplicação, nuvem e mineração de dados — dentro do prazo do semestre. Por isso, os próximos passos priorizam primeiro a integração front-end/back-end e o provisionamento básico da nuvem, para então liberar tempo da equipe para os experimentos de mineração de dados sobre uma base de dados real e em produção.
+O repositório reúne uma API, uma aplicação web parcialmente integrada, um schema versionado e um experimento de previsão. Ainda há integração de interface, cobertura de testes, aplicação de migrations e implantação de infraestrutura por concluir; a documentação evita tratar esses itens como funcionalidades entregues.

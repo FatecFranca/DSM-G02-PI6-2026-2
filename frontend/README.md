@@ -10,26 +10,25 @@ Autores: **Gabriel da Silveira Pessoni** e **Lívia Portela Ferreira**
 
 ## Sobre este documento
 
-Este README descreve o estado do front-end ao final da **Sprint 1**, cujo caráter é estrutural: o objetivo não é entregar funcionalidades finais polidas, e sim consolidar um **protótipo navegável** de todas as telas do sistema, com layout, componentes reutilizáveis e dados de exemplo (mocks), antes da integração completa com a API real.
+Este README descreve o estado atual do front-end. A aplicação é navegável e parte dos fluxos está integrada à API, mas algumas telas e elementos ainda são demonstrativos e não devem ser tratados como operações persistidas.
 
 ## Índice
 
 - [Visão geral](#visão-geral)
 - [Stack tecnológica](#stack-tecnológica)
 - [Estrutura de pastas](#estrutura-de-pastas)
-- [Telas implementadas na Sprint 1](#telas-implementadas-na-sprint-1)
+- [Telas e integração atual](#telas-e-integração-atual)
 - [Componentes reutilizáveis](#componentes-reutilizáveis)
 - [Dados mockados](#dados-mockados)
 - [Como rodar o projeto](#como-rodar-o-projeto)
 - [Convenções de código](#convenções-de-código)
-- [Status da Sprint 1](#status-da-sprint-1)
-- [Próximos passos](#próximos-passos-pós-sprint-1)
+- [Status atual e pendências](#status-atual-e-pendências)
 
 ---
 
 ## Visão geral
 
-O StockIQ cobre o ciclo completo de operação de um armazém: cadastro de produtos, categorias, marcas, fornecedores e clientes; endereçamento físico de estoque; movimentações (entrada, saída, transferência, perda, ajuste e inventário); controle de lotes com validade; contagens de inventário; alertas automáticos; trilha de auditoria; dashboard e relatórios gerenciais (incluindo curva ABC); e um módulo de IA analítica para previsão de demanda e sugestão de reposição.
+O front-end é a interface web do StockIQ e está em integração progressiva com a API. Os fluxos que fazem chamadas à API e os que ainda exibem dados demonstrativos estão separados abaixo.
 
 A solução segue uma arquitetura cliente-servidor desacoplada:
 
@@ -37,7 +36,7 @@ A solução segue uma arquitetura cliente-servidor desacoplada:
 Front-end (Next.js/React)  --HTTPS/JSON-->  API REST (Node/Express)  --Prisma-->  PostgreSQL
 ```
 
-Nesta Sprint 1, o front-end foi construído como **protótipo estático**: todas as telas centrais estão navegáveis com dados de exemplo (`mocks/`), enquanto a integração com a API real está planejada como próximo passo. Consulte o [README do back-end](../backend/README.md) para a lista completa de endpoints já disponíveis para essa integração.
+O cliente HTTP em `lib/api.ts` envia o token de autenticação e é usado nas telas já conectadas. A presença de uma tela ou rota no menu não significa, por si só, que seus dados sejam persistidos. A referência dos endpoints disponíveis está no Swagger do backend (`/docs`).
 
 ## Stack tecnológica
 
@@ -94,36 +93,18 @@ frontend/
 └── types/                       # Tipagens compartilhadas (product, movement, user, warehouse, common)
 ```
 
-## Telas implementadas na Sprint 1
+## Telas e integração atual
 
-Todas as telas abaixo já estão estruturadas com layout, sidebar/topbar responsivos e dados de exemplo (`mocks/`); a integração com a API real está em andamento.
+O estado é baseado nas chamadas presentes nas páginas; “integrada” significa que a página consulta ou altera dados pela API. Elementos isolados, como busca global/notificações da barra superior, ainda podem ser demonstrativos.
 
-| Módulo | Rota | Descrição |
+| Estado | Módulos / rotas | Observação |
 |---|---|---|
-| Autenticação | `/login` | Login |
-| Dashboard | `/dashboard` | Indicadores gerais e gráficos |
-| Produtos | `/dashboard/produtos`, `/produtos/novo`, `/produtos/[id]` | Listagem, cadastro e detalhe |
-| Categorias | `/dashboard/categorias` | CRUD de categorias |
-| Marcas | `/dashboard/marcas` | CRUD de marcas |
-| Fornecedores | `/dashboard/fornecedores` | Cadastro de fornecedores |
-| Clientes | `/dashboard/clientes` | Cadastro de clientes |
-| Endereços | `/dashboard/enderecos` | Endereçamento físico do armazém |
-| Entradas | `/dashboard/entradas` | Registro de entradas de estoque |
-| Saídas | `/dashboard/saidas` | Registro de saídas de estoque |
-| Movimentações | `/dashboard/movimentacoes` | Histórico geral |
-| Lotes | `/dashboard/lotes` | Controle de validade |
-| Inventário | `/dashboard/inventario` | Contagens (completa/parcial/cíclica) |
-| Alertas | `/dashboard/alertas` | Estoque baixo e vencimento |
-| Auditoria | `/dashboard/auditoria` | Log de operações críticas |
-| Relatórios | `/dashboard/relatorios` | Movimentações, estoque, curva ABC, etc. |
-| Scanner | `/dashboard/scanner` | Leitura de código de barras |
-| Usuários | `/dashboard/usuarios` | Gestão de usuários e perfis |
-| Configurações | `/dashboard/configuracoes` | Preferências do sistema |
-| IA / IA Analítica | `/dashboard/ia`, `/dashboard/ia-analitica` | Ver destaque abaixo |
+| Integradas à API | Login; dashboard; produtos (lista, cadastro e detalhe); categorias; marcas; fornecedores; clientes; endereços; entradas; saídas; movimentações; lotes; inventário; auditoria; relatórios; scanner; usuários | Os dados dependem da API e do banco configurados. Inventário registra contagens e divergências; o encerramento não ajusta automaticamente o estoque de produtos. |
+| Ainda demonstrativas ou parciais | Alertas; IA; IA Analítica; configurações; busca global e notificações da barra superior | A tela Alertas não consome atualmente o endpoint de alertas; os protótipos de IA não recebem a previsão do módulo Python. |
 
 ### Destaque — Módulo de IA Analítica
 
-A tela `ia-analitica` já prototipa, com dados de exemplo, os principais entregáveis do módulo de Mineração de Dados: gráfico de previsão de demanda (real vs. previsto), matriz de classificação ABC/XYZ e cartões de insights/sugestões automáticas de compra. Isso antecipa visualmente o que os modelos de mineração precisarão alimentar com dados reais nas próximas sprints. Veja o planejamento completo das técnicas em [docs/ARCHITECTURE.md](../docs/ARCHITECTURE.md).
+A tela `ia-analitica` é apenas um protótipo visual com dados de exemplo (incluindo elementos ABC/XYZ e sugestões); não está ligada ao script Python nem representa previsões ou recomendações calculadas sobre os dados do sistema. O experimento disponível e suas limitações estão descritos em [machine-learning/README.md](../machine-learning/README.md).
 
 ## Componentes reutilizáveis
 
@@ -137,7 +118,7 @@ Hooks utilitários em `hooks/`: `useDebounce`, `useSidebar`, `useTheme`.
 
 ## Dados mockados
 
-Enquanto a integração com a API real não é finalizada, as telas consomem dados de exemplo definidos em `mocks/`:
+Os arquivos `mocks/` ainda são usados em algumas partes demonstrativas, inclusive dados de alertas e busca da barra superior. Não são fonte de verdade para as telas que consultam a API. A remoção de um arquivo mock não implica integração concluída; confirme o fluxo da tela antes de considerar a funcionalidade persistente.
 
 - `dashboard.ts` — indicadores e séries do dashboard geral
 - `movements.ts` — movimentações de estoque
@@ -145,7 +126,7 @@ Enquanto a integração com a API real não é finalizada, as telas consomem dad
 - `users.ts` — usuários e perfis de acesso
 - `warehouse.ts` — endereços físicos de armazenagem
 
-As tipagens correspondentes ficam em `types/` (`product.ts`, `movement.ts`, `user.ts`, `warehouse.ts`, `common.ts`), já preparadas para receber os dados reais da API sem necessidade de retrabalho estrutural.
+As tipagens de domínio ficam em `types/` (`product.ts`, `movement.ts`, `user.ts`, `warehouse.ts`, `common.ts`); algumas são compartilhadas entre protótipos e telas conectadas.
 
 ## Como rodar o projeto
 
@@ -172,20 +153,18 @@ npm run lint    # checagem de lint (ESLint)
 - Tipagens de domínio centralizadas em `types/`, compartilhadas entre mocks, componentes e (futuramente) as chamadas à API;
 - `lib/cn.ts` concentra o helper de composição de classes Tailwind (`clsx`).
 
-## Status da Sprint 1
+## Status atual e pendências
 
-| Entrega mínima | Status | Observação |
+| Área | Status | Observação |
 |---|---|---|
-| Protótipo inicial do front-end | ✅ Concluído | 20+ telas navegáveis com dados estáticos |
-| Componentes de UI reutilizáveis | ✅ Concluído | Card, Badge, Button, DataTable, Modal, etc. |
-| Layout responsivo (sidebar/topbar) | ✅ Concluído | `components/layout/` |
-| Integração com a API real | ⏳ Pendente | Próximo passo pós-Sprint 1 |
+| Estrutura e navegação | Implementada | Inclui layouts e componentes reutilizáveis; isso não garante que cada ação da tela tenha persistência. |
+| Integração com a API | Parcial | Ver a tabela de telas; configure `NEXT_PUBLIC_API_URL` e suba backend e banco. |
+| Alertas e configurações | Demonstrativos/parciais | Ainda não refletem integralmente operações persistidas. |
+| IA / IA Analítica | Protótipo | Não recebe saídas do experimento Python nem dados operacionais ao vivo. |
 
-## Próximos passos (pós-Sprint 1)
+## Próximos passos
 
-1. Substituir os dados mockados (`mocks/`) por chamadas HTTP autenticadas à API REST do back-end;
-2. Implementar autenticação real (JWT) integrada à tela de login, incluindo persistência de sessão e client HTTP com envio automático do token;
-3. Conectar os CRUDs (produtos, categorias, marcas, fornecedores, clientes, endereços, lotes) à API;
-4. Consumir os endpoints reais de dashboard, relatórios e alertas;
-5. Tratar estados de carregamento, erro e paginação nas listagens que hoje usam dados estáticos;
-6. Integrar o módulo de IA Analítica aos modelos de mineração de dados desenvolvidos nas próximas sprints.
+1. Ligar a tela de alertas e as notificações da barra superior aos endpoints de alertas, incluindo estados de carregamento/erro e ações de leitura;
+2. Substituir ou identificar claramente os dados demonstrativos na busca global, IA, IA Analítica e configurações;
+3. Validar os fluxos integrados com o backend e banco de teste, incluindo permissões por papel e estados de erro;
+4. Integrar a previsão de demanda à UI apenas após validar o modelo e conectar sua entrada a dados operacionais.

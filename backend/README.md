@@ -22,16 +22,16 @@ Autores: **Gabriel da Silveira Pessoni** e **Lívia Portela Ferreira**
 - [Testes](#testes)
 - [Documentação interativa (Swagger)](#documentação-interativa-swagger)
 - [Módulos e endpoints](#módulos-e-endpoints)
-- [Status da Sprint 1](#status-da-sprint-1)
-- [Próximos passos](#próximos-passos-pós-sprint-1)
+- [Status atual conhecido](#status-atual-conhecido)
+- [Próximos passos](#próximos-passos)
 
 ---
 
 ## Visão geral
 
-O back-end expõe uma API REST em **Node.js/Express + TypeScript**, com persistência em **PostgreSQL** via **Prisma ORM**. Cobre o ciclo completo de operação de um armazém: produtos, categorias, marcas, fornecedores, clientes, endereçamento físico, movimentações de estoque, lotes com controle de validade, contagens de inventário, alertas automáticos, auditoria, dashboard e relatórios gerenciais (incluindo curva ABC).
+O back-end expõe uma API REST em **Node.js/Express + TypeScript**, com persistência em **PostgreSQL** via **Prisma ORM**. Há rotas para produtos, categorias, marcas, fornecedores, clientes, endereços, movimentações, lotes, inventários, alertas, auditoria, dashboard e relatórios. A existência de uma rota não implica que o front-end esteja totalmente integrado ou que todo fluxo esteja coberto por teste.
 
-Nesta Sprint 1 a API já está **funcional, autenticada, validada, documentada e testada** — o foco foi consolidar a base estrutural (rotas → controllers → services → validação → banco de dados) que sustentará as próximas sprints, incluindo a fila de mensageria assíncrona e o pipeline de exportação de dados para mineração.
+A implementação está em evolução. A documentação OpenAPI servida em `/docs` é a referência dos caminhos e métodos atuais; a tabela adiante resume os módulos, sem fixar contagens que mudam conforme as rotas evoluem. O uso dos fluxos persistentes requer PostgreSQL acessível e migrations aplicadas.
 
 ## Stack tecnológica
 
@@ -89,7 +89,7 @@ backend/
 │   └── prisma/
 │       └── client.ts          # Instância singleton do Prisma Client
 ├── prisma/
-│   ├── schema.prisma          # Modelo de dados (12 entidades, 11 enums)
+│   ├── schema.prisma          # Modelo de dados (13 entidades, 11 enums)
 │   ├── seed.ts                # Massa de dados de teste/demonstração
 │   └── migrations/            # Histórico de migrations versionadas
 ├── __tests__/                 # Testes de integração (Jest + Supertest)
@@ -120,7 +120,7 @@ npm run prisma:seed
 npm run dev
 ```
 
-A API sobe por padrão em `http://localhost:3001`. A rota raiz (`/`) exibe um painel HTML com a lista completa de módulos e endpoints; `/docs` abre o Swagger UI.
+A API sobe por padrão em `http://localhost:3001`. A rota raiz (`/`) exibe um painel HTML; `/docs` abre o Swagger UI e `/docs.json` expõe a especificação OpenAPI. Rotas de saúde: `/health/live` e `/health/ready`. O servidor só começa a aceitar tráfego depois de conectar ao banco.
 
 Outros scripts disponíveis:
 
@@ -139,6 +139,7 @@ Definidas em `.env` (veja `.env.example`):
 | Variável | Descrição |
 |---|---|
 | `DATABASE_URL` | String de conexão PostgreSQL (`postgresql://user:senha@host:porta/banco`) |
+| `TEST_DATABASE_URL` | URL de banco dedicado para testes; obrigatória para Jest, com nome de banco contendo `test` |
 | `PORT` | Porta HTTP da API (padrão `3001`) |
 | `JWT_SECRET` | Segredo usado para assinar/verificar tokens JWT |
 | `JWT_EXPIRES_IN` | Tempo de expiração do token (ex.: `7d`) |
@@ -146,14 +147,15 @@ Definidas em `.env` (veja `.env.example`):
 
 ## Banco de dados
 
-Modelado via **Prisma Schema** (`prisma/schema.prisma`) e versionado por migrations — **12 entidades** e **11 enumerações** de domínio.
+Modelado via **Prisma Schema** (`prisma/schema.prisma`) e versionado por migrations — **13 modelos** e **11 enumerações** de domínio. A aplicação de uma migration depende de um PostgreSQL configurado; não se presume aqui que o banco local ou de produção já esteja atualizado.
 
 **Entidades principais:** `User`, `Category`, `Brand`, `Supplier`, `Customer`, `Product`, `WarehouseAddress`, `Movement`, `Lot`, `InventoryCount`, `Notification`, `AuditLog`.
 
 **Relacionamentos-chave:**
 - `Product` pertence a `Category`, `Brand` e `Supplier`; pode ocupar vários `WarehouseAddress`, ter vários `Lot` e gerar vários `Movement`.
-- `Movement` referencia `Product`, `User` (autor), opcionalmente `Supplier`/`Customer` e endereços de origem/destino (`fromAddress`/`toAddress`).
-- `Lot` referencia `Product` e `Supplier`, com status calculado (`valid` · `expiring` · `expired` · `quarantine`).
+- `Movement` referencia `Product`, `User` (autor), opcionalmente `Supplier`, `Customer`, `Lot` e endereços de origem/destino.
+- `Lot` referencia `Product` e `Supplier`, e pode referenciar um endereço de armazenagem; `address` é mantido como snapshot textual.
+- `InventoryCount` contém itens (`InventoryCountItem`) com quantidade esperada e contada, divergência e usuário contador.
 - `AuditLog` e `Notification` referenciam `User`.
 
 **Principais enumerações de domínio:**
@@ -174,7 +176,7 @@ Consulte o diagrama entidade-relacionamento completo em [docs/ARCHITECTURE.md](.
 - `middleware/auth.middleware.ts` expõe dois guards:
   - `authenticate` — valida o token e popula `req.user` (`sub`, `email`, `role`);
   - `authorize(...roles)` — restringe o endpoint a papéis específicos.
-- O acesso é **hierárquico**: `viewer` < `operator` < `supervisor` < `admin` — cada papel herda as capacidades do papel abaixo, acrescentando novas. Na prática, a maioria das rotas de leitura exige apenas `authenticate`, escritas sensíveis exigem `supervisor`, e exclusões/gestão de usuários exigem `admin`.
+- As permissões são aplicadas explicitamente nas rotas: leitura requer autenticação; operações de escrita variam por domínio e papel; movimentações são restritas aos papéis operacionais autorizados e gestão de usuários é administrativa. Consulte os guards no código e no Swagger para a regra exata de cada endpoint.
 - Senhas nunca são armazenadas em texto puro — hash via `bcryptjs`.
 
 ## Segurança e qualidade
@@ -182,21 +184,21 @@ Consulte o diagrama entidade-relacionamento completo em [docs/ARCHITECTURE.md](.
 - **Helmet** — cabeçalhos HTTP de segurança;
 - **CORS** habilitado para o consumo pelo front-end;
 - **Rate limiting** — `globalLimiter` (200 req/15min por IP) em toda a API e `authLimiter` (20 req/15min) reservado para rotas de autenticação, mitigando força bruta;
-- **Validação de entrada centralizada** via schemas Zod (`src/schemas`), um por módulo — nenhum payload chega à regra de negócio sem passar por validação;
+- **Validação de entrada** via schemas Zod nas rotas que os aplicam; a cobertura e o formato de cada consulta estão documentados no Swagger e nos schemas;
 - **Auditoria** (`audit.middleware.ts`) registra ação, entidade, valor antigo/novo, usuário e IP em operações críticas (`audit_logs`);
 - **Tratamento centralizado de erros** (`error.middleware.ts`) via classe `AppError`, garantindo respostas de erro consistentes;
 - **Logs de requisição** via Morgan (desativado em ambiente de teste).
 
 ## Testes
 
-Suíte de testes de integração com **Jest + Supertest** em `__tests__/`, cobrindo os fluxos de:
+Há testes Jest/Supertest de endpoints e testes focados de serviços em `__tests__/`, incluindo:
 
-- Autenticação (`auth.test.ts`)
-- Usuários (`user.test.ts`)
-- Produtos (`product.test.ts`)
-- Categorias (`category.test.ts`)
-- Movimentações (`movement.test.ts`)
-- Armazéns (`warehouse.test.ts`)
+- Autenticação, usuários, produtos, categorias, movimentações e armazéns;
+- Segurança crítica e regras do serviço de movimentação;
+- Transições e contagens por item de inventário;
+- Comportamento de valor zero na curva ABC.
+
+Os testes que acessam banco exigem `TEST_DATABASE_URL`, que deve apontar para um banco dedicado cujo nome contenha `test`. O workflow de CI sobe PostgreSQL, aplica migrations e executa a suíte. Testes unitários com Prisma simulado também são iniciados após a validação dessa variável pelo Jest.
 
 ```bash
 npm run test            # roda toda a suíte (--runInBand)
@@ -204,7 +206,7 @@ npm run test:watch      # modo watch
 npm run test:coverage   # gera relatório de cobertura em coverage/
 ```
 
-Módulos ainda sem cobertura de teste (fornecedores, clientes, lotes, inventário, relatórios) estão listados como próximo passo pós-Sprint 1.
+Esta relação descreve os fluxos cobertos, não a cobertura total do backend. Os módulos e cenários sem teste precisam ser identificados e priorizados continuamente.
 
 ## Documentação interativa (Swagger)
 
@@ -216,50 +218,40 @@ Com a API rodando:
 
 ## Módulos e endpoints
 
-**15 módulos** e **67 endpoints REST**, com autenticação via JWT e 3 níveis efetivos de controle de acesso (autenticado padrão, supervisor, admin). Todas as rotas exigem autenticação exceto onde indicado.
+Os módulos abaixo correspondem às rotas montadas pela aplicação. Consulte `/docs` para métodos, parâmetros, validações e permissões atuais. As rotas de negócio exigem autenticação, exceto cadastro/login; raiz, documentação e health checks também são públicos.
 
-| Módulo | Base | Endpoints |
+| Módulo | Base | Principais recursos |
 |---|---|---|
-| Autenticação | `/api/auth` | `POST /register` · `POST /login` · `GET /me` · `GET /profile` · `PATCH /password` |
-| Usuários | `/api/users` | `GET /` · `GET /:id` · `POST /` 🔒admin · `PATCH /:id` 🔒admin · `DELETE /:id` 🔒admin |
-| Produtos | `/api/products` | `GET /scan/:code` · `GET /` · `GET /:id` · `POST /` 🛡supervisor · `PATCH /:id` 🛡supervisor · `DELETE /:id` 🔒admin |
-| Categorias | `/api/categories` | `GET /` · `GET /:id` · `POST /` 🛡supervisor · `PATCH /:id` 🛡supervisor · `DELETE /:id` 🔒admin |
-| Marcas | `/api/brands` | `GET /` · `GET /:id` · `POST /` 🛡supervisor · `PATCH /:id` 🛡supervisor · `DELETE /:id` 🔒admin |
-| Fornecedores | `/api/suppliers` | `GET /` · `GET /:id` · `POST /` 🛡supervisor · `PATCH /:id` 🛡supervisor · `DELETE /:id` 🔒admin |
-| Clientes | `/api/customers` | `GET /` · `GET /:id` · `POST /` 🛡supervisor · `PATCH /:id` 🛡supervisor · `DELETE /:id` 🔒admin |
-| Armazéns | `/api/warehouse` | `GET /` · `GET /:id` · `POST /` 🛡supervisor · `PATCH /:id` 🛡supervisor · `DELETE /:id` 🔒admin |
-| Movimentações | `/api/movements` | `GET /` · `GET /:id` · `POST /` |
-| Lotes | `/api/lots` | `GET /` · `GET /:id` · `POST /` · `PATCH /:id` 🛡supervisor · `DELETE /:id` 🔒admin |
-| Inventário | `/api/inventory` | `GET /` · `GET /low-stock` · `GET /expiring` · `GET /:productId` |
-| Dashboard | `/api/dashboard` | `GET /summary` · `GET /movements` · `GET /top-products` |
-| Alertas | `/api/alerts` | `GET /` · `GET /stock` · `GET /expiring` · `PATCH /read-all` · `PATCH /:id/read` |
-| Auditoria | `/api/audit` | `GET /` 🔒admin · `GET /:id` 🔒admin |
-| Relatórios | `/api/reports` | `GET /movements` · `GET /stock` · `GET /lots` · `GET /warehouse` · `GET /abc` · `GET /inventory` · `GET /suppliers` |
+| Autenticação | `/api/auth` | Cadastro, login, identidade e senha |
+| Usuários | `/api/users` | Consulta e gestão de usuários/status |
+| Produtos | `/api/products` | Listagem filtrada, detalhe, scanner e CRUD |
+| Categorias e marcas | `/api/categories`, `/api/brands` | Consulta e CRUD |
+| Fornecedores e clientes | `/api/suppliers`, `/api/customers` | Consulta e CRUD |
+| Armazém | `/api/warehouse` | Endereços, estatísticas e CRUD |
+| Movimentações | `/api/movements` | Consulta paginada e registro de operações |
+| Lotes | `/api/lots` | Consulta, alertas de validade e manutenção |
+| Inventário | `/api/inventory` | Planejamento, itens, contagem e transições de estado |
+| Dashboard | `/api/dashboard` | Indicadores, tendências, categorias e produtos |
+| Alertas | `/api/alerts` | Consulta de alertas e marcação de leitura |
+| Auditoria | `/api/audit` | Consulta paginada de registros |
+| Relatórios | `/api/reports` | Estoque, movimentos, lotes, inventário, fornecedores e ABC |
+| Prontidão | `/health/live`, `/health/ready` | Liveness e verificação de conectividade com o banco |
 
-🛡 = requer papel `supervisor` (ou superior) · 🔒 = requer papel `admin`
+> Curva ABC do backend é um relatório operacional por valor de movimentação; não equivale à tela protótipo ABC/XYZ nem a um modelo de previsão.
 
-> O endpoint `GET /api/reports/abc` (curva ABC) é a primeira entrega concreta de análise de dados do projeto, servindo de base para o módulo de Mineração de Dados (ver [docs/ARCHITECTURE.md](../docs/ARCHITECTURE.md)).
+## Status atual conhecido
 
-## Status da Sprint 1
-
-| Entrega mínima | Status |
+| Área | Status |
 |---|---|
-| Estrutura da API em camadas (routes → controllers → services) | ✅ Concluído |
-| Autenticação JWT + controle de acesso por papel | ✅ Concluído |
-| 15 módulos / 67 endpoints implementados | ✅ Concluído |
-| Validação de entrada via Zod em todos os módulos | ✅ Concluído |
-| Modelo de dados via Prisma (12 entidades, 11 enums) | ✅ Concluído |
-| Segurança (Helmet, CORS, rate limiting) | ✅ Concluído |
-| Auditoria de operações críticas | ✅ Concluído |
-| Documentação interativa (Swagger/OpenAPI) | ✅ Concluído |
-| Suíte de testes automatizados (fluxos principais) | ✅ Concluído |
-| Fila de mensageria assíncrona (SQS) | ⏳ Próxima sprint |
-| Pipeline de exportação de dados para mineração | ⏳ Próxima sprint |
+| Estrutura da API, autenticação e rotas | Implementadas e em evolução |
+| Schema e migrations | Versionados; aplicação depende de banco PostgreSQL configurado |
+| Testes | Parcial; CI configura PostgreSQL e executa os testes existentes, mas a cobertura não é exaustiva |
+| Validação e tratamento de erros | Implementados em várias rotas; consulte schemas e documentação OpenAPI |
+| AWS, SQS e exportação para data lake | Planejados, não implementados neste repositório |
 
-## Próximos passos (pós-Sprint 1)
+## Próximos passos
 
-1. Implementar a fila de mensageria assíncrona (Amazon SQS) para alertas, relatórios pesados e eventos de movimentação — ver [docs/ARCHITECTURE.md](../docs/ARCHITECTURE.md);
-2. Construir o pipeline de exportação de dados operacionais para o "data lake" (S3), alimentando o módulo de Mineração de Dados;
-3. Escrever testes automatizados para os módulos ainda não cobertos (fornecedores, clientes, lotes, inventário, relatórios);
-4. Modelar índices adicionais para consultas analíticas e avaliar particionamento da tabela `movements` conforme o volume crescer;
-5. Provisionar a infraestrutura AWS (VPC, EC2, Load Balancer) e automatizar o deploy.
+1. Aplicar e verificar as migrations em banco dedicado antes de atualizar qualquer ambiente compartilhado;
+2. Ampliar os testes de integração para fluxos sem cobertura e continuar executando o CI com PostgreSQL;
+3. Revisar e paginar relatórios que ainda retornam conjuntos completos à medida que os volumes reais forem conhecidos;
+4. Implementar SQS, exportação para data lake e infraestrutura AWS somente quando esses itens forem priorizados e provisionados.
