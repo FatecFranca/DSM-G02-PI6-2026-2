@@ -124,6 +124,24 @@ export async function profile(req: Request, res: Response, next: NextFunction): 
 
 /**
  * @swagger
+ * /api/auth/profile:
+ *   patch:
+ *     summary: Update the authenticated user's own profile (name, department, avatar)
+ *     tags: [Auth]
+ *     responses:
+ *       200:
+ *         description: Updated profile
+ */
+export async function updateProfile(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    res.json(await authService.updateProfile(req.user!.sub, req.body))
+  } catch (err) {
+    next(err)
+  }
+}
+
+/**
+ * @swagger
  * /api/auth/password:
  *   patch:
  *     summary: Change current user password

@@ -162,3 +162,29 @@ export async function update(req: Request, res: Response, next: NextFunction): P
     next(err)
   }
 }
+
+/**
+ * @swagger
+ * /api/lots/{id}:
+ *   delete:
+ *     summary: Delete a lot
+ *     tags: [Lots]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       204:
+ *         description: Lot deleted
+ *       404:
+ *         description: Lot not found
+ */
+export async function remove(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    await lotService.remove(req.params.id as string)
+    res.status(204).send()
+  } catch (err) {
+    next(err)
+  }
+}

@@ -1,6 +1,7 @@
 import request from 'supertest'
 import app from '../src/app'
 import { prisma } from '../src/prisma/client'
+import { deleteUsers } from './helpers'
 
 let adminToken: string
 let createdUserId: string
@@ -30,9 +31,9 @@ beforeAll(async () => {
 
 afterAll(async () => {
   if (createdUserId) {
-    await prisma.user.deleteMany({ where: { id: createdUserId } })
+    await deleteUsers({ where: { id: createdUserId } })
   }
-  await prisma.user.deleteMany({ where: { email: { contains: 'test-' } } })
+  await deleteUsers({ where: { email: { contains: 'test-' } } })
   await prisma.$disconnect()
 })
 

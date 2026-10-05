@@ -1,5 +1,6 @@
 import { prisma } from '../prisma/client'
 import { AppError } from '../middleware/error.middleware'
+import { getExpiryAlertDays } from './settings.service'
 import { CreateLotInput, LotQueryInput, UpdateLotInput } from '../schemas/lot.schema'
 
 const INCLUDE = {
@@ -7,9 +8,25 @@ const INCLUDE = {
   supplier: { select: { id: true, name: true } },
 }
 
+/**
+ * Keeps the stored lot status in line with the expiration date (quarantine is manual).
+ * Cheap enough (three indexed updates) to run before every lot read.
+ */
+export async function syncLotStatuses(): Promise<void> {
+  const now = new Date()
+  const cutoff = new Date()
+  cutoff.setDate(cutoff.getDate() + (await getExpiryAlertDays()))
+  await prisma.$transaction([
+    prisma.lot.updateMany({ where: { status: { in: ['valid', 'expiring'] }, expirationDate: { lt: now } }, data: { status: 'expired' } }),
+    prisma.lot.updateMany({ where: { status: { in: ['valid', 'expired'] }, expirationDate: { gte: now, lte: cutoff } }, data: { status: 'expiring' } }),
+    prisma.lot.updateMany({ where: { status: 'expiring', expirationDate: { gt: cutoff } }, data: { status: 'valid' } }),
+  ])
+}
+
 export type LotQuery = Partial<LotQueryInput>
 
 export async function findAll(query: LotQuery = {}) {
+  await syncLotStatuses()
   const page = query.page ?? 1
   const limit = query.limit ?? 20
   const { productId, status, expiringSoonDays, search } = query
@@ -47,6 +64,7 @@ export async function findAll(query: LotQuery = {}) {
 }
 
 export async function findById(id: string) {
+  await syncLotStatuses()
   const lot = await prisma.lot.findUnique({ where: { id }, include: INCLUDE })
   if (!lot) throw new AppError('Lot not found', 404)
   return lot
@@ -95,7 +113,9 @@ export async function update(id: string, data: UpdateLotInput) {
   return prisma.lot.update({ where: { id }, data: updateData, include: INCLUDE })
 }
 
-export async function getExpiringAlerts(days = 30) {
+export async function getExpiringAlerts(days?: number) {
+  days ??= await getExpiryAlertDays()
+  await syncLotStatuses()
   const cutoff = new Date()
   cutoff.setDate(cutoff.getDate() + days)
 
@@ -107,4 +127,9 @@ export async function getExpiringAlerts(days = 30) {
     include: INCLUDE,
     orderBy: { expirationDate: 'asc' },
   })
+}
+
+export async function remove(id: string) {
+  await findById(id)
+  await prisma.lot.delete({ where: { id } })
 }

@@ -29,7 +29,8 @@ export const lotQuerySchema = z.object({
 })
 
 export const lotAlertsQuerySchema = z.object({
-  days: z.coerce.number().int().min(1).max(365).default(30),
+  /** Defaults to the `expiryAlertDays` system preference when omitted. */
+  days: z.coerce.number().int().min(1).max(365).optional(),
 })
 
 export type CreateLotInput = z.infer<typeof createLotSchema>

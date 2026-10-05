@@ -25,6 +25,43 @@ import dashboardRoutes from './routes/dashboard.routes'
 import alertRoutes from './routes/alert.routes'
 import auditRoutes from './routes/audit.routes'
 import reportRoutes from './routes/report.routes'
+import analyticsRoutes from './routes/analytics.routes'
+import settingsRoutes from './routes/settings.routes'
+
+const GROUP_ICONS: Record<string, string> = {
+  Auth: '🔐', Users: '👤', Products: '📦', Categories: '🗂️', Brands: '🏷️', Suppliers: '🏭', Customers: '🏪',
+  Warehouse: '🏢', Movements: '🔄', Lots: '📋', Inventory: '📊', Dashboard: '📈', Alerts: '🔔',
+  Audit: '🕵️', Reports: '📑', Analytics: '🧠', Settings: '⚙️',
+}
+
+/** Builds the landing-page endpoint list from the OpenAPI spec so it never drifts from the code. */
+function buildEndpointGroups() {
+  const spec = swaggerSpec as unknown as {
+    tags?: { name: string }[]
+    paths: Record<string, Record<string, { tags?: string[]; summary?: string; security?: unknown[]; description?: string }>>
+  }
+  const byTag = new Map<string, { method: string; path: string; desc: string; role: string | null }[]>()
+  for (const [path, methods] of Object.entries(spec.paths)) {
+    for (const [method, op] of Object.entries(methods)) {
+      const tag = op.tags?.[0] ?? 'Outros'
+      const roles = /Perfis permitidos:\*\* ([a-z, ]+)\./.exec(op.description ?? '')?.[1]
+      const role = Array.isArray(op.security) && op.security.length === 0
+        ? 'public'
+        : roles?.startsWith('admin') && !roles.includes('supervisor') ? 'admin' : roles ? 'supervisor' : null
+      const list = byTag.get(tag) ?? []
+      list.push({ method: method.toUpperCase(), path: path.replace(/\{(\w+)\}/g, ':$1'), desc: op.summary ?? '', role })
+      byTag.set(tag, list)
+    }
+  }
+  const groups = (spec.tags ?? []).filter((t) => byTag.has(t.name)).map((t, i) => ({
+    name: t.name,
+    icon: GROUP_ICONS[t.name] ?? '📁',
+    base: '/api/' + byTag.get(t.name)![0].path.split('/')[2],
+    open: i === 0,
+    endpoints: byTag.get(t.name)!,
+  }))
+  return { groups, endpointCount: groups.reduce((n, g) => n + g.endpoints.length, 0) }
+}
 
 const app = express()
 
@@ -51,13 +88,14 @@ app.get('/health/ready', async (_req, res) => {
 app.get('/', (_req, res) => {
   const port = process.env.PORT ?? 3001
   const baseUrl = `http://localhost:${port}`
+  const { groups, endpointCount } = buildEndpointGroups()
 
   const html = `<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>WMS API — Documentação</title>
+  <title>StockIQ API — Documentação</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -354,7 +392,7 @@ app.get('/', (_req, res) => {
 
 <header>
   <div class="badge">⚡ REST API</div>
-  <h1>WMS API</h1>
+  <h1>StockIQ API</h1>
   <p>Warehouse Management System — Sistema completo para gestão de estoque, movimentações e armazéns.</p>
   <div class="header-actions">
     <a class="btn btn-primary" href="/docs">📄 Swagger UI</a>
@@ -365,10 +403,10 @@ app.get('/', (_req, res) => {
 <main>
 
   <div class="stats">
-    <div class="stat-card"><div class="num">15</div><div class="lbl">Módulos</div></div>
-    <div class="stat-card"><div class="num">67</div><div class="lbl">Endpoints</div></div>
+    <div class="stat-card"><div class="num">${groups.length}</div><div class="lbl">Módulos</div></div>
+    <div class="stat-card"><div class="num">${endpointCount}</div><div class="lbl">Endpoints</div></div>
     <div class="stat-card"><div class="num">JWT</div><div class="lbl">Autenticação</div></div>
-    <div class="stat-card"><div class="num">3</div><div class="lbl">Níveis de acesso</div></div>
+    <div class="stat-card"><div class="num">4</div><div class="lbl">Níveis de acesso</div></div>
   </div>
 
   <div class="section-title">Autenticação</div>
@@ -387,163 +425,17 @@ app.get('/', (_req, res) => {
 </main>
 
 <footer>
-  WMS API v1.0.0 &mdash; <a href="/docs">Documentação interativa (Swagger)</a>
+  StockIQ API v1.0.0 &mdash; <a href="/docs">Documentação interativa (Swagger)</a>
   &nbsp;·&nbsp; Base URL: <code style="color:#818cf8">${baseUrl}</code>
 </footer>
 
 <script>
-  const groups = [
-    {
-      name: 'Autenticação', icon: '🔐', base: '/api/auth', open: true,
-      endpoints: [
-        { method: 'POST', path: '/api/auth/register', desc: 'Registrar novo usuário (perfil operador)', role: 'public' },
-        { method: 'POST', path: '/api/auth/login',    desc: 'Login e obtenção de token', role: 'public' },
-        { method: 'GET',  path: '/api/auth/me',       desc: 'Dados do usuário autenticado', role: null },
-        { method: 'GET',  path: '/api/auth/profile',  desc: 'Perfil completo', role: null },
-        { method: 'PATCH',path: '/api/auth/password', desc: 'Alterar senha', role: null },
-      ]
-    },
-    {
-      name: 'Usuários', icon: '👤', base: '/api/users',
-      endpoints: [
-        { method: 'GET',    path: '/api/users',     desc: 'Listar usuários', role: null },
-        { method: 'GET',    path: '/api/users/:id', desc: 'Buscar por ID', role: null },
-        { method: 'POST',   path: '/api/users',     desc: 'Supervisores criam operadores/visualizadores; papéis elevados exigem admin', role: 'admin/supervisor' },
-        { method: 'PATCH',  path: '/api/users/:id', desc: 'Supervisores atualizam perfil; alteração de papel exige admin', role: 'admin/supervisor' },
-        { method: 'DELETE', path: '/api/users/:id', desc: 'Remover usuário', role: 'admin' },
-      ]
-    },
-    {
-      name: 'Produtos', icon: '📦', base: '/api/products',
-      endpoints: [
-        { method: 'GET',    path: '/api/products/scan/:code', desc: 'Scan por código de barras', role: null },
-        { method: 'GET',    path: '/api/products',            desc: 'Listar produtos (filtros + paginação)', role: null },
-        { method: 'GET',    path: '/api/products/:id',        desc: 'Buscar por ID', role: null },
-        { method: 'POST',   path: '/api/products',            desc: 'Criar produto', role: 'supervisor' },
-        { method: 'PATCH',  path: '/api/products/:id',        desc: 'Atualizar produto', role: 'supervisor' },
-        { method: 'DELETE', path: '/api/products/:id',        desc: 'Remover produto', role: 'admin' },
-      ]
-    },
-    {
-      name: 'Categorias', icon: '🗂️', base: '/api/categories',
-      endpoints: [
-        { method: 'GET',    path: '/api/categories',     desc: 'Listar categorias', role: null },
-        { method: 'GET',    path: '/api/categories/:id', desc: 'Buscar por ID', role: null },
-        { method: 'POST',   path: '/api/categories',     desc: 'Criar categoria', role: 'supervisor' },
-        { method: 'PATCH',  path: '/api/categories/:id', desc: 'Atualizar categoria', role: 'supervisor' },
-        { method: 'DELETE', path: '/api/categories/:id', desc: 'Remover categoria', role: 'admin' },
-      ]
-    },
-    {
-      name: 'Marcas', icon: '🏷️', base: '/api/brands',
-      endpoints: [
-        { method: 'GET',    path: '/api/brands',     desc: 'Listar marcas', role: null },
-        { method: 'GET',    path: '/api/brands/:id', desc: 'Buscar por ID', role: null },
-        { method: 'POST',   path: '/api/brands',     desc: 'Criar marca', role: 'supervisor' },
-        { method: 'PATCH',  path: '/api/brands/:id', desc: 'Atualizar marca', role: 'supervisor' },
-        { method: 'DELETE', path: '/api/brands/:id', desc: 'Remover marca', role: 'admin' },
-      ]
-    },
-    {
-      name: 'Fornecedores', icon: '🏭', base: '/api/suppliers',
-      endpoints: [
-        { method: 'GET',    path: '/api/suppliers',     desc: 'Listar fornecedores', role: null },
-        { method: 'GET',    path: '/api/suppliers/:id', desc: 'Buscar por ID', role: null },
-        { method: 'POST',   path: '/api/suppliers',     desc: 'Criar fornecedor', role: 'supervisor' },
-        { method: 'PATCH',  path: '/api/suppliers/:id', desc: 'Atualizar fornecedor', role: 'supervisor' },
-        { method: 'DELETE', path: '/api/suppliers/:id', desc: 'Remover fornecedor', role: 'admin' },
-      ]
-    },
-    {
-      name: 'Clientes', icon: '🏪', base: '/api/customers',
-      endpoints: [
-        { method: 'GET',    path: '/api/customers',     desc: 'Listar clientes (busca + paginação)', role: null },
-        { method: 'GET',    path: '/api/customers/:id', desc: 'Buscar por ID', role: null },
-        { method: 'POST',   path: '/api/customers',     desc: 'Criar cliente', role: 'supervisor' },
-        { method: 'PATCH',  path: '/api/customers/:id', desc: 'Atualizar cliente', role: 'supervisor' },
-        { method: 'DELETE', path: '/api/customers/:id', desc: 'Remover cliente', role: 'admin' },
-      ]
-    },
-    {
-      name: 'Armazéns', icon: '🏢', base: '/api/warehouse',
-      endpoints: [
-        { method: 'GET',    path: '/api/warehouse',     desc: 'Listar armazéns', role: null },
-        { method: 'GET',    path: '/api/warehouse/:id', desc: 'Buscar por ID', role: null },
-        { method: 'POST',   path: '/api/warehouse',     desc: 'Criar armazém', role: 'supervisor' },
-        { method: 'PATCH',  path: '/api/warehouse/:id', desc: 'Atualizar armazém', role: 'supervisor' },
-        { method: 'DELETE', path: '/api/warehouse/:id', desc: 'Remover armazém', role: 'admin' },
-      ]
-    },
-    {
-      name: 'Movimentações', icon: '🔄', base: '/api/movements',
-      endpoints: [
-        { method: 'GET',  path: '/api/movements',     desc: 'Listar movimentações (filtros + paginação)', role: null },
-        { method: 'GET',  path: '/api/movements/:id', desc: 'Buscar por ID', role: null },
-        { method: 'POST', path: '/api/movements',     desc: 'Registrar movimentação (admin/supervisor/operator)', role: 'admin/supervisor/operator' },
-      ]
-    },
-    {
-      name: 'Lotes', icon: '📋', base: '/api/lots',
-      endpoints: [
-        { method: 'GET',    path: '/api/lots',     desc: 'Listar lotes', role: null },
-        { method: 'GET',    path: '/api/lots/:id', desc: 'Buscar por ID', role: null },
-        { method: 'POST',   path: '/api/lots',     desc: 'Criar lote', role: null },
-        { method: 'PATCH',  path: '/api/lots/:id', desc: 'Atualizar lote', role: 'supervisor' },
-        { method: 'DELETE', path: '/api/lots/:id', desc: 'Remover lote', role: 'admin' },
-      ]
-    },
-    {
-      name: 'Inventário', icon: '📊', base: '/api/inventory',
-      endpoints: [
-        { method: 'GET',   path: '/api/inventory',            desc: 'Posição atual do estoque', role: null },
-        { method: 'GET',   path: '/api/inventory/low-stock',  desc: 'Produtos com estoque baixo', role: null },
-        { method: 'GET',   path: '/api/inventory/expiring',   desc: 'Lotes próximos ao vencimento', role: null },
-        { method: 'GET',   path: '/api/inventory/:productId', desc: 'Histórico de estoque por produto', role: null },
-      ]
-    },
-    {
-      name: 'Dashboard', icon: '📈', base: '/api/dashboard',
-      endpoints: [
-        { method: 'GET', path: '/api/dashboard/summary',     desc: 'Resumo geral do sistema', role: null },
-        { method: 'GET', path: '/api/dashboard/movements',   desc: 'Movimentações recentes', role: null },
-        { method: 'GET', path: '/api/dashboard/top-products',desc: 'Produtos mais movimentados', role: null },
-      ]
-    },
-    {
-      name: 'Alertas', icon: '🔔', base: '/api/alerts',
-      endpoints: [
-        { method: 'GET',   path: '/api/alerts',            desc: 'Todos os alertas com status de leitura', role: null },
-        { method: 'GET',   path: '/api/alerts/stock',       desc: 'Alertas de estoque (agrupados por severidade)', role: null },
-        { method: 'GET',   path: '/api/alerts/expiring',    desc: 'Lotes próximos ao vencimento', role: null },
-        { method: 'PATCH', path: '/api/alerts/read-all',    desc: 'Marcar todos como lidos', role: null },
-        { method: 'PATCH', path: '/api/alerts/:id/read',    desc: 'Marcar alerta como lido', role: null },
-      ]
-    },
-    {
-      name: 'Auditoria', icon: '🕵️', base: '/api/audit',
-      endpoints: [
-        { method: 'GET', path: '/api/audit',     desc: 'Logs de auditoria', role: 'admin' },
-        { method: 'GET', path: '/api/audit/:id', desc: 'Detalhe de log', role: 'admin' },
-      ]
-    },
-    {
-      name: 'Relatórios', icon: '📑', base: '/api/reports',
-      endpoints: [
-        { method: 'GET', path: '/api/reports/movements',  desc: 'Movimentações por tipo e produto', role: null },
-        { method: 'GET', path: '/api/reports/stock',      desc: 'Posição de estoque com valores', role: null },
-        { method: 'GET', path: '/api/reports/lots',       desc: 'Validade de lotes (vencidos, vencendo, válidos)', role: null },
-        { method: 'GET', path: '/api/reports/warehouse',  desc: 'Ocupação do armazém', role: null },
-        { method: 'GET', path: '/api/reports/abc',        desc: 'Curva ABC por valor de movimentação', role: null },
-        { method: 'GET', path: '/api/reports/inventory',  desc: 'Contagens de inventário e divergências', role: null },
-        { method: 'GET', path: '/api/reports/suppliers',  desc: 'Compras e entradas por fornecedor', role: null },
-      ]
-    },
-  ];
+  const groups = ${JSON.stringify(groups)};
 
   const roleBadge = (role) => {
     if (!role) return '';
     const map = { admin: 'role-admin', supervisor: 'role-supervisor', public: 'role-public' };
-    const labels = { admin: '🔒 Admin', supervisor: '🛡 Supervisor', public: '🌐 Público' };
+    const labels = { admin: '🔒 Admin', supervisor: '🛡 Supervisor+', public: '🌐 Público' };
     return \`<span class="role-badge \${map[role]}">\${labels[role]}</span>\`;
   };
 
@@ -605,6 +497,8 @@ app.use('/api/dashboard', dashboardRoutes)
 app.use('/api/alerts', alertRoutes)
 app.use('/api/audit', auditRoutes)
 app.use('/api/reports', reportRoutes)
+app.use('/api/analytics', analyticsRoutes)
+app.use('/api/settings', settingsRoutes)
 
 app.use(errorHandler)
 

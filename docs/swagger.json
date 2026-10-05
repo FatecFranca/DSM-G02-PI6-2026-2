@@ -1,14 +1,84 @@
 {
   "openapi": "3.0.0",
   "info": {
-    "title": "WMS API",
+    "title": "StockIQ — WMS API",
     "version": "1.0.0",
-    "description": "Warehouse Management System REST API"
+    "description": "API REST do StockIQ (WMS / ERP Lite).\n\n**Autenticação:** faça `POST /api/auth/login`, copie o `token` retornado e clique em **Authorize** (esquema `bearerAuth`).\n\n**Perfis:** `admin` > `supervisor` > `operator` > `viewer`. Cada operação lista os perfis permitidos.\n\n**Erros:** respostas de erro seguem `{ \"message\": string }`; validações retornam 422 com `errors[]`."
   },
   "servers": [
     {
       "url": "http://localhost:3001",
       "description": "Development server"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Auth",
+      "description": "Login, cadastro e dados do usuário autenticado"
+    },
+    {
+      "name": "Users",
+      "description": "Gestão de usuários e perfis de acesso"
+    },
+    {
+      "name": "Products",
+      "description": "Cadastro de produtos e leitura por código de barras"
+    },
+    {
+      "name": "Categories",
+      "description": "Categorias de produtos"
+    },
+    {
+      "name": "Brands",
+      "description": "Marcas de produtos"
+    },
+    {
+      "name": "Suppliers",
+      "description": "Fornecedores"
+    },
+    {
+      "name": "Customers",
+      "description": "Clientes"
+    },
+    {
+      "name": "Warehouse",
+      "description": "Endereçamento físico do armazém"
+    },
+    {
+      "name": "Movements",
+      "description": "Movimentações de estoque (entrada, saída, transferência, perda, ajuste, inventário)"
+    },
+    {
+      "name": "Lots",
+      "description": "Lotes e validade"
+    },
+    {
+      "name": "Inventory",
+      "description": "Contagens de inventário"
+    },
+    {
+      "name": "Dashboard",
+      "description": "Indicadores e gráficos do painel"
+    },
+    {
+      "name": "Alerts",
+      "description": "Alertas de estoque e validade, com controle de leitura por usuário"
+    },
+    {
+      "name": "Audit",
+      "description": "Trilha de auditoria (admin e supervisor)"
+    },
+    {
+      "name": "Reports",
+      "description": "Relatórios gerenciais"
+    },
+    {
+      "name": "Analytics",
+      "description": "Previsão de demanda, matriz ABC×XYZ e sugestões de compra"
+    },
+    {
+      "name": "Settings",
+      "description": "Dados da empresa e preferências do sistema"
     }
   ],
   "components": {
@@ -24,30 +94,3297 @@
         "type": "object",
         "properties": {
           "message": {
-            "type": "string"
+            "type": "string",
+            "example": "Descrição do erro"
+          }
+        },
+        "required": [
+          "message"
+        ]
+      },
+      "ValidationError": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "example": "Validation error"
           },
           "errors": {
             "type": "array",
             "items": {
-              "type": "object"
+              "type": "object",
+              "properties": {
+                "field": {
+                  "type": "string",
+                  "example": "email"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Invalid email"
+                }
+              }
             }
           }
-        }
+        },
+        "required": [
+          "message"
+        ]
       },
       "Pagination": {
         "type": "object",
         "properties": {
           "total": {
-            "type": "integer"
+            "type": "integer",
+            "example": 42
           },
           "page": {
-            "type": "integer"
+            "type": "integer",
+            "example": 1
           },
           "limit": {
-            "type": "integer"
+            "type": "integer",
+            "example": 20
           },
           "totalPages": {
-            "type": "integer"
+            "type": "integer",
+            "example": 3
+          }
+        }
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "cmq1x2y3z0001abcd"
+          },
+          "name": {
+            "type": "string",
+            "example": "Carlos Silva"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "admin@stockiq.com"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "admin",
+              "supervisor",
+              "operator",
+              "viewer"
+            ],
+            "example": "admin"
+          },
+          "department": {
+            "type": "string",
+            "example": "TI"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "inactive",
+              "pending"
+            ],
+            "example": "active"
+          },
+          "avatarUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "lastLogin": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "LoginRequest": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "admin@stockiq.com"
+          },
+          "password": {
+            "type": "string",
+            "minLength": 6,
+            "example": "Senha@123"
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ]
+      },
+      "RegisterRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Maria Souza"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "password": {
+            "type": "string",
+            "minLength": 6
+          },
+          "department": {
+            "type": "string",
+            "example": "Logística"
+          }
+        },
+        "required": [
+          "name",
+          "email",
+          "password",
+          "department"
+        ]
+      },
+      "AuthResult": {
+        "type": "object",
+        "properties": {
+          "user": {
+            "$ref": "#/components/schemas/User"
+          },
+          "token": {
+            "type": "string",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          }
+        }
+      },
+      "JwtPayload": {
+        "type": "object",
+        "properties": {
+          "user": {
+            "type": "object",
+            "properties": {
+              "sub": {
+                "type": "string",
+                "example": "cmq1x2y3z0001abcd"
+              },
+              "email": {
+                "type": "string",
+                "example": "admin@stockiq.com"
+              },
+              "role": {
+                "type": "string",
+                "enum": [
+                  "admin",
+                  "supervisor",
+                  "operator",
+                  "viewer"
+                ],
+                "example": "admin"
+              },
+              "iat": {
+                "type": "integer"
+              },
+              "exp": {
+                "type": "integer"
+              }
+            }
+          }
+        }
+      },
+      "ChangePasswordRequest": {
+        "type": "object",
+        "properties": {
+          "currentPassword": {
+            "type": "string",
+            "minLength": 6
+          },
+          "newPassword": {
+            "type": "string",
+            "minLength": 6
+          }
+        },
+        "required": [
+          "currentPassword",
+          "newPassword"
+        ]
+      },
+      "CreateUserRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Maria Souza"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "password": {
+            "type": "string",
+            "minLength": 6
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "admin",
+              "supervisor",
+              "operator",
+              "viewer"
+            ],
+            "example": "operator",
+            "default": "operator"
+          },
+          "department": {
+            "type": "string",
+            "example": "Logística"
+          },
+          "avatarUrl": {
+            "type": "string",
+            "format": "uri"
+          }
+        },
+        "required": [
+          "name",
+          "email",
+          "password",
+          "department"
+        ]
+      },
+      "UpdateUserRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "admin",
+              "supervisor",
+              "operator",
+              "viewer"
+            ],
+            "example": "admin"
+          },
+          "department": {
+            "type": "string"
+          },
+          "avatarUrl": {
+            "type": "string",
+            "format": "uri"
+          }
+        }
+      },
+      "UpdateUserStatusRequest": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "inactive",
+              "pending"
+            ],
+            "example": "active"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "Category": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "cmq1x2y3z0001abcd"
+          },
+          "name": {
+            "type": "string",
+            "example": "Eletrônicos"
+          },
+          "slug": {
+            "type": "string",
+            "example": "eletronicos"
+          },
+          "color": {
+            "type": "string",
+            "example": "#2563eb"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "_count": {
+            "type": "object",
+            "properties": {
+              "products": {
+                "type": "integer",
+                "example": 4
+              }
+            }
+          }
+        }
+      },
+      "CategoryRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Eletrônicos"
+          },
+          "slug": {
+            "type": "string",
+            "pattern": "^[a-z0-9-]+$",
+            "example": "eletronicos"
+          },
+          "color": {
+            "type": "string",
+            "pattern": "^#[0-9A-Fa-f]{6}$",
+            "example": "#2563eb"
+          }
+        },
+        "required": [
+          "name",
+          "slug"
+        ]
+      },
+      "Brand": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "cmq1x2y3z0001abcd"
+          },
+          "name": {
+            "type": "string",
+            "example": "Bosch"
+          },
+          "slug": {
+            "type": "string",
+            "example": "bosch"
+          },
+          "logoUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "_count": {
+            "type": "object",
+            "properties": {
+              "products": {
+                "type": "integer",
+                "example": 3
+              }
+            }
+          }
+        }
+      },
+      "BrandRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Bosch"
+          },
+          "slug": {
+            "type": "string",
+            "pattern": "^[a-z0-9-]+$",
+            "example": "bosch"
+          },
+          "logoUrl": {
+            "type": "string",
+            "format": "uri"
+          }
+        },
+        "required": [
+          "name",
+          "slug"
+        ]
+      },
+      "Supplier": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "cmq1x2y3z0001abcd"
+          },
+          "name": {
+            "type": "string",
+            "example": "TechDistrib Comércio Ltda"
+          },
+          "tradeName": {
+            "type": "string",
+            "example": "TechDistrib"
+          },
+          "cnpj": {
+            "type": "string",
+            "example": "12.345.678/0001-90"
+          },
+          "email": {
+            "type": "string",
+            "example": "vendas@techdistrib.com.br"
+          },
+          "phone": {
+            "type": "string",
+            "example": "(11) 3456-7890"
+          },
+          "contactName": {
+            "type": "string",
+            "example": "Marcelo Andrade"
+          },
+          "category": {
+            "type": "string",
+            "example": "Eletrônicos"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "inactive"
+            ],
+            "example": "active"
+          },
+          "city": {
+            "type": "string",
+            "example": "São Paulo"
+          },
+          "state": {
+            "type": "string",
+            "example": "SP"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "_count": {
+            "type": "object",
+            "properties": {
+              "products": {
+                "type": "integer",
+                "example": 6
+              }
+            }
+          }
+        }
+      },
+      "SupplierRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "TechDistrib Comércio Ltda"
+          },
+          "tradeName": {
+            "type": "string",
+            "example": "TechDistrib"
+          },
+          "cnpj": {
+            "type": "string",
+            "pattern": "^\\d{2}\\.\\d{3}\\.\\d{3}/\\d{4}-\\d{2}$",
+            "example": "12.345.678/0001-90"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "phone": {
+            "type": "string",
+            "minLength": 10,
+            "example": "(11) 3456-7890"
+          },
+          "contactName": {
+            "type": "string",
+            "example": "Marcelo Andrade"
+          },
+          "category": {
+            "type": "string",
+            "example": "Eletrônicos"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "inactive"
+            ],
+            "example": "active",
+            "default": "active"
+          },
+          "city": {
+            "type": "string",
+            "example": "São Paulo"
+          },
+          "state": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 2,
+            "example": "SP"
+          }
+        },
+        "required": [
+          "name",
+          "tradeName",
+          "cnpj",
+          "email",
+          "phone",
+          "contactName",
+          "category",
+          "city",
+          "state"
+        ]
+      },
+      "Customer": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "cmq1x2y3z0001abcd"
+          },
+          "name": {
+            "type": "string",
+            "example": "Construtora Horizonte Ltda"
+          },
+          "tradeName": {
+            "type": "string",
+            "example": "Construtora Horizonte"
+          },
+          "cnpj": {
+            "type": "string",
+            "example": "11.222.333/0001-44"
+          },
+          "email": {
+            "type": "string",
+            "example": "compras@horizonte.com.br"
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true,
+            "example": "(16) 3711-2200"
+          },
+          "contactName": {
+            "type": "string",
+            "nullable": true,
+            "example": "Ricardo Alves"
+          },
+          "city": {
+            "type": "string",
+            "example": "Franca"
+          },
+          "state": {
+            "type": "string",
+            "example": "SP"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "inactive"
+            ],
+            "example": "active"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "CustomerRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Construtora Horizonte Ltda"
+          },
+          "tradeName": {
+            "type": "string",
+            "example": "Construtora Horizonte"
+          },
+          "cnpj": {
+            "type": "string",
+            "pattern": "^\\d{2}\\.\\d{3}\\.\\d{3}/\\d{4}-\\d{2}$",
+            "example": "11.222.333/0001-44"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "phone": {
+            "type": "string",
+            "example": "(16) 3711-2200"
+          },
+          "contactName": {
+            "type": "string",
+            "example": "Ricardo Alves"
+          },
+          "city": {
+            "type": "string",
+            "example": "Franca"
+          },
+          "state": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 2,
+            "example": "SP"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "inactive"
+            ],
+            "example": "active"
+          }
+        },
+        "required": [
+          "name",
+          "tradeName",
+          "cnpj",
+          "email",
+          "city",
+          "state"
+        ]
+      },
+      "Product": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "cmq1x2y3z0001abcd"
+          },
+          "name": {
+            "type": "string",
+            "example": "Cabo HDMI 2.0 2m"
+          },
+          "internalCode": {
+            "type": "string",
+            "example": "EL-0042"
+          },
+          "sku": {
+            "type": "string",
+            "example": "CAB-HDMI-2M-BK"
+          },
+          "barcode": {
+            "type": "string",
+            "example": "7891234510000"
+          },
+          "unit": {
+            "type": "string",
+            "example": "UN"
+          },
+          "weight": {
+            "type": "number",
+            "example": 0.18
+          },
+          "width": {
+            "type": "number",
+            "example": 20
+          },
+          "height": {
+            "type": "number",
+            "example": 10
+          },
+          "depth": {
+            "type": "number",
+            "example": 5
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "purchasePrice": {
+            "type": "number",
+            "example": 22.5
+          },
+          "salePrice": {
+            "type": "number",
+            "example": 54.9
+          },
+          "minStock": {
+            "type": "integer",
+            "example": 20
+          },
+          "maxStock": {
+            "type": "integer",
+            "example": 200
+          },
+          "currentStock": {
+            "type": "integer",
+            "example": 87
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "inactive",
+              "discontinued"
+            ],
+            "example": "active"
+          },
+          "stockStatus": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "low",
+              "critical",
+              "out"
+            ],
+            "example": "ok"
+          },
+          "imageUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "categoryId": {
+            "type": "string",
+            "example": "cmq1x2y3z0001abcd"
+          },
+          "brandId": {
+            "type": "string",
+            "example": "cmq1x2y3z0001abcd"
+          },
+          "supplierId": {
+            "type": "string",
+            "example": "cmq1x2y3z0001abcd"
+          },
+          "category": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "example": "cmq1x2y3z0001abcd"
+              },
+              "name": {
+                "type": "string",
+                "example": "Nome"
+              }
+            }
+          },
+          "brand": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "example": "cmq1x2y3z0001abcd"
+              },
+              "name": {
+                "type": "string",
+                "example": "Nome"
+              }
+            }
+          },
+          "supplier": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "example": "cmq1x2y3z0001abcd"
+              },
+              "name": {
+                "type": "string",
+                "example": "Nome"
+              }
+            }
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ProductRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Cabo HDMI 2.0 2m"
+          },
+          "internalCode": {
+            "type": "string",
+            "example": "EL-0042"
+          },
+          "sku": {
+            "type": "string",
+            "example": "CAB-HDMI-2M-BK"
+          },
+          "barcode": {
+            "type": "string",
+            "example": "7891234510000"
+          },
+          "categoryId": {
+            "type": "string",
+            "example": "cmq1x2y3z0001abcd"
+          },
+          "brandId": {
+            "type": "string",
+            "example": "cmq1x2y3z0001abcd"
+          },
+          "supplierId": {
+            "type": "string",
+            "example": "cmq1x2y3z0001abcd"
+          },
+          "unit": {
+            "type": "string",
+            "example": "UN"
+          },
+          "weight": {
+            "type": "number",
+            "minimum": 0,
+            "default": 0
+          },
+          "width": {
+            "type": "number",
+            "minimum": 0,
+            "default": 0
+          },
+          "height": {
+            "type": "number",
+            "minimum": 0,
+            "default": 0
+          },
+          "depth": {
+            "type": "number",
+            "minimum": 0,
+            "default": 0
+          },
+          "description": {
+            "type": "string"
+          },
+          "purchasePrice": {
+            "type": "number",
+            "minimum": 0,
+            "example": 22.5
+          },
+          "salePrice": {
+            "type": "number",
+            "minimum": 0,
+            "example": 54.9
+          },
+          "minStock": {
+            "type": "integer",
+            "minimum": 0,
+            "default": 0
+          },
+          "maxStock": {
+            "type": "integer",
+            "minimum": 0,
+            "default": 0
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "inactive",
+              "discontinued"
+            ],
+            "example": "active",
+            "default": "active"
+          },
+          "imageUrl": {
+            "type": "string",
+            "format": "uri"
+          }
+        },
+        "required": [
+          "name",
+          "internalCode",
+          "sku",
+          "barcode",
+          "categoryId",
+          "brandId",
+          "supplierId",
+          "unit",
+          "purchasePrice",
+          "salePrice"
+        ]
+      },
+      "ProductScan": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Product"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "warehouseAddresses": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "example": "cmq1x2y3z0001abcd"
+                    },
+                    "code": {
+                      "type": "string",
+                      "example": "A-01-01-A-01"
+                    },
+                    "quantity": {
+                      "type": "integer",
+                      "example": 87
+                    },
+                    "lotNumber": {
+                      "type": "string",
+                      "nullable": true
+                    }
+                  }
+                }
+              },
+              "lots": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "example": "cmq1x2y3z0001abcd"
+                    },
+                    "lotNumber": {
+                      "type": "string",
+                      "example": "LOT-001"
+                    },
+                    "quantity": {
+                      "type": "integer",
+                      "example": 50
+                    },
+                    "expirationDate": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "valid",
+                        "expiring"
+                      ],
+                      "example": "valid"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "WarehouseAddress": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "cmq1x2y3z0001abcd"
+          },
+          "code": {
+            "type": "string",
+            "example": "A-01-01-A-01"
+          },
+          "aisle": {
+            "type": "string",
+            "example": "A"
+          },
+          "street": {
+            "type": "string",
+            "example": "01"
+          },
+          "shelf": {
+            "type": "string",
+            "example": "01"
+          },
+          "level": {
+            "type": "string",
+            "example": "A"
+          },
+          "position": {
+            "type": "string",
+            "example": "01"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "free",
+              "occupied",
+              "blocked",
+              "reserved"
+            ],
+            "example": "occupied"
+          },
+          "capacity": {
+            "type": "number",
+            "example": 800
+          },
+          "occupied": {
+            "type": "number",
+            "example": 120
+          },
+          "lotNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "quantity": {
+            "type": "integer",
+            "nullable": true
+          },
+          "productId": {
+            "type": "string",
+            "nullable": true
+          },
+          "product": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "example": "cmq1x2y3z0001abcd"
+              },
+              "name": {
+                "type": "string"
+              },
+              "internalCode": {
+                "type": "string"
+              }
+            },
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "WarehouseAddressRequest": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "example": "A-01-01-A-01"
+          },
+          "aisle": {
+            "type": "string",
+            "example": "A"
+          },
+          "street": {
+            "type": "string",
+            "example": "01"
+          },
+          "shelf": {
+            "type": "string",
+            "example": "01"
+          },
+          "level": {
+            "type": "string",
+            "example": "A"
+          },
+          "position": {
+            "type": "string",
+            "example": "01"
+          },
+          "capacity": {
+            "type": "number",
+            "minimum": 0,
+            "exclusiveMinimum": true,
+            "example": 800
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "free",
+              "occupied",
+              "blocked",
+              "reserved"
+            ],
+            "example": "free",
+            "default": "free"
+          }
+        },
+        "required": [
+          "code",
+          "aisle",
+          "street",
+          "shelf",
+          "level",
+          "position",
+          "capacity"
+        ]
+      },
+      "WarehouseStats": {
+        "type": "object",
+        "properties": {
+          "totalPositions": {
+            "type": "integer",
+            "example": 64
+          },
+          "freePositions": {
+            "type": "integer",
+            "example": 30
+          },
+          "occupiedPositions": {
+            "type": "integer",
+            "example": 27
+          },
+          "blockedPositions": {
+            "type": "integer",
+            "example": 4
+          },
+          "reservedPositions": {
+            "type": "integer",
+            "example": 3
+          },
+          "occupancyRate": {
+            "type": "integer",
+            "example": 42
+          }
+        }
+      },
+      "Movement": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "cmq1x2y3z0001abcd"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "entry",
+              "exit",
+              "transfer",
+              "loss",
+              "adjustment",
+              "inventory"
+            ],
+            "example": "entry"
+          },
+          "quantity": {
+            "type": "integer",
+            "example": 50
+          },
+          "unitCost": {
+            "type": "number",
+            "example": 22.5
+          },
+          "totalValue": {
+            "type": "number",
+            "example": 1125
+          },
+          "invoiceNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "lotNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "expirationDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "exitReason": {
+            "type": "string",
+            "enum": [
+              "sale",
+              "transfer",
+              "loss",
+              "break",
+              "internal"
+            ],
+            "example": "sale",
+            "nullable": true
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true
+          },
+          "productId": {
+            "type": "string",
+            "example": "cmq1x2y3z0001abcd"
+          },
+          "supplierId": {
+            "type": "string",
+            "nullable": true
+          },
+          "customerId": {
+            "type": "string",
+            "nullable": true
+          },
+          "customerName": {
+            "type": "string",
+            "nullable": true
+          },
+          "fromAddressId": {
+            "type": "string",
+            "nullable": true
+          },
+          "toAddressId": {
+            "type": "string",
+            "nullable": true
+          },
+          "userId": {
+            "type": "string",
+            "example": "cmq1x2y3z0001abcd"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "product": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "example": "cmq1x2y3z0001abcd"
+              },
+              "name": {
+                "type": "string"
+              },
+              "internalCode": {
+                "type": "string"
+              }
+            }
+          },
+          "supplier": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "example": "cmq1x2y3z0001abcd"
+              },
+              "name": {
+                "type": "string",
+                "example": "Nome"
+              }
+            },
+            "nullable": true
+          },
+          "user": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "example": "cmq1x2y3z0001abcd"
+              },
+              "name": {
+                "type": "string",
+                "example": "Nome"
+              }
+            }
+          },
+          "fromAddress": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "example": "cmq1x2y3z0001abcd"
+              },
+              "code": {
+                "type": "string"
+              }
+            },
+            "nullable": true
+          },
+          "toAddress": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "example": "cmq1x2y3z0001abcd"
+              },
+              "code": {
+                "type": "string"
+              }
+            },
+            "nullable": true
+          }
+        }
+      },
+      "MovementRequest": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "entry",
+              "exit",
+              "transfer",
+              "loss",
+              "adjustment",
+              "inventory"
+            ],
+            "example": "entry"
+          },
+          "productId": {
+            "type": "string",
+            "example": "cmq1x2y3z0001abcd"
+          },
+          "quantity": {
+            "type": "integer",
+            "minimum": 0,
+            "example": 50,
+            "description": "Units moved. For `inventory` this is the counted stock (absolute); the difference is applied as an adjustment."
+          },
+          "adjustmentDirection": {
+            "type": "string",
+            "enum": [
+              "increase",
+              "decrease"
+            ],
+            "example": "increase",
+            "description": "Required (and only valid) for `adjustment`."
+          },
+          "manufacturingDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Needed together with expirationDate when an entry creates a new lot."
+          },
+          "unitCost": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Defaults to the product purchase price."
+          },
+          "invoiceNumber": {
+            "type": "string",
+            "example": "NF-2026-04521"
+          },
+          "lotNumber": {
+            "type": "string",
+            "description": "On entries, creates the lot (needs supplierId + expirationDate) or increments an existing one."
+          },
+          "expirationDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "exitReason": {
+            "type": "string",
+            "enum": [
+              "sale",
+              "transfer",
+              "loss",
+              "break",
+              "internal"
+            ],
+            "example": "sale"
+          },
+          "notes": {
+            "type": "string"
+          },
+          "supplierId": {
+            "type": "string",
+            "example": "cmq1x2y3z0001abcd"
+          },
+          "customerId": {
+            "type": "string"
+          },
+          "customerName": {
+            "type": "string",
+            "example": "Construtora Horizonte"
+          },
+          "fromAddressId": {
+            "type": "string",
+            "example": "cmq1x2y3z0001abcd",
+            "description": "Required for transfers and, for products already stocked in the warehouse, for exits, losses, decreasing adjustments and counts."
+          },
+          "toAddressId": {
+            "type": "string",
+            "example": "cmq1x2y3z0001abcd",
+            "description": "Required for transfers and, for products already stocked in the warehouse, for entries and increasing adjustments."
+          }
+        },
+        "required": [
+          "type",
+          "productId",
+          "quantity"
+        ],
+        "description": "Stock effect: entry +qty · exit/loss −qty · adjustment ±qty (adjustmentDirection) · inventory sets stock to qty · transfer 0 (moves between addresses). Products tracked by lot also need lotNumber."
+      },
+      "Lot": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "cmq1x2y3z0001abcd"
+          },
+          "lotNumber": {
+            "type": "string",
+            "example": "LOT-QM0091-001"
+          },
+          "quantity": {
+            "type": "integer",
+            "example": 200
+          },
+          "manufacturingDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "expirationDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "address": {
+            "type": "string",
+            "example": "C-03-02-A-01"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "valid",
+              "expiring",
+              "expired",
+              "quarantine"
+            ],
+            "example": "valid",
+            "description": "Derived from expirationDate (≤30 days = expiring) unless the lot is in quarantine."
+          },
+          "productId": {
+            "type": "string",
+            "example": "cmq1x2y3z0001abcd"
+          },
+          "supplierId": {
+            "type": "string",
+            "example": "cmq1x2y3z0001abcd"
+          },
+          "product": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "example": "cmq1x2y3z0001abcd"
+              },
+              "name": {
+                "type": "string"
+              },
+              "internalCode": {
+                "type": "string"
+              }
+            }
+          },
+          "supplier": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "example": "cmq1x2y3z0001abcd"
+              },
+              "name": {
+                "type": "string",
+                "example": "Nome"
+              }
+            }
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "LotRequest": {
+        "type": "object",
+        "properties": {
+          "lotNumber": {
+            "type": "string",
+            "example": "LOT-QM0091-001"
+          },
+          "productId": {
+            "type": "string",
+            "example": "cmq1x2y3z0001abcd"
+          },
+          "supplierId": {
+            "type": "string",
+            "example": "cmq1x2y3z0001abcd"
+          },
+          "quantity": {
+            "type": "integer",
+            "minimum": 1,
+            "example": 200
+          },
+          "manufacturingDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "expirationDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "addressId": {
+            "type": "string",
+            "example": "cmq1x2y3z0001abcd"
+          },
+          "address": {
+            "type": "string",
+            "example": "C-03-02-A-01",
+            "description": "Address code; alternative to addressId."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "valid",
+              "expiring",
+              "expired",
+              "quarantine"
+            ],
+            "example": "valid",
+            "default": "valid"
+          }
+        },
+        "required": [
+          "lotNumber",
+          "productId",
+          "supplierId",
+          "quantity",
+          "manufacturingDate",
+          "expirationDate"
+        ]
+      },
+      "InventoryCount": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "cmq1x2y3z0001abcd"
+          },
+          "name": {
+            "type": "string",
+            "example": "Inventário Geral — Junho/2026"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "full",
+              "partial",
+              "cyclic"
+            ],
+            "example": "full"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "planned",
+              "in_progress",
+              "review",
+              "completed"
+            ],
+            "example": "in_progress"
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "totalItems": {
+            "type": "integer",
+            "example": 26
+          },
+          "countedItems": {
+            "type": "integer",
+            "example": 12
+          },
+          "divergences": {
+            "type": "integer",
+            "example": 1
+          },
+          "responsibleId": {
+            "type": "string",
+            "example": "cmq1x2y3z0001abcd"
+          },
+          "responsible": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "example": "cmq1x2y3z0001abcd"
+              },
+              "name": {
+                "type": "string",
+                "example": "Nome"
+              }
+            }
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "InventoryCountRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Cíclico EPI — Outubro/2026"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "full",
+              "partial",
+              "cyclic"
+            ],
+            "example": "cyclic"
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "responsibleId": {
+            "type": "string",
+            "example": "cmq1x2y3z0001abcd"
+          },
+          "productIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "example": "cmq1x2y3z0001abcd"
+            },
+            "description": "Required for partial and cyclic counts; full counts include every active product."
+          }
+        },
+        "required": [
+          "name",
+          "type",
+          "startDate",
+          "responsibleId"
+        ]
+      },
+      "InventoryCountUpdateRequest": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "planned",
+              "in_progress",
+              "review",
+              "completed"
+            ],
+            "example": "planned",
+            "description": "Allowed transitions: planned → in_progress → review → completed (review may return to in_progress). Review requires every item counted."
+          }
+        }
+      },
+      "InventoryCountItem": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "cmq1x2y3z0001abcd"
+          },
+          "expectedQuantity": {
+            "type": "integer",
+            "example": 24
+          },
+          "countedQuantity": {
+            "type": "integer",
+            "nullable": true,
+            "example": 23
+          },
+          "discrepancy": {
+            "type": "integer",
+            "example": -1
+          },
+          "countedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "product": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "example": "cmq1x2y3z0001abcd"
+              },
+              "name": {
+                "type": "string"
+              },
+              "internalCode": {
+                "type": "string"
+              },
+              "unit": {
+                "type": "string",
+                "example": "UN"
+              }
+            }
+          },
+          "countedBy": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "example": "cmq1x2y3z0001abcd"
+              },
+              "name": {
+                "type": "string",
+                "example": "Nome"
+              }
+            },
+            "nullable": true
+          }
+        }
+      },
+      "InventoryCountDetails": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/InventoryCount"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "items": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/InventoryCountItem"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "CountInventoryItemRequest": {
+        "type": "object",
+        "properties": {
+          "countedQuantity": {
+            "type": "integer",
+            "minimum": 0,
+            "example": 23
+          }
+        },
+        "required": [
+          "countedQuantity"
+        ]
+      },
+      "Alert": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "stock-out-cmq1x2y3z0001abcd",
+            "description": "Stable alert key used to mark as read."
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "critical",
+              "warning",
+              "info"
+            ],
+            "example": "critical"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "stock",
+              "expiry"
+            ],
+            "example": "stock"
+          },
+          "title": {
+            "type": "string",
+            "example": "Estoque zerado: Álcool 70% INPM 1L"
+          },
+          "desc": {
+            "type": "string",
+            "example": "O produto QM-0091 atingiu zero unidades em estoque."
+          },
+          "read": {
+            "type": "boolean",
+            "example": false
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "AlertsResponse": {
+        "type": "object",
+        "properties": {
+          "alerts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Alert"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "example": 9
+          },
+          "unread": {
+            "type": "integer",
+            "example": 7
+          }
+        }
+      },
+      "StockAlertGroup": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer",
+            "example": 2
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Product"
+            }
+          }
+        }
+      },
+      "StockAlerts": {
+        "type": "object",
+        "properties": {
+          "outOfStock": {
+            "$ref": "#/components/schemas/StockAlertGroup"
+          },
+          "critical": {
+            "$ref": "#/components/schemas/StockAlertGroup"
+          },
+          "low": {
+            "$ref": "#/components/schemas/StockAlertGroup"
+          },
+          "totalAlerts": {
+            "type": "integer",
+            "example": 6
+          }
+        }
+      },
+      "MarkAllReadRequest": {
+        "type": "object",
+        "properties": {
+          "alertKeys": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "example": "stock-out-abc"
+            }
+          }
+        },
+        "required": [
+          "alertKeys"
+        ]
+      },
+      "MarkAllReadResult": {
+        "type": "object",
+        "properties": {
+          "marked": {
+            "type": "integer",
+            "example": 5
+          }
+        }
+      },
+      "AuditLog": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "cmq1x2y3z0001abcd"
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "CREATE",
+              "UPDATE",
+              "DELETE"
+            ],
+            "example": "UPDATE"
+          },
+          "entity": {
+            "type": "string",
+            "example": "Product"
+          },
+          "entityId": {
+            "type": "string",
+            "example": "cmq1x2y3z0001abcd"
+          },
+          "entityName": {
+            "type": "string",
+            "example": "Cabo HDMI 2.0 2m"
+          },
+          "oldValue": {
+            "type": "object",
+            "nullable": true,
+            "additionalProperties": true
+          },
+          "newValue": {
+            "type": "object",
+            "nullable": true,
+            "additionalProperties": true
+          },
+          "ip": {
+            "type": "string",
+            "example": "192.168.1.10"
+          },
+          "userId": {
+            "type": "string",
+            "example": "cmq1x2y3z0001abcd"
+          },
+          "user": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "example": "cmq1x2y3z0001abcd"
+              },
+              "name": {
+                "type": "string"
+              },
+              "role": {
+                "type": "string",
+                "enum": [
+                  "admin",
+                  "supervisor",
+                  "operator",
+                  "viewer"
+                ],
+                "example": "admin"
+              }
+            }
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "DashboardSummary": {
+        "type": "object",
+        "properties": {
+          "products": {
+            "type": "object",
+            "properties": {
+              "total": {
+                "type": "integer",
+                "example": 26
+              },
+              "active": {
+                "type": "integer",
+                "example": 25
+              },
+              "lowStock": {
+                "type": "integer",
+                "example": 5
+              },
+              "outStock": {
+                "type": "integer",
+                "example": 1
+              }
+            }
+          },
+          "movements": {
+            "type": "object",
+            "properties": {
+              "today": {
+                "type": "integer",
+                "example": 6
+              },
+              "todayEntries": {
+                "type": "object",
+                "properties": {
+                  "count": {
+                    "type": "integer",
+                    "example": 2
+                  },
+                  "value": {
+                    "type": "number",
+                    "example": 1350
+                  }
+                }
+              },
+              "todayExits": {
+                "type": "object",
+                "properties": {
+                  "count": {
+                    "type": "integer",
+                    "example": 4
+                  },
+                  "value": {
+                    "type": "number",
+                    "example": 2800
+                  }
+                }
+              }
+            }
+          },
+          "users": {
+            "type": "object",
+            "properties": {
+              "active": {
+                "type": "integer",
+                "example": 6
+              }
+            }
+          },
+          "lots": {
+            "type": "object",
+            "properties": {
+              "total": {
+                "type": "integer",
+                "example": 10
+              },
+              "expiringSoon": {
+                "type": "integer",
+                "example": 3
+              },
+              "validPercentage": {
+                "type": "integer",
+                "example": 60
+              }
+            }
+          },
+          "inventory": {
+            "type": "object",
+            "properties": {
+              "pendingCounts": {
+                "type": "integer",
+                "example": 3
+              },
+              "accuracy": {
+                "type": "number",
+                "nullable": true,
+                "example": 99.2
+              }
+            }
+          },
+          "warehouse": {
+            "type": "object",
+            "properties": {
+              "total": {
+                "type": "integer",
+                "example": 64
+              },
+              "free": {
+                "type": "integer",
+                "example": 30
+              },
+              "occupied": {
+                "type": "integer",
+                "example": 27
+              },
+              "blocked": {
+                "type": "integer",
+                "example": 4
+              },
+              "occupancyRate": {
+                "type": "integer",
+                "example": 42
+              }
+            }
+          },
+          "stock": {
+            "type": "object",
+            "properties": {
+              "totalPurchaseValue": {
+                "type": "number",
+                "example": 182000.5
+              },
+              "totalSaleValue": {
+                "type": "number",
+                "example": 341000
+              }
+            }
+          },
+          "recentMovements": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Movement"
+            }
+          }
+        }
+      },
+      "MovementTrendPoint": {
+        "type": "object",
+        "properties": {
+          "month": {
+            "type": "string",
+            "example": "out. de 26"
+          },
+          "entries": {
+            "type": "integer",
+            "example": 900
+          },
+          "exits": {
+            "type": "integer",
+            "example": 850
+          },
+          "balance": {
+            "type": "integer",
+            "example": 50
+          }
+        }
+      },
+      "CategoryDistributionItem": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "cmq1x2y3z0001abcd"
+          },
+          "name": {
+            "type": "string",
+            "example": "Eletrônicos"
+          },
+          "color": {
+            "type": "string",
+            "example": "#2563eb"
+          },
+          "productCount": {
+            "type": "integer",
+            "example": 8
+          },
+          "percentage": {
+            "type": "integer",
+            "example": 30
+          },
+          "stockValue": {
+            "type": "number",
+            "example": 52000
+          }
+        }
+      },
+      "TopProduct": {
+        "type": "object",
+        "properties": {
+          "product": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "example": "cmq1x2y3z0001abcd"
+              },
+              "name": {
+                "type": "string"
+              },
+              "internalCode": {
+                "type": "string"
+              },
+              "currentStock": {
+                "type": "integer"
+              },
+              "salePrice": {
+                "type": "number"
+              }
+            }
+          },
+          "movementCount": {
+            "type": "integer",
+            "example": 54
+          },
+          "totalQuantity": {
+            "type": "integer",
+            "example": 980
+          },
+          "totalValue": {
+            "type": "number",
+            "example": 48000
+          },
+          "trend": {
+            "type": "integer",
+            "example": 12,
+            "description": "% change in movement count, last 30 days vs previous 30."
+          }
+        }
+      },
+      "HeatmapCell": {
+        "type": "object",
+        "properties": {
+          "day": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 6,
+            "example": 2
+          },
+          "hour": {
+            "type": "integer",
+            "example": 14
+          },
+          "value": {
+            "type": "integer",
+            "example": 7
+          }
+        }
+      },
+      "AbcItem": {
+        "type": "object",
+        "properties": {
+          "class": {
+            "type": "string",
+            "enum": [
+              "A",
+              "B",
+              "C"
+            ],
+            "example": "A"
+          },
+          "product": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "example": "cmq1x2y3z0001abcd"
+              },
+              "name": {
+                "type": "string"
+              },
+              "internalCode": {
+                "type": "string"
+              },
+              "currentStock": {
+                "type": "integer"
+              }
+            }
+          },
+          "totalValue": {
+            "type": "number",
+            "example": 25000
+          },
+          "accumulatedPercentage": {
+            "type": "number",
+            "example": 41.3
+          }
+        }
+      },
+      "AbcClassStat": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer",
+            "example": 5
+          },
+          "percentage": {
+            "type": "integer",
+            "example": 20
+          }
+        }
+      },
+      "AbcCurve": {
+        "type": "object",
+        "properties": {
+          "A": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AbcItem"
+            }
+          },
+          "B": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AbcItem"
+            }
+          },
+          "C": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AbcItem"
+            }
+          },
+          "summary": {
+            "type": "object",
+            "properties": {
+              "totalValue": {
+                "type": "number",
+                "example": 480000
+              },
+              "A": {
+                "$ref": "#/components/schemas/AbcClassStat"
+              },
+              "B": {
+                "$ref": "#/components/schemas/AbcClassStat"
+              },
+              "C": {
+                "$ref": "#/components/schemas/AbcClassStat"
+              }
+            }
+          }
+        }
+      },
+      "MovementReport": {
+        "type": "object",
+        "properties": {
+          "period": {
+            "type": "object",
+            "properties": {
+              "from": {
+                "type": "string",
+                "nullable": true
+              },
+              "to": {
+                "type": "string",
+                "nullable": true
+              }
+            }
+          },
+          "totals": {
+            "type": "object",
+            "properties": {
+              "count": {
+                "type": "integer",
+                "example": 1273
+              },
+              "quantity": {
+                "type": "integer",
+                "example": 40000
+              },
+              "value": {
+                "type": "number",
+                "example": 980000
+              }
+            }
+          },
+          "byType": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "entry",
+                    "exit",
+                    "transfer",
+                    "loss",
+                    "adjustment",
+                    "inventory"
+                  ],
+                  "example": "entry"
+                },
+                "count": {
+                  "type": "integer"
+                },
+                "quantity": {
+                  "type": "integer"
+                },
+                "value": {
+                  "type": "number"
+                }
+              }
+            }
+          },
+          "topProducts": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "product": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "example": "cmq1x2y3z0001abcd"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "internalCode": {
+                      "type": "string"
+                    },
+                    "unit": {
+                      "type": "string",
+                      "example": "UN"
+                    }
+                  }
+                },
+                "count": {
+                  "type": "integer"
+                },
+                "quantity": {
+                  "type": "integer"
+                },
+                "value": {
+                  "type": "number"
+                }
+              }
+            }
+          }
+        }
+      },
+      "StockReport": {
+        "type": "object",
+        "properties": {
+          "summary": {
+            "type": "object",
+            "properties": {
+              "total": {
+                "type": "integer",
+                "example": 25
+              },
+              "out": {
+                "type": "integer",
+                "example": 1
+              },
+              "critical": {
+                "type": "integer",
+                "example": 3
+              },
+              "low": {
+                "type": "integer",
+                "example": 4
+              },
+              "ok": {
+                "type": "integer",
+                "example": 17
+              },
+              "totalStockValue": {
+                "type": "number",
+                "example": 182000
+              },
+              "totalSaleValue": {
+                "type": "number",
+                "example": 341000
+              }
+            }
+          },
+          "products": {
+            "type": "array",
+            "items": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Product"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "stockValue": {
+                      "type": "number"
+                    },
+                    "saleValue": {
+                      "type": "number"
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      "LotExpirationReport": {
+        "type": "object",
+        "properties": {
+          "windowDays": {
+            "type": "integer",
+            "example": 90
+          },
+          "summary": {
+            "type": "object",
+            "properties": {
+              "expired": {
+                "type": "integer",
+                "example": 2
+              },
+              "expiringSoon": {
+                "type": "integer",
+                "example": 3
+              },
+              "valid": {
+                "type": "integer",
+                "example": 4
+              },
+              "quarantine": {
+                "type": "integer",
+                "example": 1
+              }
+            }
+          },
+          "expired": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Lot"
+            }
+          },
+          "expiringSoon": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Lot"
+            }
+          },
+          "quarantine": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Lot"
+            }
+          }
+        }
+      },
+      "WarehouseReport": {
+        "type": "object",
+        "properties": {
+          "summary": {
+            "type": "object",
+            "properties": {
+              "total": {
+                "type": "integer",
+                "example": 64
+              },
+              "byStatus": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "integer"
+                },
+                "example": {
+                  "free": 30,
+                  "occupied": 27,
+                  "blocked": 4,
+                  "reserved": 3
+                }
+              },
+              "totalCapacity": {
+                "type": "number",
+                "example": 41600
+              },
+              "totalOccupied": {
+                "type": "number",
+                "example": 5200
+              },
+              "occupancyRate": {
+                "type": "integer",
+                "example": 13
+              }
+            }
+          },
+          "addresses": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WarehouseAddress"
+            }
+          }
+        }
+      },
+      "InventoryReport": {
+        "type": "object",
+        "properties": {
+          "summary": {
+            "type": "object",
+            "properties": {
+              "total": {
+                "type": "integer",
+                "example": 5
+              },
+              "completed": {
+                "type": "integer",
+                "example": 2
+              },
+              "in_progress": {
+                "type": "integer",
+                "example": 1
+              },
+              "planned": {
+                "type": "integer",
+                "example": 1
+              },
+              "totalDivergences": {
+                "type": "integer",
+                "example": 4
+              },
+              "avgAccuracy": {
+                "type": "number",
+                "nullable": true,
+                "example": 99.1
+              }
+            }
+          },
+          "counts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InventoryCount"
+            }
+          }
+        }
+      },
+      "SupplierReport": {
+        "type": "object",
+        "properties": {
+          "period": {
+            "type": "object",
+            "properties": {
+              "from": {
+                "type": "string",
+                "nullable": true
+              },
+              "to": {
+                "type": "string",
+                "nullable": true
+              }
+            }
+          },
+          "summary": {
+            "type": "object",
+            "properties": {
+              "totalSuppliers": {
+                "type": "integer",
+                "example": 6
+              },
+              "totalEntries": {
+                "type": "integer",
+                "example": 120
+              },
+              "totalValue": {
+                "type": "number",
+                "example": 540000
+              }
+            }
+          },
+          "suppliers": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "supplier": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "example": "cmq1x2y3z0001abcd"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "tradeName": {
+                      "type": "string"
+                    },
+                    "cnpj": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "active",
+                        "inactive"
+                      ],
+                      "example": "active"
+                    }
+                  }
+                },
+                "entryCount": {
+                  "type": "integer"
+                },
+                "totalQuantity": {
+                  "type": "integer"
+                },
+                "totalValue": {
+                  "type": "number"
+                }
+              }
+            }
+          }
+        }
+      },
+      "Company": {
+        "type": "object",
+        "properties": {
+          "legalName": {
+            "type": "string",
+            "example": "StockIQ Sistemas de Gestão Ltda"
+          },
+          "tradeName": {
+            "type": "string",
+            "example": "StockIQ"
+          },
+          "cnpj": {
+            "type": "string",
+            "example": "12.345.678/0001-99"
+          },
+          "email": {
+            "type": "string",
+            "example": "contato@stockiq.com.br"
+          },
+          "phone": {
+            "type": "string",
+            "example": "(11) 3456-7890"
+          },
+          "website": {
+            "type": "string",
+            "example": "https://stockiq.com.br"
+          },
+          "address": {
+            "type": "string",
+            "example": "Av. Paulista, 1000"
+          },
+          "zip": {
+            "type": "string",
+            "example": "01310-100"
+          },
+          "city": {
+            "type": "string",
+            "example": "São Paulo"
+          },
+          "state": {
+            "type": "string",
+            "example": "SP"
+          }
+        }
+      },
+      "Preferences": {
+        "type": "object",
+        "properties": {
+          "expiryAlertDays": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 365,
+            "example": 30,
+            "description": "Lots expiring within this window are flagged and alert."
+          }
+        }
+      },
+      "Settings": {
+        "type": "object",
+        "properties": {
+          "company": {
+            "$ref": "#/components/schemas/Company"
+          },
+          "preferences": {
+            "$ref": "#/components/schemas/Preferences"
+          }
+        }
+      },
+      "UpdateSettingsRequest": {
+        "type": "object",
+        "properties": {
+          "company": {
+            "$ref": "#/components/schemas/Company",
+            "description": "Partial update"
+          },
+          "preferences": {
+            "$ref": "#/components/schemas/Preferences",
+            "description": "Partial update"
+          }
+        }
+      },
+      "UpdateProfileRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Maria Souza"
+          },
+          "department": {
+            "type": "string",
+            "example": "Logística"
+          },
+          "avatarUrl": {
+            "type": "string",
+            "format": "uri"
+          }
+        }
+      },
+      "ResetPasswordRequest": {
+        "type": "object",
+        "properties": {
+          "newPassword": {
+            "type": "string",
+            "minLength": 6
+          }
+        },
+        "required": [
+          "newPassword"
+        ]
+      },
+      "AnalyticsOverview": {
+        "type": "object",
+        "properties": {
+          "window": {
+            "type": "object",
+            "properties": {
+              "historyMonths": {
+                "type": "integer",
+                "example": 6
+              },
+              "forecastMonths": {
+                "type": "integer",
+                "example": 3
+              }
+            }
+          },
+          "demand": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "month": {
+                  "type": "string",
+                  "example": "Out"
+                },
+                "real": {
+                  "type": "integer",
+                  "nullable": true,
+                  "example": 420
+                },
+                "forecast": {
+                  "type": "integer",
+                  "example": 440
+                }
+              }
+            }
+          },
+          "matrix": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "productId": {
+                  "type": "string",
+                  "example": "cmq1x2y3z0001abcd"
+                },
+                "product": {
+                  "type": "string"
+                },
+                "code": {
+                  "type": "string"
+                },
+                "abc": {
+                  "type": "string",
+                  "enum": [
+                    "A",
+                    "B",
+                    "C"
+                  ],
+                  "example": "A"
+                },
+                "xyz": {
+                  "type": "string",
+                  "enum": [
+                    "X",
+                    "Y",
+                    "Z"
+                  ],
+                  "example": "X"
+                },
+                "turnover": {
+                  "type": "number",
+                  "example": 6.4
+                },
+                "valueShare": {
+                  "type": "number",
+                  "example": 12.5
+                }
+              }
+            }
+          },
+          "suggestions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "productId": {
+                  "type": "string",
+                  "example": "cmq1x2y3z0001abcd"
+                },
+                "product": {
+                  "type": "string"
+                },
+                "code": {
+                  "type": "string"
+                },
+                "category": {
+                  "type": "string"
+                },
+                "currentStock": {
+                  "type": "integer"
+                },
+                "daysOfCover": {
+                  "type": "integer",
+                  "nullable": true
+                },
+                "quantity": {
+                  "type": "integer"
+                },
+                "urgency": {
+                  "type": "string",
+                  "enum": [
+                    "Urgente",
+                    "Alta",
+                    "Média"
+                  ],
+                  "example": "Urgente"
+                },
+                "reason": {
+                  "type": "string"
+                },
+                "estimatedCost": {
+                  "type": "number"
+                }
+              }
+            }
+          },
+          "insights": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "warning",
+                    "success",
+                    "info"
+                  ],
+                  "example": "warning"
+                },
+                "title": {
+                  "type": "string"
+                },
+                "desc": {
+                  "type": "string"
+                },
+                "action": {
+                  "type": "string"
+                },
+                "href": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "PaginatedUser": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/User"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "example": 42
+          },
+          "page": {
+            "type": "integer",
+            "example": 1
+          },
+          "limit": {
+            "type": "integer",
+            "example": 20
+          },
+          "totalPages": {
+            "type": "integer",
+            "example": 3
+          }
+        }
+      },
+      "PaginatedProduct": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Product"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "example": 42
+          },
+          "page": {
+            "type": "integer",
+            "example": 1
+          },
+          "limit": {
+            "type": "integer",
+            "example": 20
+          },
+          "totalPages": {
+            "type": "integer",
+            "example": 3
+          }
+        }
+      },
+      "PaginatedSupplier": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Supplier"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "example": 42
+          },
+          "page": {
+            "type": "integer",
+            "example": 1
+          },
+          "limit": {
+            "type": "integer",
+            "example": 20
+          },
+          "totalPages": {
+            "type": "integer",
+            "example": 3
+          }
+        }
+      },
+      "PaginatedCustomer": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Customer"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "example": 42
+          },
+          "page": {
+            "type": "integer",
+            "example": 1
+          },
+          "limit": {
+            "type": "integer",
+            "example": 20
+          },
+          "totalPages": {
+            "type": "integer",
+            "example": 3
+          }
+        }
+      },
+      "PaginatedWarehouseAddress": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WarehouseAddress"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "example": 42
+          },
+          "page": {
+            "type": "integer",
+            "example": 1
+          },
+          "limit": {
+            "type": "integer",
+            "example": 20
+          },
+          "totalPages": {
+            "type": "integer",
+            "example": 3
+          }
+        }
+      },
+      "PaginatedMovement": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Movement"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "example": 42
+          },
+          "page": {
+            "type": "integer",
+            "example": 1
+          },
+          "limit": {
+            "type": "integer",
+            "example": 20
+          },
+          "totalPages": {
+            "type": "integer",
+            "example": 3
+          }
+        }
+      },
+      "PaginatedLot": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Lot"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "example": 42
+          },
+          "page": {
+            "type": "integer",
+            "example": 1
+          },
+          "limit": {
+            "type": "integer",
+            "example": 20
+          },
+          "totalPages": {
+            "type": "integer",
+            "example": 3
+          }
+        }
+      },
+      "PaginatedInventoryCount": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InventoryCount"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "example": 42
+          },
+          "page": {
+            "type": "integer",
+            "example": 1
+          },
+          "limit": {
+            "type": "integer",
+            "example": 20
+          },
+          "totalPages": {
+            "type": "integer",
+            "example": 3
+          }
+        }
+      },
+      "PaginatedAuditLog": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AuditLog"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "example": 42
+          },
+          "page": {
+            "type": "integer",
+            "example": 1
+          },
+          "limit": {
+            "type": "integer",
+            "example": 20
+          },
+          "totalPages": {
+            "type": "integer",
+            "example": 3
+          }
+        }
+      }
+    },
+    "responses": {
+      "Unauthorized": {
+        "description": "Token ausente, inválido ou expirado",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "Forbidden": {
+        "description": "Perfil sem permissão para esta operação",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "Registro não encontrado",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "Conflict": {
+        "description": "Conflito (valor único já existente ou registro vinculado)",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "ValidationError": {
+        "description": "Erro de validação do corpo/parâmetros",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ValidationError"
+            }
+          }
+        }
+      },
+      "TooManyRequests": {
+        "description": "Limite de requisições excedido",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
           }
         }
       }
@@ -59,6 +3396,67 @@
     }
   ],
   "paths": {
+    "/api/settings": {
+      "get": {
+        "summary": "Get company data and system preferences",
+        "tags": [
+          "Settings"
+        ],
+        "responses": {
+          "200": {
+            "description": "Current settings (defaults are returned for values never saved)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Settings"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      },
+      "put": {
+        "summary": "Update company data and/or preferences",
+        "description": "Partial update, `company` and `preferences` are merged with the stored values.\n\n**Perfis permitidos:** admin.",
+        "tags": [
+          "Settings"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSettingsRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated settings",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Settings"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          }
+        }
+      }
+    },
     "/api/reports/movements": {
       "get": {
         "summary": "Movement report grouped by type and product",
@@ -85,7 +3483,20 @@
         ],
         "responses": {
           "200": {
-            "description": "Movement totals by type and top products"
+            "description": "Movement totals by type and top products",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MovementReport"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
           }
         }
       }
@@ -98,7 +3509,17 @@
         ],
         "responses": {
           "200": {
-            "description": "All active products with stock status, purchase and sale values"
+            "description": "All active products with stock status, purchase and sale values",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StockReport"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       }
@@ -122,7 +3543,20 @@
         ],
         "responses": {
           "200": {
-            "description": "Expired, expiring soon, valid, and quarantine lots"
+            "description": "Expired, expiring soon, valid, and quarantine lots",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotExpirationReport"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
           }
         }
       }
@@ -135,7 +3569,17 @@
         ],
         "responses": {
           "200": {
-            "description": "Addresses grouped by status with capacity and occupancy rate"
+            "description": "Addresses grouped by status with capacity and occupancy rate",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WarehouseReport"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       }
@@ -148,7 +3592,17 @@
         ],
         "responses": {
           "200": {
-            "description": "Products classified into A, B, C with summary"
+            "description": "Products classified into A, B, C with summary",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AbcCurve"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       }
@@ -161,7 +3615,17 @@
         ],
         "responses": {
           "200": {
-            "description": "All inventory counts with summary statistics"
+            "description": "All inventory counts with summary statistics",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryReport"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       }
@@ -192,7 +3656,20 @@
         ],
         "responses": {
           "200": {
-            "description": "Purchase totals grouped by supplier"
+            "description": "Purchase totals grouped by supplier",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupplierReport"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
           }
         }
       }
@@ -242,7 +3719,20 @@
         ],
         "responses": {
           "200": {
-            "description": "Paginated list of customers"
+            "description": "Paginated list of customers",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedCustomer"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
           }
         }
       },
@@ -304,9 +3794,29 @@
         },
         "responses": {
           "201": {
-            "description": "Customer created"
+            "description": "Customer created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Customer"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
           }
-        }
+        },
+        "description": "**Perfis permitidos:** admin, supervisor."
       }
     },
     "/api/customers/{id}": {
@@ -327,10 +3837,20 @@
         ],
         "responses": {
           "200": {
-            "description": "Customer data"
+            "description": "Customer data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Customer"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           },
           "404": {
-            "description": "Not found"
+            "$ref": "#/components/responses/NotFound"
           }
         }
       },
@@ -351,9 +3871,43 @@
         ],
         "responses": {
           "200": {
-            "description": "Customer updated"
+            "description": "Customer updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Customer"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
           }
-        }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CustomerRequest"
+              }
+            }
+          },
+          "description": "Todos os campos são opcionais na atualização parcial."
+        },
+        "description": "**Perfis permitidos:** admin, supervisor."
       },
       "delete": {
         "summary": "Delete a customer",
@@ -373,8 +3927,18 @@
         "responses": {
           "204": {
             "description": "Customer deleted"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
           }
-        }
+        },
+        "description": "**Perfis permitidos:** admin."
       }
     },
     "/api/audit": {
@@ -417,6 +3981,21 @@
           },
           {
             "in": "query",
+            "name": "action",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "search",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Search by user, action, entity or record name"
+          },
+          {
+            "in": "query",
             "name": "from",
             "schema": {
               "type": "string",
@@ -434,9 +4013,26 @@
         ],
         "responses": {
           "200": {
-            "description": "Paginated audit logs"
+            "description": "Paginated audit logs",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedAuditLog"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
           }
-        }
+        },
+        "description": "**Perfis permitidos:** admin, supervisor."
       }
     },
     "/api/audit/{id}": {
@@ -457,10 +4053,73 @@
         ],
         "responses": {
           "200": {
-            "description": "Audit log entry"
+            "description": "Audit log entry",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuditLog"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
           },
           "404": {
-            "description": "Not found"
+            "$ref": "#/components/responses/NotFound"
+          }
+        },
+        "description": "**Perfis permitidos:** admin, supervisor."
+      }
+    },
+    "/api/analytics": {
+      "get": {
+        "summary": "Analytics overview (forecast, ABC×XYZ matrix, purchase suggestions, insights)",
+        "description": "Computed on demand from the movement history. Forecast uses a least-squares linear trend over monthly exits; XYZ uses the coefficient of variation of monthly demand.\n",
+        "tags": [
+          "Analytics"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "historyMonths",
+            "schema": {
+              "type": "integer",
+              "minimum": 3,
+              "maximum": 24,
+              "default": 6
+            }
+          },
+          {
+            "in": "query",
+            "name": "forecastMonths",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 6,
+              "default": 3
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Analytics overview",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnalyticsOverview"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
           }
         }
       }
@@ -484,7 +4143,20 @@
         ],
         "responses": {
           "200": {
-            "description": "Combined alert list with unread count"
+            "description": "Combined alert list with unread count",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
           }
         }
       }
@@ -497,7 +4169,17 @@
         ],
         "responses": {
           "200": {
-            "description": "Stock alerts grouped by severity"
+            "description": "Stock alerts grouped by severity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StockAlerts"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       }
@@ -521,7 +4203,23 @@
         ],
         "responses": {
           "200": {
-            "description": "Lots expiring within the given window"
+            "description": "Lots expiring within the given window",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Lot"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
           }
         }
       }
@@ -555,7 +4253,20 @@
         },
         "responses": {
           "200": {
-            "description": "Number of alerts marked as read"
+            "description": "Number of alerts marked as read",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MarkAllReadResult"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
           }
         }
       }
@@ -580,6 +4291,9 @@
         "responses": {
           "200": {
             "description": "Alert marked as read"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       }
@@ -630,7 +4344,20 @@
         ],
         "responses": {
           "200": {
-            "description": "Paginated list of addresses"
+            "description": "Paginated list of addresses",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedWarehouseAddress"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
           }
         }
       },
@@ -692,12 +4419,29 @@
         },
         "responses": {
           "201": {
-            "description": "Address created"
+            "description": "Address created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WarehouseAddress"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
           },
           "409": {
-            "description": "Code already in use"
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
           }
-        }
+        },
+        "description": "**Perfis permitidos:** admin, supervisor."
       }
     },
     "/api/warehouse/stats": {
@@ -708,7 +4452,17 @@
         ],
         "responses": {
           "200": {
-            "description": "Warehouse stats"
+            "description": "Warehouse stats",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WarehouseStats"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       }
@@ -731,10 +4485,20 @@
         ],
         "responses": {
           "200": {
-            "description": "Address found"
+            "description": "Address found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WarehouseAddress"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           },
           "404": {
-            "description": "Address not found"
+            "$ref": "#/components/responses/NotFound"
           }
         }
       },
@@ -761,13 +4525,37 @@
                 "type": "object"
               }
             }
-          }
+          },
+          "description": "Todos os campos são opcionais na atualização parcial."
         },
         "responses": {
           "200": {
-            "description": "Address updated"
+            "description": "Address updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WarehouseAddress"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
           }
-        }
+        },
+        "description": "**Perfis permitidos:** admin, supervisor."
       },
       "delete": {
         "summary": "Delete a warehouse address",
@@ -789,9 +4577,29 @@
             "description": "Address deleted"
           },
           "400": {
-            "description": "Cannot delete occupied address"
+            "description": "Cannot delete occupied address",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
           }
-        }
+        },
+        "description": "**Perfis permitidos:** admin."
       }
     },
     "/api/users": {
@@ -827,12 +4635,26 @@
         ],
         "responses": {
           "200": {
-            "description": "Paginated list of users"
+            "description": "Paginated list of users",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedUser"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
           }
         }
       },
       "post": {
         "summary": "Create a new user",
+        "description": "Supervisors can create operators and viewers; only admins can assign elevated roles.\n\n**Perfis permitidos:** admin, supervisor.",
         "tags": [
           "Users"
         ],
@@ -879,10 +4701,26 @@
         },
         "responses": {
           "201": {
-            "description": "User created"
+            "description": "User created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
           },
           "409": {
-            "description": "Email already in use"
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
           }
         }
       }
@@ -905,15 +4743,26 @@
         ],
         "responses": {
           "200": {
-            "description": "User found"
+            "description": "User found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           },
           "404": {
-            "description": "User not found"
+            "$ref": "#/components/responses/NotFound"
           }
         }
       },
       "patch": {
         "summary": "Update a user",
+        "description": "Supervisors can update profile fields; only admins can change a user's role.\n\n**Perfis permitidos:** admin, supervisor.",
         "tags": [
           "Users"
         ],
@@ -956,10 +4805,26 @@
         },
         "responses": {
           "200": {
-            "description": "User updated"
+            "description": "User updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
           },
           "404": {
-            "description": "User not found"
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
           }
         }
       },
@@ -982,10 +4847,17 @@
           "204": {
             "description": "User deleted"
           },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
           "404": {
-            "description": "User not found"
+            "$ref": "#/components/responses/NotFound"
           }
-        }
+        },
+        "description": "**Perfis permitidos:** admin."
       }
     },
     "/api/users/{id}/status": {
@@ -1029,9 +4901,75 @@
         },
         "responses": {
           "200": {
-            "description": "Status updated"
+            "description": "Status updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
           }
-        }
+        },
+        "description": "**Perfis permitidos:** admin."
+      }
+    },
+    "/api/users/{id}/password": {
+      "patch": {
+        "summary": "Reset a user's password (admin)",
+        "tags": [
+          "Users"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Password reset"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResetPasswordRequest"
+              }
+            }
+          }
+        },
+        "description": "**Perfis permitidos:** admin."
       }
     },
     "/api/suppliers": {
@@ -1067,7 +5005,20 @@
         ],
         "responses": {
           "200": {
-            "description": "Paginated list of suppliers"
+            "description": "Paginated list of suppliers",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedSupplier"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
           }
         }
       },
@@ -1131,12 +5082,29 @@
         },
         "responses": {
           "201": {
-            "description": "Supplier created"
+            "description": "Supplier created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Supplier"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
           },
           "409": {
-            "description": "CNPJ already in use"
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
           }
-        }
+        },
+        "description": "**Perfis permitidos:** admin, supervisor."
       }
     },
     "/api/suppliers/{id}": {
@@ -1157,10 +5125,20 @@
         ],
         "responses": {
           "200": {
-            "description": "Supplier found"
+            "description": "Supplier found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Supplier"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           },
           "404": {
-            "description": "Supplier not found"
+            "$ref": "#/components/responses/NotFound"
           }
         }
       },
@@ -1187,13 +5165,37 @@
                 "type": "object"
               }
             }
-          }
+          },
+          "description": "Todos os campos são opcionais na atualização parcial."
         },
         "responses": {
           "200": {
-            "description": "Supplier updated"
+            "description": "Supplier updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Supplier"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
           }
-        }
+        },
+        "description": "**Perfis permitidos:** admin, supervisor."
       },
       "delete": {
         "summary": "Delete a supplier",
@@ -1215,9 +5217,29 @@
             "description": "Supplier deleted"
           },
           "400": {
-            "description": "Cannot delete supplier with products"
+            "description": "Cannot delete supplier with products",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
           }
-        }
+        },
+        "description": "**Perfis permitidos:** admin."
       }
     },
     "/api/products": {
@@ -1292,7 +5314,20 @@
         ],
         "responses": {
           "200": {
-            "description": "Paginated list of products"
+            "description": "Paginated list of products",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedProduct"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
           }
         }
       },
@@ -1371,12 +5406,29 @@
         },
         "responses": {
           "201": {
-            "description": "Product created"
+            "description": "Product created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Product"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
           },
           "409": {
-            "description": "SKU or barcode already in use"
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
           }
-        }
+        },
+        "description": "**Perfis permitidos:** admin, supervisor."
       }
     },
     "/api/products/{id}": {
@@ -1397,10 +5449,20 @@
         ],
         "responses": {
           "200": {
-            "description": "Product found"
+            "description": "Product found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Product"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           },
           "404": {
-            "description": "Product not found"
+            "$ref": "#/components/responses/NotFound"
           }
         }
       },
@@ -1427,16 +5489,37 @@
                 "type": "object"
               }
             }
-          }
+          },
+          "description": "Todos os campos são opcionais na atualização parcial."
         },
         "responses": {
           "200": {
-            "description": "Product updated"
+            "description": "Product updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Product"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
           },
           "404": {
-            "description": "Product not found"
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
           }
-        }
+        },
+        "description": "**Perfis permitidos:** admin, supervisor."
       },
       "delete": {
         "summary": "Delete a product",
@@ -1457,10 +5540,17 @@
           "204": {
             "description": "Product deleted"
           },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
           "404": {
-            "description": "Product not found"
+            "$ref": "#/components/responses/NotFound"
           }
-        }
+        },
+        "description": "**Perfis permitidos:** admin."
       }
     },
     "/api/products/scan/{code}": {
@@ -1482,10 +5572,20 @@
         ],
         "responses": {
           "200": {
-            "description": "Product found with warehouse addresses and active lots"
+            "description": "Product found with warehouse addresses and active lots",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductScan"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           },
           "404": {
-            "description": "No product found for this code"
+            "$ref": "#/components/responses/NotFound"
           }
         }
       }
@@ -1518,15 +5618,9 @@
             "name": "type",
             "schema": {
               "type": "string",
-              "enum": [
-                "entry",
-                "exit",
-                "transfer",
-                "loss",
-                "adjustment",
-                "inventory"
-              ]
-            }
+              "example": "exit,loss"
+            },
+            "description": "One movement type or a comma-separated list (entry, exit, transfer, loss, adjustment, inventory)"
           },
           {
             "in": "query",
@@ -1534,6 +5628,14 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "in": "query",
+            "name": "search",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Matches product name/code, operator, invoice, lot or customer"
           },
           {
             "in": "query",
@@ -1554,12 +5656,26 @@
         ],
         "responses": {
           "200": {
-            "description": "Paginated list of movements"
+            "description": "Paginated list of movements",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedMovement"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
           }
         }
       },
       "post": {
         "summary": "Register a stock movement",
+        "description": "Available to admins, supervisors, and operators. Viewers are read-only.\n\n**Perfis permitidos:** admin, supervisor, operator.",
         "tags": [
           "Movements"
         ],
@@ -1616,10 +5732,36 @@
         },
         "responses": {
           "201": {
-            "description": "Movement registered"
+            "description": "Movement registered",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Movement"
+                }
+              }
+            }
           },
           "400": {
-            "description": "Insufficient stock"
+            "description": "Insufficient stock",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
           }
         }
       }
@@ -1642,10 +5784,20 @@
         ],
         "responses": {
           "200": {
-            "description": "Movement found"
+            "description": "Movement found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Movement"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           },
           "404": {
-            "description": "Movement not found"
+            "$ref": "#/components/responses/NotFound"
           }
         }
       }
@@ -1689,7 +5841,20 @@
         ],
         "responses": {
           "200": {
-            "description": "List of lots"
+            "description": "List of lots",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedLot"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
           }
         }
       },
@@ -1753,12 +5918,29 @@
         },
         "responses": {
           "201": {
-            "description": "Lot created"
+            "description": "Lot created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Lot"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
           },
           "409": {
-            "description": "Lot number already exists"
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
           }
-        }
+        },
+        "description": "**Perfis permitidos:** admin, supervisor, operator."
       }
     },
     "/api/lots/alerts": {
@@ -1779,7 +5961,23 @@
         ],
         "responses": {
           "200": {
-            "description": "Lots expiring soon"
+            "description": "Lots expiring soon",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Lot"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
           }
         }
       }
@@ -1802,10 +6000,20 @@
         ],
         "responses": {
           "200": {
-            "description": "Lot found"
+            "description": "Lot found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Lot"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           },
           "404": {
-            "description": "Lot not found"
+            "$ref": "#/components/responses/NotFound"
           }
         }
       },
@@ -1846,13 +6054,65 @@
                 }
               }
             }
-          }
+          },
+          "description": "Todos os campos são opcionais na atualização parcial."
         },
         "responses": {
           "200": {
-            "description": "Lot updated"
+            "description": "Lot updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Lot"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
           }
-        }
+        },
+        "description": "**Perfis permitidos:** admin, supervisor."
+      },
+      "delete": {
+        "summary": "Delete a lot",
+        "tags": [
+          "Lots"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Lot deleted"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        },
+        "description": "**Perfis permitidos:** admin."
       }
     },
     "/api/inventory": {
@@ -1878,7 +6138,20 @@
         ],
         "responses": {
           "200": {
-            "description": "List of inventory counts"
+            "description": "List of inventory counts",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedInventoryCount"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
           }
         }
       },
@@ -1925,9 +6198,29 @@
         },
         "responses": {
           "201": {
-            "description": "Inventory count created"
+            "description": "Inventory count created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryCount"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
           }
-        }
+        },
+        "description": "**Perfis permitidos:** admin, supervisor."
       }
     },
     "/api/inventory/{id}": {
@@ -1948,10 +6241,20 @@
         ],
         "responses": {
           "200": {
-            "description": "Inventory count found"
+            "description": "Inventory count found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryCountDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           },
           "404": {
-            "description": "Not found"
+            "$ref": "#/components/responses/NotFound"
           }
         }
       },
@@ -2003,9 +6306,32 @@
         },
         "responses": {
           "200": {
-            "description": "Updated"
+            "description": "Updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryCount"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
           }
-        }
+        },
+        "description": "**Perfis permitidos:** admin, supervisor, operator."
       },
       "delete": {
         "summary": "Delete a planned inventory count",
@@ -2027,7 +6353,91 @@
             "description": "Deleted"
           },
           "400": {
-            "description": "Only planned counts can be deleted"
+            "description": "Only planned counts can be deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          }
+        },
+        "description": "**Perfis permitidos:** admin."
+      }
+    },
+    "/api/inventory/{id}/items/{itemId}/count": {
+      "post": {
+        "summary": "Record the counted quantity of an inventory item",
+        "description": "Only allowed while the inventory is in progress; updates the item discrepancy and the inventory totals.\n\n**Perfis permitidos:** admin, supervisor, operator.",
+        "tags": [
+          "Inventory"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "itemId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Updated item",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryCountItem"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CountInventoryItemRequest"
+              }
+            }
           }
         }
       }
@@ -2040,7 +6450,17 @@
         ],
         "responses": {
           "200": {
-            "description": "Summary with products, movements, users, warehouse stats and stock value"
+            "description": "Summary with products, movements, users, warehouse stats and stock value",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardSummary"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       }
@@ -2064,7 +6484,23 @@
         ],
         "responses": {
           "200": {
-            "description": "Array of monthly { month, entries, exits, balance }"
+            "description": "Array of monthly { month, entries, exits, balance }",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MovementTrendPoint"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
           }
         }
       }
@@ -2077,7 +6513,20 @@
         ],
         "responses": {
           "200": {
-            "description": "Categories with product count, percentage and stock value"
+            "description": "Categories with product count, percentage and stock value",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CategoryDistributionItem"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       }
@@ -2100,7 +6549,23 @@
         ],
         "responses": {
           "200": {
-            "description": "Products ranked by number of movements"
+            "description": "Products ranked by number of movements",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TopProduct"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
           }
         }
       }
@@ -2113,7 +6578,57 @@
         ],
         "responses": {
           "200": {
-            "description": "Products classified into A, B and C by revenue contribution"
+            "description": "Products classified into A, B and C by revenue contribution",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AbcCurve"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/dashboard/heatmap": {
+      "get": {
+        "summary": "Movement volume by weekday and hour",
+        "tags": [
+          "Dashboard"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "days",
+            "schema": {
+              "type": "integer",
+              "default": 90
+            },
+            "description": "How many days back to aggregate"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Array of { day (0=Sunday), hour, value }",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/HeatmapCell"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
           }
         }
       }
@@ -2126,7 +6641,20 @@
         ],
         "responses": {
           "200": {
-            "description": "List of categories with product count"
+            "description": "List of categories with product count",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Category"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       },
@@ -2163,12 +6691,29 @@
         },
         "responses": {
           "201": {
-            "description": "Category created"
+            "description": "Category created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Category"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
           },
           "409": {
-            "description": "Slug already in use"
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
           }
-        }
+        },
+        "description": "**Perfis permitidos:** admin, supervisor."
       }
     },
     "/api/categories/{id}": {
@@ -2189,10 +6734,20 @@
         ],
         "responses": {
           "200": {
-            "description": "Category found"
+            "description": "Category found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Category"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           },
           "404": {
-            "description": "Category not found"
+            "$ref": "#/components/responses/NotFound"
           }
         }
       },
@@ -2230,13 +6785,37 @@
                 }
               }
             }
-          }
+          },
+          "description": "Todos os campos são opcionais na atualização parcial."
         },
         "responses": {
           "200": {
-            "description": "Category updated"
+            "description": "Category updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Category"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
           }
-        }
+        },
+        "description": "**Perfis permitidos:** admin, supervisor."
       },
       "delete": {
         "summary": "Delete a category",
@@ -2258,9 +6837,29 @@
             "description": "Category deleted"
           },
           "400": {
-            "description": "Cannot delete category with products"
+            "description": "Cannot delete category with products",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
           }
-        }
+        },
+        "description": "**Perfis permitidos:** admin."
       }
     },
     "/api/brands": {
@@ -2271,7 +6870,20 @@
         ],
         "responses": {
           "200": {
-            "description": "List of brands with product count"
+            "description": "List of brands with product count",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Brand"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       },
@@ -2308,12 +6920,29 @@
         },
         "responses": {
           "201": {
-            "description": "Brand created"
+            "description": "Brand created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Brand"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
           },
           "409": {
-            "description": "Slug already in use"
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
           }
-        }
+        },
+        "description": "**Perfis permitidos:** admin, supervisor."
       }
     },
     "/api/brands/{id}": {
@@ -2334,10 +6963,20 @@
         ],
         "responses": {
           "200": {
-            "description": "Brand found"
+            "description": "Brand found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Brand"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           },
           "404": {
-            "description": "Brand not found"
+            "$ref": "#/components/responses/NotFound"
           }
         }
       },
@@ -2364,16 +7003,37 @@
                 "type": "object"
               }
             }
-          }
+          },
+          "description": "Todos os campos são opcionais na atualização parcial."
         },
         "responses": {
           "200": {
-            "description": "Brand updated"
+            "description": "Brand updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Brand"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
           },
           "404": {
-            "description": "Brand not found"
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
           }
-        }
+        },
+        "description": "**Perfis permitidos:** admin, supervisor."
       },
       "delete": {
         "summary": "Delete a brand",
@@ -2395,12 +7055,29 @@
             "description": "Brand deleted"
           },
           "400": {
-            "description": "Cannot delete brand with products"
+            "description": "Cannot delete brand with products",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
           },
           "404": {
-            "description": "Brand not found"
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
           }
-        }
+        },
+        "description": "**Perfis permitidos:** admin."
       }
     },
     "/api/auth/register": {
@@ -2434,15 +7111,6 @@
                     "type": "string",
                     "minLength": 6
                   },
-                  "role": {
-                    "type": "string",
-                    "enum": [
-                      "admin",
-                      "supervisor",
-                      "operator",
-                      "viewer"
-                    ]
-                  },
                   "department": {
                     "type": "string"
                   }
@@ -2453,13 +7121,23 @@
         },
         "responses": {
           "201": {
-            "description": "User created"
+            "description": "User created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResult"
+                }
+              }
+            }
           },
           "409": {
-            "description": "Email already in use"
+            "$ref": "#/components/responses/Conflict"
           },
           "422": {
-            "$ref": "#/components/schemas/Error"
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
           }
         }
       }
@@ -2498,8 +7176,24 @@
           "200": {
             "description": "Login successful, returns token"
           },
+          "201": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResult"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Invalid credentials"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
           }
         }
       }
@@ -2512,10 +7206,17 @@
         ],
         "responses": {
           "200": {
-            "description": "Current user payload from JWT"
+            "description": "Current user payload from JWT",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JwtPayload"
+                }
+              }
+            }
           },
           "401": {
-            "description": "Unauthorized"
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       }
@@ -2528,10 +7229,51 @@
         ],
         "responses": {
           "200": {
-            "description": "Full user profile from database"
+            "description": "Full user profile from database",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
           },
           "401": {
-            "description": "Unauthorized"
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update the authenticated user's own profile (name, department, avatar)",
+        "tags": [
+          "Auth"
+        ],
+        "responses": {
+          "200": {
+            "description": "Updated profile",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProfileRequest"
+              }
+            }
           }
         }
       }
@@ -2570,72 +7312,13 @@
             "description": "Password changed"
           },
           "401": {
-            "description": "Current password incorrect"
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
           }
         }
       }
     }
-  },
-  "tags": [
-    {
-      "name": "Reports",
-      "description": "Analytical reports for inventory, movements, lots and warehouse"
-    },
-    {
-      "name": "Customers",
-      "description": "Customer management"
-    },
-    {
-      "name": "Audit",
-      "description": "Audit log (admin only)"
-    },
-    {
-      "name": "Alerts",
-      "description": "Stock and expiration alerts"
-    },
-    {
-      "name": "Warehouse",
-      "description": "Warehouse address management"
-    },
-    {
-      "name": "Users",
-      "description": "User management"
-    },
-    {
-      "name": "Suppliers",
-      "description": "Supplier management"
-    },
-    {
-      "name": "Products",
-      "description": "Product management"
-    },
-    {
-      "name": "Movements",
-      "description": "Stock movement management"
-    },
-    {
-      "name": "Lots",
-      "description": "Lot and batch management"
-    },
-    {
-      "name": "Inventory",
-      "description": "Inventory count management"
-    },
-    {
-      "name": "Dashboard",
-      "description": "Dashboard and analytics data"
-    },
-    {
-      "name": "Categories",
-      "description": "Product category management"
-    },
-    {
-      "name": "Brands",
-      "description": "Brand management"
-    },
-    {
-      "name": "Auth",
-      "description": "Authentication endpoints"
-    }
-  ]
+  }
 }

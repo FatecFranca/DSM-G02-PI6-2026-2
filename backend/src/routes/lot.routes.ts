@@ -14,5 +14,6 @@ router.get('/', validateQuery(lotQuerySchema), ctrl.list)
 router.get('/:id', ctrl.getById)
 router.post('/', authorize('admin', 'supervisor', 'operator'), validate(createLotSchema), audit('Lot', 'CREATE'), ctrl.create)
 router.patch('/:id', authorize('admin', 'supervisor'), validate(updateLotSchema), audit('Lot', 'UPDATE'), ctrl.update)
+router.delete('/:id', authorize('admin'), audit('Lot', 'DELETE'), ctrl.remove)
 
 export default router

@@ -120,3 +120,27 @@ export async function abcCurve(_req: Request, res: Response, next: NextFunction)
     next(err)
   }
 }
+
+/**
+ * @swagger
+ * /api/dashboard/heatmap:
+ *   get:
+ *     summary: Movement volume by weekday and hour
+ *     tags: [Dashboard]
+ *     parameters:
+ *       - in: query
+ *         name: days
+ *         schema: { type: integer, default: 90 }
+ *         description: How many days back to aggregate
+ *     responses:
+ *       200:
+ *         description: Array of { day (0=Sunday), hour, value }
+ */
+export async function heatmap(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const days = req.query.days ? Number(req.query.days) : 90
+    res.json(await dashboardService.getHeatmap(days))
+  } catch (err) {
+    next(err)
+  }
+}

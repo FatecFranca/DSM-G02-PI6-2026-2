@@ -85,3 +85,14 @@ function signToken(userId: string, email: string, role: string): string {
     { expiresIn: (process.env.JWT_EXPIRES_IN ?? '7d') as never },
   )
 }
+
+export async function updateProfile(
+  userId: string,
+  data: { name?: string; department?: string; avatarUrl?: string },
+) {
+  return prisma.user.update({
+    where: { id: userId },
+    data,
+    select: { id: true, name: true, email: true, role: true, department: true, status: true, avatarUrl: true, lastLogin: true, createdAt: true, updatedAt: true },
+  })
+}

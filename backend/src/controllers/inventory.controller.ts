@@ -125,6 +125,26 @@ export async function update(req: Request, res: Response, next: NextFunction): P
   }
 }
 
+/**
+ * @swagger
+ * /api/inventory/{id}/items/{itemId}/count:
+ *   post:
+ *     summary: Record the counted quantity of an inventory item
+ *     description: Only allowed while the inventory is in progress; updates the item discrepancy and the inventory totals.
+ *     tags: [Inventory]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *       - in: path
+ *         name: itemId
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Updated item
+ */
 export async function recordItemCount(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     res.json(await inventoryService.recordItemCount(

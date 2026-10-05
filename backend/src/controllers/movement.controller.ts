@@ -23,10 +23,15 @@ import * as movementService from '../services/movement.service'
  *         schema: { type: integer, default: 20 }
  *       - in: query
  *         name: type
- *         schema: { type: string, enum: [entry, exit, transfer, loss, adjustment, inventory] }
+ *         schema: { type: string, example: 'exit,loss' }
+ *         description: One movement type or a comma-separated list (entry, exit, transfer, loss, adjustment, inventory)
  *       - in: query
  *         name: productId
  *         schema: { type: string }
+ *       - in: query
+ *         name: search
+ *         schema: { type: string }
+ *         description: Matches product name/code, operator, invoice, lot or customer
  *       - in: query
  *         name: from
  *         schema: { type: string, format: date-time }

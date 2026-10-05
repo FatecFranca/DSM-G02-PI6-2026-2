@@ -1,9 +1,14 @@
 import { prisma } from '../prisma/client'
 import * as reportService from './report.service'
+import { getExpiryAlertDays } from './settings.service'
+import { syncLotStatuses } from './lot.service'
 
 export async function getSummary() {
+  await syncLotStatuses()
   const todayStart = new Date()
   todayStart.setHours(0, 0, 0, 0)
+  const expiringCutoff = new Date()
+  expiringCutoff.setDate(expiringCutoff.getDate() + (await getExpiryAlertDays()))
 
   const [
     totalProducts,
@@ -14,6 +19,13 @@ export async function getSummary() {
     recentMovements,
     warehouseStats,
     criticalProducts,
+    todayEntries,
+    todayExits,
+    expiringLots,
+    totalLots,
+    validLots,
+    completedCounts,
+    pendingCounts,
   ] = await Promise.all([
     prisma.product.count(),
     prisma.product.count({ where: { status: 'active' } }),
@@ -40,7 +52,36 @@ export async function getSummary() {
         AND "minStock" > 0
         AND "currentStock" <= "minStock"
     `,
+    prisma.movement.aggregate({
+      where: { type: 'entry', createdAt: { gte: todayStart } },
+      _count: { id: true },
+      _sum: { totalValue: true },
+    }),
+    prisma.movement.aggregate({
+      where: { type: 'exit', createdAt: { gte: todayStart } },
+      _count: { id: true },
+      _sum: { totalValue: true },
+    }),
+    prisma.lot.count({
+      where: { expirationDate: { gte: new Date(), lte: expiringCutoff }, status: { not: 'quarantine' } },
+    }),
+    prisma.lot.count(),
+    prisma.lot.count({ where: { expirationDate: { gt: expiringCutoff }, status: { not: 'quarantine' } } }),
+    prisma.inventoryCount.findMany({
+      where: { status: 'completed', totalItems: { gt: 0 } },
+      select: { totalItems: true, divergences: true },
+    }),
+    prisma.inventoryCount.count({ where: { status: { in: ['planned', 'in_progress', 'review'] } } }),
   ])
+
+  const round2 = (n: number) => Math.round(n * 100) / 100
+  const inventoryAccuracy =
+    completedCounts.length > 0
+      ? Math.round(
+          (completedCounts.reduce((acc, c) => acc + ((c.totalItems - c.divergences) / c.totalItems) * 100, 0) /
+            completedCounts.length) * 10,
+        ) / 10
+      : null
 
   const warehouseMap = Object.fromEntries(
     warehouseStats.map((s) => [s.status, s._count.status]),
@@ -62,8 +103,18 @@ export async function getSummary() {
       lowStock: criticalProducts[0]?.count ?? 0,
       outStock: outStockProducts,
     },
-    movements: { today: totalMovementsToday },
+    movements: {
+      today: totalMovementsToday,
+      todayEntries: { count: todayEntries._count.id, value: round2(Number(todayEntries._sum.totalValue ?? 0)) },
+      todayExits: { count: todayExits._count.id, value: round2(Number(todayExits._sum.totalValue ?? 0)) },
+    },
     users: { active: totalUsers },
+    lots: {
+      total: totalLots,
+      expiringSoon: expiringLots,
+      validPercentage: totalLots > 0 ? Math.round((validLots / totalLots) * 100) : 100,
+    },
+    inventory: { pendingCounts, accuracy: inventoryAccuracy },
     warehouse: {
       total: totalPositions,
       free: warehouseMap['free'] ?? 0,
@@ -78,7 +129,11 @@ export async function getSummary() {
       totalPurchaseValue: Math.round(purchaseValue * 100) / 100,
       totalSaleValue: Math.round(saleValue * 100) / 100,
     },
-    recentMovements,
+    recentMovements: recentMovements.map((m) => ({
+      ...m,
+      unitCost: Number(m.unitCost),
+      totalValue: Number(m.totalValue),
+    })),
   }
 }
 
@@ -141,6 +196,12 @@ export async function getCategoryDistribution() {
 }
 
 export async function getTopProducts(limit = 10) {
+  const now = new Date()
+  const d30 = new Date(now)
+  d30.setDate(d30.getDate() - 30)
+  const d60 = new Date(now)
+  d60.setDate(d60.getDate() - 60)
+
   const movements = await prisma.movement.groupBy({
     by: ['productId'],
     _sum: { quantity: true, totalValue: true },
@@ -152,19 +213,59 @@ export async function getTopProducts(limit = 10) {
   if (movements.length === 0) return []
 
   const productIds = movements.map((m) => m.productId)
-  const products = await prisma.product.findMany({
-    where: { id: { in: productIds } },
-    select: { id: true, name: true, internalCode: true, currentStock: true, salePrice: true },
+  const [products, recent, previous] = await Promise.all([
+    prisma.product.findMany({
+      where: { id: { in: productIds } },
+      select: { id: true, name: true, internalCode: true, currentStock: true, salePrice: true },
+    }),
+    prisma.movement.groupBy({
+      by: ['productId'],
+      where: { productId: { in: productIds }, createdAt: { gte: d30 } },
+      _count: { id: true },
+    }),
+    prisma.movement.groupBy({
+      by: ['productId'],
+      where: { productId: { in: productIds }, createdAt: { gte: d60, lt: d30 } },
+      _count: { id: true },
+    }),
+  ])
+
+  const productMap = Object.fromEntries(
+    products.map((p) => [p.id, { ...p, salePrice: Number(p.salePrice) }]),
+  )
+  const recentMap = Object.fromEntries(recent.map((r) => [r.productId, r._count.id]))
+  const previousMap = Object.fromEntries(previous.map((r) => [r.productId, r._count.id]))
+
+  return movements.map((m) => {
+    const cur = recentMap[m.productId] ?? 0
+    const prev = previousMap[m.productId] ?? 0
+    const trend = prev > 0 ? Math.round(((cur - prev) / prev) * 100) : cur > 0 ? 100 : 0
+    return {
+      product: productMap[m.productId],
+      movementCount: m._count.id,
+      totalQuantity: m._sum.quantity ?? 0,
+      totalValue: Math.round(Number(m._sum.totalValue ?? 0) * 100) / 100,
+      trend,
+    }
   })
+}
 
-  const productMap = Object.fromEntries(products.map((p) => [p.id, p]))
-
-  return movements.map((m) => ({
-    product: productMap[m.productId],
-    movementCount: m._count.id,
-    totalQuantity: m._sum.quantity ?? 0,
-    totalValue: Math.round(Number(m._sum.totalValue ?? 0) * 100) / 100,
-  }))
+/** Movement volume per weekday (0 = Sunday) and hour, for the activity heatmap. */
+export async function getHeatmap(days = 90) {
+  const since = new Date()
+  since.setDate(since.getDate() - days)
+  const movements = await prisma.movement.findMany({
+    where: { createdAt: { gte: since } },
+    select: { createdAt: true },
+  })
+  const grid = new Map<string, number>()
+  for (const m of movements) {
+    const key = `${m.createdAt.getDay()}-${m.createdAt.getHours()}`
+    grid.set(key, (grid.get(key) ?? 0) + 1)
+  }
+  return Array.from({ length: 7 }, (_, day) =>
+    Array.from({ length: 24 }, (_, hour) => ({ day, hour, value: grid.get(`${day}-${hour}`) ?? 0 })),
+  ).flat()
 }
 
 export async function getAbcCurve() {

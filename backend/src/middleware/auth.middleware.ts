@@ -89,3 +89,18 @@ export function authorizeUserRoleChange(...allowedRoles: string[]) {
     next()
   }
 }
+
+/** Only admins may modify admin accounts (supervisors manage everyone else). */
+export async function protectAdminAccounts(req: Request, _res: Response, next: NextFunction): Promise<void> {
+  if (!req.user) return next(new AppError('Unauthorized', 401))
+  if (req.user.role === 'admin') return next()
+  try {
+    const target = await prisma.user.findUnique({ where: { id: req.params.id as string }, select: { role: true } })
+    if (target?.role === 'admin') {
+      return next(new AppError('Forbidden: only admins can modify admin accounts', 403))
+    }
+    next()
+  } catch (err) {
+    next(err)
+  }
+}

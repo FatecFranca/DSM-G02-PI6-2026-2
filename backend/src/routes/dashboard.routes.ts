@@ -10,6 +10,7 @@ router.get('/', ctrl.summary)
 router.get('/movement-trend', ctrl.movementTrend)
 router.get('/category-distribution', ctrl.categoryDistribution)
 router.get('/top-products', ctrl.topProducts)
+router.get('/heatmap', ctrl.heatmap)
 router.get('/abc', ctrl.abcCurve)
 
 export default router

@@ -1,6 +1,7 @@
 import request from 'supertest'
 import app from '../src/app'
 import { prisma } from '../src/prisma/client'
+import { deleteUsers } from './helpers'
 
 let adminToken: string
 let productId: string
@@ -71,7 +72,7 @@ afterAll(async () => {
   await prisma.supplier.deleteMany({ where: { cnpj: '98.765.432/0001-10' } })
   await prisma.brand.deleteMany({ where: { slug: 'mvt-brand' } })
   await prisma.category.deleteMany({ where: { slug: 'mvt-cat' } })
-  await prisma.user.deleteMany({ where: { email: 'test-admin-mvt@example.com' } })
+  await deleteUsers({ where: { email: 'test-admin-mvt@example.com' } })
   await prisma.$disconnect()
 })
 

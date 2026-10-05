@@ -15,6 +15,10 @@ export const updateUserStatusSchema = z.object({
   status: z.enum(['active', 'inactive', 'pending']),
 })
 
+export const resetPasswordSchema = z.object({
+  newPassword: z.string().min(6),
+})
+
 export const paginationSchema = z.object({
   page: z.coerce.number().min(1).default(1),
   limit: z.coerce.number().min(1).max(100).default(20),

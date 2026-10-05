@@ -69,3 +69,9 @@ export async function remove(id: string) {
   await findById(id)
   await prisma.user.delete({ where: { id } })
 }
+
+export async function resetPassword(id: string, newPassword: string) {
+  await findById(id)
+  const password = await bcrypt.hash(newPassword, 10)
+  await prisma.user.update({ where: { id }, data: { password } })
+}

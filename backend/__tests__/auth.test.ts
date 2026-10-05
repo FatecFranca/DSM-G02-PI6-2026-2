@@ -1,13 +1,14 @@
 import request from 'supertest'
 import app from '../src/app'
 import { prisma } from '../src/prisma/client'
+import { deleteUsers } from './helpers'
 
 beforeAll(async () => {
   await prisma.$connect()
 })
 
 afterAll(async () => {
-  await prisma.user.deleteMany({ where: { email: { contains: 'test-jest' } } })
+  await deleteUsers({ where: { email: { contains: 'test-jest' } } })
   await prisma.$disconnect()
 })
 

@@ -1,4 +1,5 @@
 import { prisma } from '../prisma/client'
+import { getExpiryAlertDays } from './settings.service'
 
 export async function getStockAlerts() {
   const [outOfStock, critical, low] = await Promise.all([
@@ -44,7 +45,8 @@ export async function getStockAlerts() {
   }
 }
 
-export async function getExpiringLots(days = 30) {
+export async function getExpiringLots(days?: number) {
+  days ??= await getExpiryAlertDays()
   const cutoff = new Date()
   cutoff.setDate(cutoff.getDate() + days)
 
@@ -61,7 +63,8 @@ export async function getExpiringLots(days = 30) {
   })
 }
 
-export async function getAllAlerts(userId: string, days = 30) {
+export async function getAllAlerts(userId: string, days?: number) {
+  days ??= await getExpiryAlertDays()
   const now = new Date()
   const cutoff = new Date()
   cutoff.setDate(cutoff.getDate() + days)

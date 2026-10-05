@@ -193,3 +193,27 @@ export async function remove(req: Request, res: Response, next: NextFunction): P
     next(err)
   }
 }
+
+/**
+ * @swagger
+ * /api/users/{id}/password:
+ *   patch:
+ *     summary: Reset a user's password (admin)
+ *     tags: [Users]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       204:
+ *         description: Password reset
+ */
+export async function resetPassword(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    await userService.resetPassword(req.params.id as string, req.body.newPassword)
+    res.status(204).send()
+  } catch (err) {
+    next(err)
+  }
+}

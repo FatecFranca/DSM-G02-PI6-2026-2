@@ -1,6 +1,7 @@
 import request from 'supertest'
 import app from '../src/app'
 import { prisma } from '../src/prisma/client'
+import { deleteUsers } from './helpers'
 
 let adminToken: string
 let addressId: string
@@ -32,7 +33,7 @@ afterAll(async () => {
   if (addressId) {
     await prisma.warehouseAddress.deleteMany({ where: { code: 'JEST-TEST-01' } })
   }
-  await prisma.user.deleteMany({ where: { email: 'test-admin-wh@example.com' } })
+  await deleteUsers({ where: { email: 'test-admin-wh@example.com' } })
   await prisma.$disconnect()
 })
 
