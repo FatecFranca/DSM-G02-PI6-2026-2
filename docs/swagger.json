@@ -1,0 +1,2641 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "WMS API",
+    "version": "1.0.0",
+    "description": "Warehouse Management System REST API"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3001",
+      "description": "Development server"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
+        }
+      },
+      "Pagination": {
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "integer"
+          },
+          "page": {
+            "type": "integer"
+          },
+          "limit": {
+            "type": "integer"
+          },
+          "totalPages": {
+            "type": "integer"
+          }
+        }
+      }
+    }
+  },
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "paths": {
+    "/api/reports/movements": {
+      "get": {
+        "summary": "Movement report grouped by type and product",
+        "tags": [
+          "Reports"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "from",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Movement totals by type and top products"
+          }
+        }
+      }
+    },
+    "/api/reports/stock": {
+      "get": {
+        "summary": "Full stock position report with value per product",
+        "tags": [
+          "Reports"
+        ],
+        "responses": {
+          "200": {
+            "description": "All active products with stock status, purchase and sale values"
+          }
+        }
+      }
+    },
+    "/api/reports/lots": {
+      "get": {
+        "summary": "Lot expiration report",
+        "tags": [
+          "Reports"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "days",
+            "schema": {
+              "type": "integer",
+              "default": 90
+            },
+            "description": "Window in days to flag lots expiring soon"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Expired, expiring soon, valid, and quarantine lots"
+          }
+        }
+      }
+    },
+    "/api/reports/warehouse": {
+      "get": {
+        "summary": "Warehouse occupancy report",
+        "tags": [
+          "Reports"
+        ],
+        "responses": {
+          "200": {
+            "description": "Addresses grouped by status with capacity and occupancy rate"
+          }
+        }
+      }
+    },
+    "/api/reports/abc": {
+      "get": {
+        "summary": "ABC curve report — classifies products by movement value (A=80%, B=15%, C=5%)",
+        "tags": [
+          "Reports"
+        ],
+        "responses": {
+          "200": {
+            "description": "Products classified into A, B, C with summary"
+          }
+        }
+      }
+    },
+    "/api/reports/inventory": {
+      "get": {
+        "summary": "Inventory count report with divergences and accuracy",
+        "tags": [
+          "Reports"
+        ],
+        "responses": {
+          "200": {
+            "description": "All inventory counts with summary statistics"
+          }
+        }
+      }
+    },
+    "/api/reports/suppliers": {
+      "get": {
+        "summary": "Supplier report — entries and purchase value per supplier",
+        "tags": [
+          "Reports"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "from",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Purchase totals grouped by supplier"
+          }
+        }
+      }
+    },
+    "/api/customers": {
+      "get": {
+        "summary": "List customers with search and pagination",
+        "tags": [
+          "Customers"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "default": 20
+            }
+          },
+          {
+            "in": "query",
+            "name": "search",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Search by name, tradeName, cnpj or email"
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "active",
+                "inactive"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated list of customers"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a new customer",
+        "tags": [
+          "Customers"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name",
+                  "tradeName",
+                  "cnpj",
+                  "email",
+                  "city",
+                  "state"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "tradeName": {
+                    "type": "string"
+                  },
+                  "cnpj": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string"
+                  },
+                  "phone": {
+                    "type": "string"
+                  },
+                  "contactName": {
+                    "type": "string"
+                  },
+                  "city": {
+                    "type": "string"
+                  },
+                  "state": {
+                    "type": "string"
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "active",
+                      "inactive"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Customer created"
+          }
+        }
+      }
+    },
+    "/api/customers/{id}": {
+      "get": {
+        "summary": "Get customer by ID",
+        "tags": [
+          "Customers"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Customer data"
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update a customer",
+        "tags": [
+          "Customers"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Customer updated"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete a customer",
+        "tags": [
+          "Customers"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Customer deleted"
+          }
+        }
+      }
+    },
+    "/api/audit": {
+      "get": {
+        "summary": "List audit logs",
+        "tags": [
+          "Audit"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "default": 50
+            }
+          },
+          {
+            "in": "query",
+            "name": "entity",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter by entity type (e.g. Product, User)"
+          },
+          {
+            "in": "query",
+            "name": "userId",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "from",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated audit logs"
+          }
+        }
+      }
+    },
+    "/api/audit/{id}": {
+      "get": {
+        "summary": "Get audit log entry by ID",
+        "tags": [
+          "Audit"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Audit log entry"
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      }
+    },
+    "/api/alerts": {
+      "get": {
+        "summary": "Get all active alerts (stock + expiry) with per-user read status",
+        "tags": [
+          "Alerts"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "days",
+            "schema": {
+              "type": "integer",
+              "default": 30
+            },
+            "description": "How many days ahead to look for expiring lots"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Combined alert list with unread count"
+          }
+        }
+      }
+    },
+    "/api/alerts/stock": {
+      "get": {
+        "summary": "Get stock level alerts grouped by severity (out, critical, low)",
+        "tags": [
+          "Alerts"
+        ],
+        "responses": {
+          "200": {
+            "description": "Stock alerts grouped by severity"
+          }
+        }
+      }
+    },
+    "/api/alerts/expiring": {
+      "get": {
+        "summary": "Get lots expiring soon",
+        "tags": [
+          "Alerts"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "days",
+            "schema": {
+              "type": "integer",
+              "default": 30
+            },
+            "description": "How many days ahead to look"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lots expiring within the given window"
+          }
+        }
+      }
+    },
+    "/api/alerts/read-all": {
+      "patch": {
+        "summary": "Mark all provided alerts as read for the authenticated user",
+        "tags": [
+          "Alerts"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "alertKeys"
+                ],
+                "properties": {
+                  "alertKeys": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Number of alerts marked as read"
+          }
+        }
+      }
+    },
+    "/api/alerts/{id}/read": {
+      "patch": {
+        "summary": "Mark a single alert as read for the authenticated user",
+        "tags": [
+          "Alerts"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Alert key (e.g. stock-out-{productId})"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Alert marked as read"
+          }
+        }
+      }
+    },
+    "/api/warehouse": {
+      "get": {
+        "summary": "List warehouse addresses",
+        "tags": [
+          "Warehouse"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "default": 20
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "free",
+                "occupied",
+                "blocked",
+                "reserved"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "aisle",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated list of addresses"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a warehouse address",
+        "tags": [
+          "Warehouse"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "code",
+                  "aisle",
+                  "street",
+                  "shelf",
+                  "level",
+                  "position",
+                  "capacity"
+                ],
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "aisle": {
+                    "type": "string"
+                  },
+                  "street": {
+                    "type": "string"
+                  },
+                  "shelf": {
+                    "type": "string"
+                  },
+                  "level": {
+                    "type": "string"
+                  },
+                  "position": {
+                    "type": "string"
+                  },
+                  "capacity": {
+                    "type": "number"
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "free",
+                      "occupied",
+                      "blocked",
+                      "reserved"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Address created"
+          },
+          "409": {
+            "description": "Code already in use"
+          }
+        }
+      }
+    },
+    "/api/warehouse/stats": {
+      "get": {
+        "summary": "Get warehouse occupancy statistics",
+        "tags": [
+          "Warehouse"
+        ],
+        "responses": {
+          "200": {
+            "description": "Warehouse stats"
+          }
+        }
+      }
+    },
+    "/api/warehouse/{id}": {
+      "get": {
+        "summary": "Get address by ID",
+        "tags": [
+          "Warehouse"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Address found"
+          },
+          "404": {
+            "description": "Address not found"
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update a warehouse address",
+        "tags": [
+          "Warehouse"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Address updated"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete a warehouse address",
+        "tags": [
+          "Warehouse"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Address deleted"
+          },
+          "400": {
+            "description": "Cannot delete occupied address"
+          }
+        }
+      }
+    },
+    "/api/users": {
+      "get": {
+        "summary": "List all users",
+        "tags": [
+          "Users"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "default": 20
+            }
+          },
+          {
+            "in": "query",
+            "name": "search",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated list of users"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a new user",
+        "tags": [
+          "Users"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name",
+                  "email",
+                  "password",
+                  "department"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 6
+                  },
+                  "role": {
+                    "type": "string",
+                    "enum": [
+                      "admin",
+                      "supervisor",
+                      "operator",
+                      "viewer"
+                    ]
+                  },
+                  "department": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "User created"
+          },
+          "409": {
+            "description": "Email already in use"
+          }
+        }
+      }
+    },
+    "/api/users/{id}": {
+      "get": {
+        "summary": "Get user by ID",
+        "tags": [
+          "Users"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User found"
+          },
+          "404": {
+            "description": "User not found"
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update a user",
+        "tags": [
+          "Users"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "department": {
+                    "type": "string"
+                  },
+                  "role": {
+                    "type": "string",
+                    "enum": [
+                      "admin",
+                      "supervisor",
+                      "operator",
+                      "viewer"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "User updated"
+          },
+          "404": {
+            "description": "User not found"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete a user",
+        "tags": [
+          "Users"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "User deleted"
+          },
+          "404": {
+            "description": "User not found"
+          }
+        }
+      }
+    },
+    "/api/users/{id}/status": {
+      "patch": {
+        "summary": "Update user status",
+        "tags": [
+          "Users"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "status"
+                ],
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "active",
+                      "inactive",
+                      "pending"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Status updated"
+          }
+        }
+      }
+    },
+    "/api/suppliers": {
+      "get": {
+        "summary": "List all suppliers",
+        "tags": [
+          "Suppliers"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "default": 20
+            }
+          },
+          {
+            "in": "query",
+            "name": "search",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated list of suppliers"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a supplier",
+        "tags": [
+          "Suppliers"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name",
+                  "tradeName",
+                  "cnpj",
+                  "email",
+                  "phone",
+                  "contactName",
+                  "category",
+                  "city",
+                  "state"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "tradeName": {
+                    "type": "string"
+                  },
+                  "cnpj": {
+                    "type": "string",
+                    "example": "12.345.678/0001-99"
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "phone": {
+                    "type": "string"
+                  },
+                  "contactName": {
+                    "type": "string"
+                  },
+                  "category": {
+                    "type": "string"
+                  },
+                  "city": {
+                    "type": "string"
+                  },
+                  "state": {
+                    "type": "string",
+                    "maxLength": 2
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Supplier created"
+          },
+          "409": {
+            "description": "CNPJ already in use"
+          }
+        }
+      }
+    },
+    "/api/suppliers/{id}": {
+      "get": {
+        "summary": "Get supplier by ID",
+        "tags": [
+          "Suppliers"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Supplier found"
+          },
+          "404": {
+            "description": "Supplier not found"
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update a supplier",
+        "tags": [
+          "Suppliers"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Supplier updated"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete a supplier",
+        "tags": [
+          "Suppliers"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Supplier deleted"
+          },
+          "400": {
+            "description": "Cannot delete supplier with products"
+          }
+        }
+      }
+    },
+    "/api/products": {
+      "get": {
+        "summary": "List all products",
+        "tags": [
+          "Products"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "default": 20
+            }
+          },
+          {
+            "in": "query",
+            "name": "search",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "categoryId",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "brandId",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "active",
+                "inactive",
+                "discontinued"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "stockStatus",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ok",
+                "low",
+                "critical",
+                "out"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated list of products"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a new product",
+        "tags": [
+          "Products"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name",
+                  "internalCode",
+                  "sku",
+                  "barcode",
+                  "categoryId",
+                  "brandId",
+                  "supplierId",
+                  "unit",
+                  "purchasePrice",
+                  "salePrice"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "internalCode": {
+                    "type": "string"
+                  },
+                  "sku": {
+                    "type": "string"
+                  },
+                  "barcode": {
+                    "type": "string"
+                  },
+                  "categoryId": {
+                    "type": "string"
+                  },
+                  "brandId": {
+                    "type": "string"
+                  },
+                  "supplierId": {
+                    "type": "string"
+                  },
+                  "unit": {
+                    "type": "string"
+                  },
+                  "purchasePrice": {
+                    "type": "number"
+                  },
+                  "salePrice": {
+                    "type": "number"
+                  },
+                  "minStock": {
+                    "type": "integer"
+                  },
+                  "maxStock": {
+                    "type": "integer"
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "active",
+                      "inactive",
+                      "discontinued"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Product created"
+          },
+          "409": {
+            "description": "SKU or barcode already in use"
+          }
+        }
+      }
+    },
+    "/api/products/{id}": {
+      "get": {
+        "summary": "Get product by ID",
+        "tags": [
+          "Products"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Product found"
+          },
+          "404": {
+            "description": "Product not found"
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update a product",
+        "tags": [
+          "Products"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Product updated"
+          },
+          "404": {
+            "description": "Product not found"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete a product",
+        "tags": [
+          "Products"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Product deleted"
+          },
+          "404": {
+            "description": "Product not found"
+          }
+        }
+      }
+    },
+    "/api/products/scan/{code}": {
+      "get": {
+        "summary": "Lookup product by barcode, SKU or internal code (scanner)",
+        "tags": [
+          "Products"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "code",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Barcode, SKU or internal code"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Product found with warehouse addresses and active lots"
+          },
+          "404": {
+            "description": "No product found for this code"
+          }
+        }
+      }
+    },
+    "/api/movements": {
+      "get": {
+        "summary": "List movements",
+        "tags": [
+          "Movements"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "default": 20
+            }
+          },
+          {
+            "in": "query",
+            "name": "type",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "entry",
+                "exit",
+                "transfer",
+                "loss",
+                "adjustment",
+                "inventory"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "productId",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "from",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated list of movements"
+          }
+        }
+      },
+      "post": {
+        "summary": "Register a stock movement",
+        "tags": [
+          "Movements"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "type",
+                  "productId",
+                  "quantity"
+                ],
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "entry",
+                      "exit",
+                      "transfer",
+                      "loss",
+                      "adjustment",
+                      "inventory"
+                    ]
+                  },
+                  "productId": {
+                    "type": "string"
+                  },
+                  "quantity": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "unitCost": {
+                    "type": "number"
+                  },
+                  "exitReason": {
+                    "type": "string",
+                    "enum": [
+                      "sale",
+                      "transfer",
+                      "loss",
+                      "break",
+                      "internal"
+                    ]
+                  },
+                  "notes": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Movement registered"
+          },
+          "400": {
+            "description": "Insufficient stock"
+          }
+        }
+      }
+    },
+    "/api/movements/{id}": {
+      "get": {
+        "summary": "Get movement by ID",
+        "tags": [
+          "Movements"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Movement found"
+          },
+          "404": {
+            "description": "Movement not found"
+          }
+        }
+      }
+    },
+    "/api/lots": {
+      "get": {
+        "summary": "List lots",
+        "tags": [
+          "Lots"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "productId",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "valid",
+                "expiring",
+                "expired",
+                "quarantine"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "expiringSoonDays",
+            "schema": {
+              "type": "integer",
+              "example": 30
+            },
+            "description": "Return lots expiring within this many days"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of lots"
+          }
+        }
+      },
+      "post": {
+        "summary": "Register a new lot",
+        "tags": [
+          "Lots"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "lotNumber",
+                  "productId",
+                  "supplierId",
+                  "quantity",
+                  "manufacturingDate",
+                  "expirationDate",
+                  "address"
+                ],
+                "properties": {
+                  "lotNumber": {
+                    "type": "string"
+                  },
+                  "productId": {
+                    "type": "string"
+                  },
+                  "supplierId": {
+                    "type": "string"
+                  },
+                  "quantity": {
+                    "type": "integer"
+                  },
+                  "manufacturingDate": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "expirationDate": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "address": {
+                    "type": "string"
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "valid",
+                      "expiring",
+                      "expired",
+                      "quarantine"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Lot created"
+          },
+          "409": {
+            "description": "Lot number already exists"
+          }
+        }
+      }
+    },
+    "/api/lots/alerts": {
+      "get": {
+        "summary": "Get lots expiring soon (default 30 days)",
+        "tags": [
+          "Lots"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "days",
+            "schema": {
+              "type": "integer",
+              "default": 30
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lots expiring soon"
+          }
+        }
+      }
+    },
+    "/api/lots/{id}": {
+      "get": {
+        "summary": "Get lot by ID",
+        "tags": [
+          "Lots"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lot found"
+          },
+          "404": {
+            "description": "Lot not found"
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update lot",
+        "tags": [
+          "Lots"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "valid",
+                      "expiring",
+                      "expired",
+                      "quarantine"
+                    ]
+                  },
+                  "quantity": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Lot updated"
+          }
+        }
+      }
+    },
+    "/api/inventory": {
+      "get": {
+        "summary": "List inventory counts",
+        "tags": [
+          "Inventory"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "status",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "planned",
+                "in_progress",
+                "review",
+                "completed"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of inventory counts"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create an inventory count",
+        "tags": [
+          "Inventory"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name",
+                  "type",
+                  "startDate",
+                  "responsibleId"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "full",
+                      "partial",
+                      "cyclic"
+                    ]
+                  },
+                  "startDate": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "responsibleId": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Inventory count created"
+          }
+        }
+      }
+    },
+    "/api/inventory/{id}": {
+      "get": {
+        "summary": "Get inventory count by ID",
+        "tags": [
+          "Inventory"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Inventory count found"
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update inventory count progress",
+        "tags": [
+          "Inventory"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "planned",
+                      "in_progress",
+                      "review",
+                      "completed"
+                    ]
+                  },
+                  "countedItems": {
+                    "type": "integer"
+                  },
+                  "divergences": {
+                    "type": "integer"
+                  },
+                  "endDate": {
+                    "type": "string",
+                    "format": "date-time"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete a planned inventory count",
+        "tags": [
+          "Inventory"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted"
+          },
+          "400": {
+            "description": "Only planned counts can be deleted"
+          }
+        }
+      }
+    },
+    "/api/dashboard": {
+      "get": {
+        "summary": "Get dashboard summary (KPIs)",
+        "tags": [
+          "Dashboard"
+        ],
+        "responses": {
+          "200": {
+            "description": "Summary with products, movements, users, warehouse stats and stock value"
+          }
+        }
+      }
+    },
+    "/api/dashboard/movement-trend": {
+      "get": {
+        "summary": "Monthly entries vs exits trend",
+        "tags": [
+          "Dashboard"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "months",
+            "schema": {
+              "type": "integer",
+              "default": 12
+            },
+            "description": "How many months to look back"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Array of monthly { month, entries, exits, balance }"
+          }
+        }
+      }
+    },
+    "/api/dashboard/category-distribution": {
+      "get": {
+        "summary": "Product count and stock value by category",
+        "tags": [
+          "Dashboard"
+        ],
+        "responses": {
+          "200": {
+            "description": "Categories with product count, percentage and stock value"
+          }
+        }
+      }
+    },
+    "/api/dashboard/top-products": {
+      "get": {
+        "summary": "Top products by movement frequency",
+        "tags": [
+          "Dashboard"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "default": 10
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Products ranked by number of movements"
+          }
+        }
+      }
+    },
+    "/api/dashboard/abc": {
+      "get": {
+        "summary": "ABC curve analysis (A=80%, B=15%, C=5% of value)",
+        "tags": [
+          "Dashboard"
+        ],
+        "responses": {
+          "200": {
+            "description": "Products classified into A, B and C by revenue contribution"
+          }
+        }
+      }
+    },
+    "/api/categories": {
+      "get": {
+        "summary": "List all categories",
+        "tags": [
+          "Categories"
+        ],
+        "responses": {
+          "200": {
+            "description": "List of categories with product count"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a category",
+        "tags": [
+          "Categories"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name",
+                  "slug"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "slug": {
+                    "type": "string"
+                  },
+                  "color": {
+                    "type": "string",
+                    "example": "#6366f1"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Category created"
+          },
+          "409": {
+            "description": "Slug already in use"
+          }
+        }
+      }
+    },
+    "/api/categories/{id}": {
+      "get": {
+        "summary": "Get category by ID",
+        "tags": [
+          "Categories"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Category found"
+          },
+          "404": {
+            "description": "Category not found"
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update a category",
+        "tags": [
+          "Categories"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "slug": {
+                    "type": "string"
+                  },
+                  "color": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Category updated"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete a category",
+        "tags": [
+          "Categories"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Category deleted"
+          },
+          "400": {
+            "description": "Cannot delete category with products"
+          }
+        }
+      }
+    },
+    "/api/brands": {
+      "get": {
+        "summary": "List all brands",
+        "tags": [
+          "Brands"
+        ],
+        "responses": {
+          "200": {
+            "description": "List of brands with product count"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a brand",
+        "tags": [
+          "Brands"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name",
+                  "slug"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "slug": {
+                    "type": "string"
+                  },
+                  "logoUrl": {
+                    "type": "string",
+                    "format": "uri"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Brand created"
+          },
+          "409": {
+            "description": "Slug already in use"
+          }
+        }
+      }
+    },
+    "/api/brands/{id}": {
+      "get": {
+        "summary": "Get brand by ID",
+        "tags": [
+          "Brands"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Brand found"
+          },
+          "404": {
+            "description": "Brand not found"
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update a brand",
+        "tags": [
+          "Brands"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Brand updated"
+          },
+          "404": {
+            "description": "Brand not found"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete a brand",
+        "tags": [
+          "Brands"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Brand deleted"
+          },
+          "400": {
+            "description": "Cannot delete brand with products"
+          },
+          "404": {
+            "description": "Brand not found"
+          }
+        }
+      }
+    },
+    "/api/auth/register": {
+      "post": {
+        "summary": "Register a new user",
+        "tags": [
+          "Auth"
+        ],
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name",
+                  "email",
+                  "password",
+                  "department"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 6
+                  },
+                  "role": {
+                    "type": "string",
+                    "enum": [
+                      "admin",
+                      "supervisor",
+                      "operator",
+                      "viewer"
+                    ]
+                  },
+                  "department": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "User created"
+          },
+          "409": {
+            "description": "Email already in use"
+          },
+          "422": {
+            "$ref": "#/components/schemas/Error"
+          }
+        }
+      }
+    },
+    "/api/auth/login": {
+      "post": {
+        "summary": "Login and receive a JWT token",
+        "tags": [
+          "Auth"
+        ],
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "email",
+                  "password"
+                ],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "password": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login successful, returns token"
+          },
+          "401": {
+            "description": "Invalid credentials"
+          }
+        }
+      }
+    },
+    "/api/auth/me": {
+      "get": {
+        "summary": "Get current authenticated user info",
+        "tags": [
+          "Auth"
+        ],
+        "responses": {
+          "200": {
+            "description": "Current user payload from JWT"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/auth/profile": {
+      "get": {
+        "summary": "Get current user full profile",
+        "tags": [
+          "Auth"
+        ],
+        "responses": {
+          "200": {
+            "description": "Full user profile from database"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/auth/password": {
+      "patch": {
+        "summary": "Change current user password",
+        "tags": [
+          "Auth"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "currentPassword",
+                  "newPassword"
+                ],
+                "properties": {
+                  "currentPassword": {
+                    "type": "string"
+                  },
+                  "newPassword": {
+                    "type": "string",
+                    "minLength": 6
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Password changed"
+          },
+          "401": {
+            "description": "Current password incorrect"
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Reports",
+      "description": "Analytical reports for inventory, movements, lots and warehouse"
+    },
+    {
+      "name": "Customers",
+      "description": "Customer management"
+    },
+    {
+      "name": "Audit",
+      "description": "Audit log (admin only)"
+    },
+    {
+      "name": "Alerts",
+      "description": "Stock and expiration alerts"
+    },
+    {
+      "name": "Warehouse",
+      "description": "Warehouse address management"
+    },
+    {
+      "name": "Users",
+      "description": "User management"
+    },
+    {
+      "name": "Suppliers",
+      "description": "Supplier management"
+    },
+    {
+      "name": "Products",
+      "description": "Product management"
+    },
+    {
+      "name": "Movements",
+      "description": "Stock movement management"
+    },
+    {
+      "name": "Lots",
+      "description": "Lot and batch management"
+    },
+    {
+      "name": "Inventory",
+      "description": "Inventory count management"
+    },
+    {
+      "name": "Dashboard",
+      "description": "Dashboard and analytics data"
+    },
+    {
+      "name": "Categories",
+      "description": "Product category management"
+    },
+    {
+      "name": "Brands",
+      "description": "Brand management"
+    },
+    {
+      "name": "Auth",
+      "description": "Authentication endpoints"
+    }
+  ]
+}
