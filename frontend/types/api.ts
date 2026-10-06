@@ -219,10 +219,30 @@ export interface ApiSupplierReport {
   suppliers: { supplier: { id: string; name: string; tradeName: string }; entryCount: number; totalQuantity: number; totalValue: number }[]
 }
 
+export interface ApiBacktestScore { rmsle: number; wape: number; vies_pct: number; wape_categoria?: number }
+
+export interface ApiForecastModel {
+  source: 'ml' | 'baseline'
+  reason?: string
+  version?: string
+  trainedOn?: string
+  savedAt?: string
+  dataRange?: [string, string]
+  backtest?: {
+    horizonDays: number
+    testOrigins: string[]
+    model: ApiBacktestScore
+    baseline: ApiBacktestScore
+    baselineName: string
+    intervalCoverage: number
+  }
+}
+
 export interface ApiAnalytics {
-  window: { historyMonths: number; forecastMonths: number }
-  demand: { month: string; real: number | null; forecast: number }[]
-  matrix: { productId: string; product: string; code: string; abc: 'A' | 'B' | 'C'; xyz: 'X' | 'Y' | 'Z'; turnover: number; valueShare: number }[]
+  window: { historyWeeks: number; forecastWeeks: number; asOf: string; leadTimeDays: number; coverageDays: number }
+  model: ApiForecastModel
+  demand: { label: string; start: string; real: number | null; forecast: number | null; low: number | null; high: number | null }[]
+  matrix: { productId: string; product: string; code: string; abc: 'A' | 'B' | 'C'; xyz: 'X' | 'Y' | 'Z'; turnover: number | null; valueShare: number }[]
   suggestions: {
     productId: string
     product: string
@@ -230,9 +250,13 @@ export interface ApiAnalytics {
     category: string
     currentStock: number
     daysOfCover: number | null
+    forecast7: number
+    forecast28: number
+    safetyStock: number
     quantity: number
     urgency: 'Urgente' | 'Alta' | 'Média'
     reason: string
+    method: 'gbm' | 'mean' | 'baseline'
     estimatedCost: number
   }[]
   insights: { type: 'warning' | 'success' | 'info'; title: string; desc: string; action: string; href: string }[]

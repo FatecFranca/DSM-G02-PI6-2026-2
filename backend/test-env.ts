@@ -12,3 +12,6 @@ if (!databaseName.toLowerCase().includes('test')) {
 }
 
 process.env.DATABASE_URL = testDatabaseUrl
+
+// Tests must not depend on a locally running ML service (defined-but-empty beats .env via dotenv).
+process.env.ML_SERVICE_URL = ''

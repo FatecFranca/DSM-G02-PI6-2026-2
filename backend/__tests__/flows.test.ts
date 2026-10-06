@@ -203,15 +203,18 @@ describe('profile, settings, analytics and alerts', () => {
     const put = await request(app).put('/api/settings').set(auth(adminToken)).send({ preferences: { expiryAlertDays: 45 } })
     expect(put.status).toBe(200)
     expect(put.body.preferences.expiryAlertDays).toBe(45)
+    expect(put.body.preferences.leadTimeDays).toBeGreaterThan(0)
     await request(app).put('/api/settings').set(auth(adminToken)).send({ preferences: { expiryAlertDays: original } })
   })
 
   it('returns the analytics overview', async () => {
     const res = await request(app).get('/api/analytics').set(auth(operatorToken))
     expect(res.status).toBe(200)
-    expect(Array.isArray(res.body.demand)).toBe(true)
+    expect(res.body.model.source).toBe('baseline') // ML_SERVICE_URL is not set in tests
+    expect(res.body.demand).toHaveLength(res.body.window.historyWeeks + res.body.window.forecastWeeks)
     expect(Array.isArray(res.body.matrix)).toBe(true)
     expect(Array.isArray(res.body.suggestions)).toBe(true)
+    expect((await request(app).get('/api/analytics/model').set(auth(operatorToken))).body.source).toBe('baseline')
   })
 
   it('tracks alert read state per user', async () => {

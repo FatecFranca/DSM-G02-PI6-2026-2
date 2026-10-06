@@ -14,7 +14,7 @@ const DEFAULT_COMPANY: Company = {
   state: '',
 }
 
-const DEFAULT_PREFERENCES: Preferences = { expiryAlertDays: 30 }
+const DEFAULT_PREFERENCES: Preferences = { expiryAlertDays: 30, leadTimeDays: 7 }
 
 let cachedPreferences: { value: Preferences; at: number } | null = null
 const CACHE_MS = 30_000
@@ -45,10 +45,14 @@ export async function updateSettings(input: UpdateSettingsInput) {
   return { company, preferences }
 }
 
-/** Expiry window in days, cached briefly because lots/alerts/dashboard read it on every request. */
-export async function getExpiryAlertDays(): Promise<number> {
+export async function getPreferences(): Promise<Preferences> {
   if (!cachedPreferences || Date.now() - cachedPreferences.at > CACHE_MS) {
     cachedPreferences = { value: await read('preferences', DEFAULT_PREFERENCES), at: Date.now() }
   }
-  return cachedPreferences.value.expiryAlertDays
+  return cachedPreferences.value
+}
+
+/** Expiry window in days, cached briefly because lots/alerts/dashboard read it on every request. */
+export async function getExpiryAlertDays(): Promise<number> {
+  return (await getPreferences()).expiryAlertDays
 }

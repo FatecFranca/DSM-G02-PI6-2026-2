@@ -1,4 +1,4 @@
-"""Previsão simples de demanda semanal por categoria de produto.
+"""[Baseline legado] Previsão simples de demanda semanal por categoria de produto.
 
 O banco de produção do StockIQ (Postgres/Prisma) ainda não acumulou
 histórico suficiente de movimentações, então este protótipo usa o
@@ -25,7 +25,12 @@ if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-RAW_FILE = BASE_DIR / "data" / "raw" / "train.csv"
+# O dataset pode estar na pasta original do Kaggle ou em data/raw (ver stockiq_ml/config.py).
+RAW_FILE = next(
+    (p / "train.csv" for p in (BASE_DIR / "store-sales-time-series-forecasting", BASE_DIR / "data" / "raw")
+     if (p / "train.csv").exists()),
+    BASE_DIR / "data" / "raw" / "train.csv",
+)
 OUTPUT_FILE = BASE_DIR / "data" / "previsao_demanda.csv"
 WEEKS_HISTORY = 12
 MIN_TRAIN_WEEKS = 4

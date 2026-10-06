@@ -16,6 +16,8 @@ export const companySchema = z.object({
 export const preferencesSchema = z.object({
   /** Lots expiring within this many days are flagged as "expiring" and generate alerts. */
   expiryAlertDays: z.number().int().min(1).max(365),
+  /** Days between placing a purchase order and receiving it; drives reorder suggestions. */
+  leadTimeDays: z.number().int().min(1).max(60),
 })
 
 export const updateSettingsSchema = z.object({

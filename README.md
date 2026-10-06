@@ -49,7 +49,7 @@ pi/
 │                     # → backend/README.md
 ├── frontend/         # Aplicação web — Next.js/React, interface de operação do sistema
 │                     # → frontend/README.md
-├── machine-learning/ # Protótipo de previsão de demanda (mineração de dados)
+├── machine-learning/ # Previsão de demanda: modelo + API (mineração de dados)
 │                     # → machine-learning/README.md
 └── docs/             # Documentação de arquitetura, nuvem, mineração de dados e requisitos
     ├── ARCHITECTURE.md
@@ -60,7 +60,7 @@ pi/
 |---|---|---|
 | [`backend/`](backend) | [backend/README.md](backend/README.md) | API REST com 15 módulos de rotas; `/docs` (Swagger) é a referência dos endpoints atuais |
 | [`frontend/`](frontend) | [frontend/README.md](frontend/README.md) | Aplicação Next.js parcialmente integrada à API; algumas telas e elementos ainda usam dados de demonstração |
-| [`machine-learning/`](machine-learning) | [machine-learning/README.md](machine-learning/README.md) | Experimento de previsão semanal por categoria com dados externos, avaliação temporal e sem integração com a API |
+| [`machine-learning/`](machine-learning) | [machine-learning/README.md](machine-learning/README.md) | Modelo global de previsão de demanda diária (gradient boosting, treinado no Store Sales), API FastAPI e integração com a tela IA Analítica do backend (com fallback para média móvel) |
 
 ## Arquitetura da solução
 
@@ -100,7 +100,7 @@ Instruções detalhadas, variáveis de ambiente e scripts em [backend/README.md]
 |---|---|
 | [backend/README.md](backend/README.md) | Stack, estrutura em camadas, setup, banco de dados, autenticação/RBAC, segurança, testes e resumo de módulos (endpoints atuais no Swagger) |
 | [frontend/README.md](frontend/README.md) | Stack, estrutura de pastas, telas implementadas, componentes reutilizáveis, dados mockados, setup |
-| [machine-learning/README.md](machine-learning/README.md) | Dataset usado, mapeamento para o schema do StockIQ, algoritmo de previsão, como rodar |
+| [machine-learning/README.md](machine-learning/README.md) | Dataset usado, mapeamento para o schema do StockIQ, features/modelo, backtest, contrato da API, integração com o backend e como rodar |
 | [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md) | Escopo, requisitos funcionais (RF01–RF16), requisitos não funcionais (RNF01–RNF10) e regras de acesso por papel |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Visão lógica, casos de uso, modelo de dados (ER), arquitetura AWS, mensageria (SQS) e planejamento de mineração de dados |
 

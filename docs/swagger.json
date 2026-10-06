@@ -2869,6 +2869,13 @@
             "maximum": 365,
             "example": 30,
             "description": "Lots expiring within this window are flagged and alert."
+          },
+          "leadTimeDays": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 60,
+            "example": 7,
+            "description": "Supplier lead time used by purchase suggestions."
           }
         }
       },
@@ -2925,30 +2932,143 @@
           "newPassword"
         ]
       },
+      "BacktestScore": {
+        "type": "object",
+        "properties": {
+          "rmsle": {
+            "type": "number",
+            "example": 0.451
+          },
+          "wape": {
+            "type": "number",
+            "example": 0.1498
+          },
+          "vies_pct": {
+            "type": "number",
+            "example": 1.9,
+            "description": "Forecast bias in % (positive = over-forecast)."
+          },
+          "wape_categoria": {
+            "type": "number",
+            "example": 0.0918
+          }
+        }
+      },
+      "ForecastModel": {
+        "type": "object",
+        "properties": {
+          "source": {
+            "type": "string",
+            "enum": [
+              "ml",
+              "baseline"
+            ],
+            "example": "ml",
+            "description": "ml = ML service answered; baseline = 28-day moving average fallback."
+          },
+          "reason": {
+            "type": "string",
+            "description": "Why the baseline was used (only when source = baseline)."
+          },
+          "version": {
+            "type": "string",
+            "example": "1.0.0"
+          },
+          "trainedOn": {
+            "type": "string",
+            "example": "Store Sales - Time Series Forecasting (Kaggle)"
+          },
+          "savedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "dataRange": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "example": "2013-01-01"
+            },
+            "minItems": 2,
+            "maxItems": 2
+          },
+          "backtest": {
+            "type": "object",
+            "properties": {
+              "horizonDays": {
+                "type": "integer",
+                "example": 14
+              },
+              "testOrigins": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "example": "2017-07-03"
+                }
+              },
+              "model": {
+                "$ref": "#/components/schemas/BacktestScore"
+              },
+              "baseline": {
+                "$ref": "#/components/schemas/BacktestScore"
+              },
+              "baselineName": {
+                "type": "string",
+                "example": "media_mesmo_dia_8sem"
+              },
+              "intervalCoverage": {
+                "type": "number",
+                "example": 0.8,
+                "description": "Share of actuals inside the low–high band (target ≈ 0.8)."
+              }
+            }
+          }
+        }
+      },
       "AnalyticsOverview": {
         "type": "object",
         "properties": {
           "window": {
             "type": "object",
             "properties": {
-              "historyMonths": {
+              "historyWeeks": {
                 "type": "integer",
-                "example": 6
+                "example": 12
               },
-              "forecastMonths": {
+              "forecastWeeks": {
                 "type": "integer",
-                "example": 3
+                "example": 4
+              },
+              "asOf": {
+                "type": "string",
+                "example": "2026-10-04",
+                "description": "Last full day used as forecast origin."
+              },
+              "leadTimeDays": {
+                "type": "integer",
+                "example": 7
+              },
+              "coverageDays": {
+                "type": "integer",
+                "example": 28
               }
             }
           },
+          "model": {
+            "$ref": "#/components/schemas/ForecastModel"
+          },
           "demand": {
             "type": "array",
+            "description": "Weekly units: real for past weeks, forecast (with low/high band) for future weeks.",
             "items": {
               "type": "object",
               "properties": {
-                "month": {
+                "label": {
                   "type": "string",
-                  "example": "Out"
+                  "example": "06/10"
+                },
+                "start": {
+                  "type": "string",
+                  "example": "2026-10-06"
                 },
                 "real": {
                   "type": "integer",
@@ -2957,7 +3077,16 @@
                 },
                 "forecast": {
                   "type": "integer",
+                  "nullable": true,
                   "example": 440
+                },
+                "low": {
+                  "type": "integer",
+                  "nullable": true
+                },
+                "high": {
+                  "type": "integer",
+                  "nullable": true
                 }
               }
             }
@@ -2997,7 +3126,9 @@
                 },
                 "turnover": {
                   "type": "number",
-                  "example": 6.4
+                  "nullable": true,
+                  "example": 6.4,
+                  "description": "Annualised units sold ÷ stock on hand; null when stock is zero."
                 },
                 "valueShare": {
                   "type": "number",
@@ -3029,10 +3160,23 @@
                 },
                 "daysOfCover": {
                   "type": "integer",
-                  "nullable": true
+                  "nullable": true,
+                  "description": "Days until forecast demand exhausts the stock (null = beyond the 28-day horizon)."
+                },
+                "forecast7": {
+                  "type": "number",
+                  "description": "Forecast units over the next 7 days."
+                },
+                "forecast28": {
+                  "type": "number",
+                  "description": "Forecast units over the next 28 days."
+                },
+                "safetyStock": {
+                  "type": "integer"
                 },
                 "quantity": {
-                  "type": "integer"
+                  "type": "integer",
+                  "description": "Suggested order quantity."
                 },
                 "urgency": {
                   "type": "string",
@@ -3045,6 +3189,15 @@
                 },
                 "reason": {
                   "type": "string"
+                },
+                "method": {
+                  "type": "string",
+                  "enum": [
+                    "gbm",
+                    "mean",
+                    "baseline"
+                  ],
+                  "example": "gbm"
                 },
                 "estimatedCost": {
                   "type": "number"
@@ -4078,7 +4231,7 @@
     "/api/analytics": {
       "get": {
         "summary": "Analytics overview (forecast, ABC×XYZ matrix, purchase suggestions, insights)",
-        "description": "Computed on demand from the movement history. Forecast uses a least-squares linear trend over monthly exits; XYZ uses the coefficient of variation of monthly demand.\n",
+        "description": "Computed on demand from the movement history. The daily demand forecast (28 days) comes from the ML service in /machine-learning (gradient boosting trained on Store Sales) and falls back to a 28-day moving average when the service is unavailable — `model.source` tells which one was used. XYZ uses the coefficient of variation of monthly demand.\n",
         "tags": [
           "Analytics"
         ],
@@ -4091,16 +4244,6 @@
               "minimum": 3,
               "maximum": 24,
               "default": 6
-            }
-          },
-          {
-            "in": "query",
-            "name": "forecastMonths",
-            "schema": {
-              "type": "integer",
-              "minimum": 1,
-              "maximum": 6,
-              "default": 3
             }
           }
         ],
@@ -4120,6 +4263,29 @@
           },
           "422": {
             "$ref": "#/components/responses/ValidationError"
+          }
+        }
+      }
+    },
+    "/api/analytics/model": {
+      "get": {
+        "summary": "Status and backtest metrics of the forecasting model",
+        "tags": [
+          "Analytics"
+        ],
+        "responses": {
+          "200": {
+            "description": "Model metadata (source = ml when the ML service is reachable, baseline otherwise)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForecastModel"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       }

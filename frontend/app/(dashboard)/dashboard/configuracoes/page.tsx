@@ -21,7 +21,7 @@ interface Company {
   legalName: string; tradeName: string; cnpj: string; email: string; phone: string
   website: string; address: string; zip: string; city: string; state: string
 }
-interface Settings { company: Company; preferences: { expiryAlertDays: number } }
+interface Settings { company: Company; preferences: { expiryAlertDays: number; leadTimeDays: number } }
 
 const SECTIONS = [
   { id: 'profile', icon: UserCircle, label: 'Meu Perfil' },
@@ -249,10 +249,14 @@ function CompanySection({ editable }: { editable: boolean }) {
 function PreferencesSection({ editable }: { editable: boolean }) {
   const { data, loading, error, saving, msg, save } = useSettings()
   const [days, setDays] = useState('')
+  const [lead, setLead] = useState('')
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (data) setDays(String(data.preferences.expiryAlertDays))
+    if (data) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setDays(String(data.preferences.expiryAlertDays))
+      setLead(String(data.preferences.leadTimeDays))
+    }
   }, [data])
 
   if (loading || !data) return error ? <Alert>{error}</Alert> : <PageLoading rows={2} />
@@ -264,8 +268,10 @@ function PreferencesSection({ editable }: { editable: boolean }) {
         {msg && <Alert variant={msg.ok ? 'success' : 'danger'}>{msg.text}</Alert>}
         <Input label="Antecedência do alerta de vencimento (dias)" type="number" min={1} max={365} value={days} disabled={!editable} onChange={e => setDays(e.target.value)}
           hint="Lotes que vencem dentro deste prazo ficam como “Vencendo” e geram alertas." />
+        <Input label="Prazo de reposição dos fornecedores (dias)" type="number" min={1} max={60} value={lead} disabled={!editable} onChange={e => setLead(e.target.value)}
+          hint="Usado pela IA Analítica: define o ponto de pedido e o estoque de segurança das sugestões de compra." />
         {editable && (
-          <Button size="sm" leftIcon={<Save className="w-3.5 h-3.5" />} loading={saving} onClick={() => save({ preferences: { expiryAlertDays: Number(days) } })}>Salvar preferências</Button>
+          <Button size="sm" leftIcon={<Save className="w-3.5 h-3.5" />} loading={saving} onClick={() => save({ preferences: { expiryAlertDays: Number(days), leadTimeDays: Number(lead) } })}>Salvar preferências</Button>
         )}
       </div>
     </Card>

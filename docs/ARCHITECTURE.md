@@ -233,9 +233,9 @@ StockIQ (PostgreSQL operacional)
 
 | Técnica | Objetivo no StockIQ | Status |
 |---|---|---|
-| Curva ABC | Classificar produtos por valor acumulado de movimentação, priorizando controle sobre os itens de maior impacto financeiro | Endpoint disponível no backend; não equivale à matriz ABC/XYZ mockada da UI |
-| Classificação XYZ | Classificar produtos pela variabilidade/regularidade da demanda, complementando a curva ABC (matriz ABC/XYZ) | Protótipo visual com dados demonstrativos; cálculo não implementado |
-| Previsão de demanda (séries temporais) | Estimar a quantidade de saída futura por produto/categoria, antecipando risco de ruptura | Experimento Python por categoria com dataset externo e validação temporal; não integrado a dados reais ou à UI |
+| Curva ABC | Classificar produtos por valor acumulado de movimentação, priorizando controle sobre os itens de maior impacto financeiro | ✅ Implementado (`/api/reports/abc`, `/api/dashboard/abc`) |
+| Classificação XYZ | Classificar produtos pela variabilidade/regularidade da demanda, complementando a curva ABC (matriz ABC/XYZ) | ✅ Implementado em `GET /api/analytics` (coeficiente de variação da demanda mensal) e exibido na tela IA Analítica |
+| Previsão de demanda (séries temporais) | Estimar a quantidade de saída futura por produto/categoria, antecipando risco de ruptura | ✅ Integrado: modelo global de gradient boosting (Python, `machine-learning/`) treinado no Store Sales, servido por API FastAPI e consumido pelo backend (`GET /api/analytics`) com fallback para média móvel; backtest por janela temporal contra baselines. Ainda treinado em dados externos — retreino com movimentações reais é o próximo passo |
 | Regras de associação (Apriori/Market Basket) | Identificar produtos frequentemente movimentados juntos, apoiando decisões de slotting | 📋 Planejado |
 | Clustering de produtos (k-means) | Agrupar produtos por padrão de consumo para sugerir políticas de estoque mínimo/máximo | 📋 Planejado |
 | Detecção de anomalias | Sinalizar movimentações de ajuste/perda fora do padrão histórico, cruzando com o log de auditoria | 📋 Planejado |

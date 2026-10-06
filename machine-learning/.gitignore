@@ -1,5 +1,12 @@
+# Dataset do Kaggle (>100 MB, regenerável) e dados derivados
 data/
 !data/.gitkeep
+store-sales-time-series-forecasting/
+
+# Artefatos gerados pelo treino (rode `python -m stockiq_ml.train`)
+artifacts/*
+!artifacts/.gitkeep
+
 __pycache__/
 *.pyc
 .venv/
