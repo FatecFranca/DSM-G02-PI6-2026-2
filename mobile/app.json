@@ -1,0 +1,75 @@
+{
+  "expo": {
+    "name": "StockIQ",
+    "slug": "stockiq",
+    "scheme": "stockiq",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "br.edu.fatecfranca.stockiq",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Usamos a câmera para ler códigos de barras e fotografar produtos.",
+        "NSPhotoLibraryUsageDescription": "Acesso às fotos para identificar produtos por imagem."
+      }
+    },
+    "android": {
+      "package": "br.edu.fatecfranca.stockiq",
+      "adaptiveIcon": {
+        "backgroundColor": "#2563eb",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "permissions": [
+        "CAMERA"
+      ],
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro",
+      "output": "single"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#2563eb"
+        }
+      ],
+      "expo-secure-store",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Usamos a câmera para ler códigos de barras e fotografar produtos."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Acesso às fotos para identificar produtos por imagem.",
+          "cameraPermission": "Usamos a câmera para fotografar produtos."
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": true
+          }
+        }
+      ],
+      "expo-font"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

@@ -49,6 +49,8 @@ pi/
 │                     # → backend/README.md
 ├── frontend/         # Aplicação web — Next.js/React, interface de operação do sistema
 │                     # → frontend/README.md
+├── mobile/           # App React Native (Expo) — mesmas telas e endpoints do web
+│                     # → mobile/README.md
 ├── machine-learning/ # Previsão de demanda: modelo + API (mineração de dados)
 │                     # → machine-learning/README.md
 └── docs/             # Documentação de arquitetura, nuvem, mineração de dados e requisitos
