@@ -55,6 +55,7 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { label: 'IA — Produtos', href: '/dashboard/ia', icon: 'Sparkles' },
       { label: 'IA Analítica', href: '/dashboard/ia-analitica', icon: 'BrainCircuit' },
+      { label: 'Simulação de Vendas', href: '/dashboard/simulacao', icon: 'FlaskConical' },
       { label: 'Relatórios', href: '/dashboard/relatorios', icon: 'FileBarChart' },
     ],
   },

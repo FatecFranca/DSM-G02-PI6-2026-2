@@ -1,7 +1,8 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { ArrowUpFromLine, DollarSign, Download, Package, Plus, Search } from 'lucide-react'
+import { Suspense, useEffect, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
+import { ArrowUpFromLine, DollarSign, Package, Plus, Search } from 'lucide-react'
 import { Breadcrumb } from '@/components/ui/Breadcrumb'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
@@ -12,6 +13,7 @@ import { EXIT_REASON_LABELS } from '@/constants/status'
 import { ApiError, api } from '@/lib/api'
 import { formatCurrency, formatDateTime, formatNumber } from '@/lib/utils'
 import type { ExitReason, MovementRecord } from '@/types/movement'
+import { ExportMovementsButton } from '@/components/movements/ExportMovementsButton'
 
 interface Paginated<T> {
   data: T[]
@@ -50,6 +52,13 @@ const REASON_VARIANT: Record<ExitReason, 'success' | 'info' | 'danger' | 'warnin
 }
 
 export default function SaidasPage() {
+  // useSearchParams exige um limite de Suspense no App Router.
+  return <Suspense fallback={null}><SaidasContent /></Suspense>
+}
+
+function SaidasContent() {
+  // ?productId=… (vem do scanner e do detalhe do produto) já abre o formulário com o produto escolhido.
+  const initialProductId = useSearchParams().get('productId') ?? ''
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
   const [result, setResult] = useState<{
@@ -58,7 +67,7 @@ export default function SaidasPage() {
     total: number
     error?: string
   } | null>(null)
-  const [showForm, setShowForm] = useState(false)
+  const [showForm, setShowForm] = useState(initialProductId !== '')
   const key = `${page}:${search}`
 
   useEffect(() => {
@@ -90,7 +99,7 @@ export default function SaidasPage() {
   const totalQty = exits.reduce((sum, movement) => sum + movement.quantity, 0)
 
   if (showForm) {
-    return <NovaSaidaForm onBack={() => setShowForm(false)} />
+    return <NovaSaidaForm initialProductId={initialProductId} onBack={() => setShowForm(false)} />
   }
 
   return (
@@ -102,7 +111,7 @@ export default function SaidasPage() {
           <p className="mt-0.5 text-sm text-[color:var(--text-tertiary)]">{total} saídas registradas</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" leftIcon={<Download className="h-3.5 w-3.5" />}>Exportar</Button>
+          <ExportMovementsButton filename="saidas.csv" params={{ type: 'exit,loss,transfer', search }} />
           <Button size="sm" leftIcon={<Plus className="h-3.5 w-3.5" />} onClick={() => setShowForm(true)}>Nova Saída</Button>
         </div>
       </div>
@@ -170,11 +179,11 @@ export default function SaidasPage() {
   )
 }
 
-function NovaSaidaForm({ onBack }: { onBack: () => void }) {
+function NovaSaidaForm({ onBack, initialProductId = '' }: { onBack: () => void; initialProductId?: string }) {
   const [products, setProducts] = useState<ProductOption[]>([])
   const [productDetails, setProductDetails] = useState<ProductDetails | null>(null)
   const [reason, setReason] = useState<ExitReason | ''>('')
-  const [productId, setProductId] = useState('')
+  const [productId, setProductId] = useState(initialProductId)
   const [quantity, setQuantity] = useState('')
   const [customerName, setCustomerName] = useState('')
   const [notes, setNotes] = useState('')
@@ -204,6 +213,16 @@ function NovaSaidaForm({ onBack }: { onBack: () => void }) {
       setError(err instanceof Error ? err.message : 'Falha ao carregar endereços e lotes do produto')
     }
   }
+
+  // Produto vindo da URL (?productId=…): carrega endereços e lotes dele ao abrir o formulário.
+  useEffect(() => {
+    if (!initialProductId) return
+    let active = true
+    api.get<ProductDetails>(`/products/${initialProductId}`)
+      .then((details) => { if (active) setProductDetails(details) })
+      .catch((err: unknown) => { if (active) setError(err instanceof Error ? err.message : 'Falha ao carregar endereços e lotes do produto') })
+    return () => { active = false }
+  }, [initialProductId])
 
   const handleSave = async () => {
     setError('')

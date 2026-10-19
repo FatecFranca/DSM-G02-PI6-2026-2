@@ -7,7 +7,7 @@ import {
   ArrowDownToLine, ArrowUpFromLine, History, Layers, MapPin,
   ClipboardList, ScanLine, Sparkles, BrainCircuit, FileBarChart,
   UserCog, ShieldCheck, Settings, ChevronLeft, ChevronRight,
-  Boxes, X, Search, ChevronsUpDown,
+  Boxes, X, Search, ChevronsUpDown, FlaskConical,
 } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import type { NavGroup } from '@/constants/navigation'
@@ -21,7 +21,7 @@ const ICONS: Record<string, React.ElementType> = {
   LayoutDashboard, Bell, Package, Tag, Award, Truck, Users,
   ArrowDownToLine, ArrowUpFromLine, History, Layers, MapPin,
   ClipboardList, ScanLine, Sparkles, BrainCircuit, FileBarChart,
-  UserCog, ShieldCheck, Settings,
+  UserCog, ShieldCheck, Settings, FlaskConical,
 }
 
 const ICON_STROKE = 1.75

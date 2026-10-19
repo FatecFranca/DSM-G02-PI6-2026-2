@@ -151,7 +151,7 @@ export interface ApiAuditLog {
 export interface ApiAlert {
   id: string
   type: 'critical' | 'warning' | 'info'
-  category: 'stock' | 'expiry'
+  category: 'stock' | 'expiry' | 'inventory'
   title: string
   desc: string
   read: boolean
@@ -292,4 +292,41 @@ export interface ApiSupplier {
   city: string
   state: string
   _count?: { products: number }
+}
+
+// ── Simulação de vendas (modelos do notebook, servidos por /ml-service) ──────
+export interface SimulationStatus {
+  available: boolean
+  status: 'offline' | 'loading' | 'training' | 'ready' | 'error'
+  message: string
+  trainedAt: string | null
+}
+
+export interface SimulationModel {
+  id: string
+  name: string
+  selection: string
+  origin: 'notebook' | 'complementar'
+  usesDate: boolean
+  features: string[]
+  metrics: { r2: number; mae: number; rmse: number }
+  importance: { feature: string; weight: number }[]
+}
+
+export interface SimulationModelInfo {
+  trainedAt: string
+  dataset: { rows: number; trainRows: number; testRows: number; attributes: number; split: string }
+  stores: { id: number; city: string; state: string; type: string; cluster: number }[]
+  families: string[]
+  oil: { default: number; min: number; max: number }
+  promoBands: { band: number; label: string }[]
+  models: SimulationModel[]
+}
+
+export interface SimulationScenario {
+  store: number
+  family: string
+  date: string
+  onpromotion: number
+  oil?: number
 }

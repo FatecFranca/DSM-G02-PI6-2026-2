@@ -25,6 +25,7 @@ export default function AlertasPage() {
     if (tab === 'critical') return a.type === 'critical'
     if (tab === 'expiry') return a.category === 'expiry'
     if (tab === 'stock') return a.category === 'stock'
+    if (tab === 'inventory') return a.category === 'inventory'
     return true
   })
 
@@ -34,6 +35,7 @@ export default function AlertasPage() {
     { id: 'critical', label: 'Críticos', badge: alerts.filter(a => a.type === 'critical').length },
     { id: 'stock', label: 'Estoque', badge: alerts.filter(a => a.category === 'stock').length },
     { id: 'expiry', label: 'Validade', badge: alerts.filter(a => a.category === 'expiry').length },
+    { id: 'inventory', label: 'Inventário', badge: alerts.filter(a => a.category === 'inventory').length },
   ]
 
   return (
@@ -93,8 +95,8 @@ export default function AlertasPage() {
                     <Badge variant={cfg.variant} size="sm">{cfg.label}</Badge>
                   </div>
                   <div className="flex items-center justify-between mt-2">
-                    <Link href={alert.category === 'expiry' ? '/dashboard/lotes' : '/dashboard/produtos'} className="text-[11px] text-[color:var(--brand)] hover:underline">
-                      {alert.category === 'expiry' ? 'Ver lotes →' : 'Ver produtos →'}
+                    <Link href={alert.category === 'expiry' ? '/dashboard/lotes' : alert.category === 'inventory' ? '/dashboard/inventario' : '/dashboard/produtos'} className="text-[11px] text-[color:var(--brand)] hover:underline">
+                      {alert.category === 'expiry' ? 'Ver lotes →' : alert.category === 'inventory' ? 'Ver inventários →' : 'Ver produtos →'}
                     </Link>
                     {!alert.read && (
                       <button onClick={() => markRead(alert.id)} className="text-[11px] text-[color:var(--brand)] hover:underline">Marcar como lido</button>

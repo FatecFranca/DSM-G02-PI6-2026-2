@@ -37,8 +37,16 @@ const UNITS = [
 
 type Status = 'active' | 'inactive' | 'discontinued'
 
+/** Valores iniciais para um produto novo (ex.: sugestão da IA de identificação por foto). */
+export interface ProductPrefill {
+  name?: string
+  description?: string
+  categoryId?: string
+  brandId?: string
+}
+
 /** Create/edit form shared by /produtos/novo and /produtos/[id]/editar. */
-export function ProductForm({ product }: { product?: ApiProduct }) {
+export function ProductForm({ product, prefill }: { product?: ApiProduct; prefill?: ProductPrefill }) {
   const router = useRouter()
   const editing = !!product
   const [tab, setTab] = useState('basic')
@@ -49,13 +57,13 @@ export function ProductForm({ product }: { product?: ApiProduct }) {
   const { data: brands } = useFetch<ApiBrand[]>('/brands')
   const { data: suppliers } = useFetch<Paginated<ApiSupplier>>('/suppliers', { limit: 100 })
 
-  const [name, setName] = useState(product?.name ?? '')
+  const [name, setName] = useState(product?.name ?? prefill?.name ?? '')
   const [internalCode, setInternalCode] = useState(product?.internalCode ?? '')
   const [sku, setSku] = useState(product?.sku ?? '')
   const [barcode, setBarcode] = useState(product?.barcode ?? '')
-  const [description, setDescription] = useState(product?.description ?? '')
-  const [categoryId, setCategoryId] = useState(product?.categoryId ?? '')
-  const [brandId, setBrandId] = useState(product?.brandId ?? '')
+  const [description, setDescription] = useState(product?.description ?? prefill?.description ?? '')
+  const [categoryId, setCategoryId] = useState(product?.categoryId ?? prefill?.categoryId ?? '')
+  const [brandId, setBrandId] = useState(product?.brandId ?? prefill?.brandId ?? '')
   const [supplierId, setSupplierId] = useState(product?.supplierId ?? '')
   const [unit, setUnit] = useState(product?.unit ?? '')
   const [status, setStatus] = useState<Status>(product?.status ?? 'active')

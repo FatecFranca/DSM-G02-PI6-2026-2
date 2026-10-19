@@ -1,11 +1,10 @@
 'use client'
 import { useEffect, useState } from 'react'
 import {
-  Search, Download, ArrowDownToLine, ArrowUpFromLine,
+  Search, ArrowDownToLine, ArrowUpFromLine,
   RefreshCw, AlertTriangle,
 } from 'lucide-react'
 import { Breadcrumb } from '@/components/ui/Breadcrumb'
-import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { Input } from '@/components/ui/Input'
 import { Pagination } from '@/components/ui/Pagination'
@@ -14,6 +13,7 @@ import { formatCurrency, formatNumber, formatDateTime } from '@/lib/utils'
 import { cn } from '@/lib/cn'
 import { api } from '@/lib/api'
 import type { MovementRecord } from '@/types/movement'
+import { ExportMovementsButton } from '@/components/movements/ExportMovementsButton'
 
 type MType = 'entry' | 'exit' | 'transfer' | 'loss' | 'adjustment' | 'inventory'
 
@@ -77,7 +77,7 @@ export default function MovimentacoesPage() {
           <h1 className="text-xl font-bold text-[color:var(--text-primary)]">Movimentações</h1>
           <p className="text-sm text-[color:var(--text-tertiary)] mt-0.5">Histórico completo de todas as movimentações de estoque</p>
         </div>
-        <Button variant="outline" size="sm" leftIcon={<Download className="w-3.5 h-3.5" />}>Exportar</Button>
+        <ExportMovementsButton filename="movimentacoes.csv" params={{ search, type: typeFilter || undefined, from: fromDate ? `${fromDate}T00:00:00.000Z` : undefined, to: toDate ? `${toDate}T23:59:59.999Z` : undefined }} />
       </div>
 
       {/* Summary cards */}

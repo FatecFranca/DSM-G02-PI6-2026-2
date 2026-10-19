@@ -1,7 +1,8 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { ArrowDownToLine, Download, FileText, Package, Plus, Search } from 'lucide-react'
+import { Suspense, useEffect, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
+import { ArrowDownToLine, FileText, Package, Plus, Search } from 'lucide-react'
 import { Breadcrumb } from '@/components/ui/Breadcrumb'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -10,6 +11,7 @@ import { StatCard } from '@/components/ui/StatCard'
 import { ApiError, api } from '@/lib/api'
 import { formatCurrency, formatDateTime, formatNumber } from '@/lib/utils'
 import type { MovementRecord } from '@/types/movement'
+import { ExportMovementsButton } from '@/components/movements/ExportMovementsButton'
 
 interface Paginated<T> {
   data: T[]
@@ -39,6 +41,13 @@ interface AddressOption {
 const PAGE_SIZE = 20
 
 export default function EntradasPage() {
+  // useSearchParams exige um limite de Suspense no App Router.
+  return <Suspense fallback={null}><EntradasContent /></Suspense>
+}
+
+function EntradasContent() {
+  // ?productId=… (vem do scanner e do detalhe do produto) já abre o formulário com o produto escolhido.
+  const initialProductId = useSearchParams().get('productId') ?? ''
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
   const [result, setResult] = useState<{
@@ -47,7 +56,7 @@ export default function EntradasPage() {
     total: number
     error?: string
   } | null>(null)
-  const [showForm, setShowForm] = useState(false)
+  const [showForm, setShowForm] = useState(initialProductId !== '')
   const key = `${page}:${search}`
 
   useEffect(() => {
@@ -79,7 +88,7 @@ export default function EntradasPage() {
   const totalQty = entries.reduce((sum, movement) => sum + movement.quantity, 0)
 
   if (showForm) {
-    return <NovaEntradaForm onBack={() => setShowForm(false)} />
+    return <NovaEntradaForm initialProductId={initialProductId} onBack={() => setShowForm(false)} />
   }
 
   return (
@@ -92,7 +101,7 @@ export default function EntradasPage() {
           <p className="mt-0.5 text-sm text-[color:var(--text-tertiary)]">{total} entradas registradas</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" leftIcon={<Download className="h-3.5 w-3.5" />}>Exportar</Button>
+          <ExportMovementsButton filename="entradas.csv" params={{ type: 'entry', search }} />
           <Button size="sm" leftIcon={<Plus className="h-3.5 w-3.5" />} onClick={() => setShowForm(true)}>
             Nova Entrada
           </Button>
@@ -161,7 +170,7 @@ export default function EntradasPage() {
   )
 }
 
-function NovaEntradaForm({ onBack }: { onBack: () => void }) {
+function NovaEntradaForm({ onBack, initialProductId = '' }: { onBack: () => void; initialProductId?: string }) {
   const [products, setProducts] = useState<ProductOption[]>([])
   const [suppliers, setSuppliers] = useState<SupplierOption[]>([])
   const [addresses, setAddresses] = useState<AddressOption[]>([])
@@ -169,7 +178,7 @@ function NovaEntradaForm({ onBack }: { onBack: () => void }) {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [form, setForm] = useState({
-    productId: '',
+    productId: initialProductId,
     quantity: '',
     unitCost: '',
     invoiceNumber: '',

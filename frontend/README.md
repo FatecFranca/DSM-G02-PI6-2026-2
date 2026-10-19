@@ -62,8 +62,9 @@ frontend/
 │   │       ├── enderecos/ entradas/ saidas/ movimentacoes/ lotes/
 │   │       ├── inventario/      # Contagens e acompanhamento do ajuste de estoque (fila)
 │   │       ├── alertas/ auditoria/ relatorios/ scanner/ usuarios/ configuracoes/
-│   │       ├── ia/              # Identificação por imagem (protótipo; modelo não integrado)
-│   │       └── ia-analitica/    # Previsão de demanda, matriz ABC×XYZ e sugestões de compra
+│   │       ├── ia/              # Identificação de produto por foto (OpenAI, via API)
+│   │       ├── ia-analitica/    # Previsão de demanda, matriz ABC×XYZ e sugestões de compra
+│   │       └── simulacao/       # Simulação de vendas com os modelos do notebook (ml-service)
 │   ├── lp/                      # Página de apresentação
 │   ├── layout.tsx · page.tsx · globals.css
 ├── components/
@@ -71,6 +72,7 @@ frontend/
 │   ├── ui/                      # 18 componentes reutilizáveis
 │   ├── products/                # ProductForm, ProductImage, ProductImageUploader
 │   ├── inventory/               # InventoryJobBanner
+│   ├── movements/               # ExportMovementsButton (CSV)
 │   └── partners/                # PartnerManager (fornecedores e clientes)
 ├── constants/                   # navigation.ts, status.ts
 ├── hooks/                       # useDebounce, useFetch, useSidebar, useTheme
@@ -83,7 +85,7 @@ frontend/
 | Estado | Módulos / rotas | Observação |
 |---|---|---|
 | Integradas à API | Login; dashboard; produtos (lista, cadastro, edição, detalhe e **foto**); categorias; marcas; fornecedores; clientes; endereços; entradas; saídas; movimentações; lotes; **inventário**; alertas (e sino da barra superior); auditoria; relatórios; scanner; usuários; configurações; **IA Analítica** | Os dados dependem da API e do banco configurados. |
-| Protótipo | `IA — Produtos` (`/dashboard/ia`) | Aceita e pré-visualiza a imagem, mas o modelo de visão não está integrado; a tela não inventa resultados. |
+| Dependem de serviço externo | `IA — Produtos` (precisa de `OPENAI_API_KEY` no backend) e `Simulação de Vendas` (precisa de `npm run ml:service`) | Sem o serviço, as telas mostram uma mensagem clara em vez de dados falsos. |
 | Estática | `/lp` (apresentação) | Conteúdo institucional. |
 
 ### Foto do produto
@@ -94,9 +96,21 @@ No cadastro/edição, o card **Foto do Produto** aceita arrastar ou escolher um 
 
 Ao **concluir** um inventário a API enfileira o ajuste de estoque (SQS). A tela mostra um banner com o andamento (*Na fila*, *Ajustando… X de Y*, *Ajustado*, *Com pendências*, *Falhou*), atualiza sozinha a cada 3 s enquanto houver job em andamento e oferece **Reprocessar** (admin/supervisor). Cada item divergente indica se foi ajustado ou o motivo da pendência manual.
 
+### IA — Produtos (identificação por foto)
+
+Envia a foto à API (`POST /ai/identify-product`), que usa um modelo de visão da OpenAI. A tela mostra o que foi identificado (nome, categoria, marca, descrição, confiança), os **produtos parecidos já cadastrados** e o botão *Cadastrar produto com estes dados*, que abre o cadastro pré-preenchido (`/produtos/novo?name=…&categoryId=…&brandId=…`).
+
+### Simulação de Vendas
+
+Tela "e se…" sobre os modelos de regressão do notebook (Regressão Linear e Random Forest, com SelectKBest e RFE) mais um modelo complementar. Escolha loja, família, itens em promoção, preço do petróleo, data e horizonte e veja: indicadores, previsão diária por modelo, o efeito de cada faixa de promoção, a comparação entre as 5 lojas e a tabela de desempenho (R², MAE, RMSE). Consome `/simulation/*`; se o serviço não estiver no ar, mostra como iniciá-lo.
+
+### Exportar CSV e Movimentar
+
+Os botões **Exportar** de Entradas, Saídas e Histórico geram um CSV (UTF-8 com BOM, abre no Excel) com **todas** as movimentações que casam com os filtros atuais, não só a página exibida. No detalhe do produto, **Nova entrada** e **Nova saída** abrem o formulário já com o produto escolhido (`?productId=`), o mesmo parâmetro que o Scanner usa.
+
 ### IA Analítica
 
-Consome `GET /api/analytics`: previsão de demanda (real × previsto com faixa de incerteza), origem do modelo (ML ou média móvel), matriz ABC×XYZ, insights e sugestões de compra com exportação do pedido em CSV. O experimento de regressão (notebook) está descrito em [machine-learning/README.md](../machine-learning/README.md) e não alimenta a tela.
+Consome `GET /api/analytics`: previsão de demanda (real × previsto com faixa de incerteza), origem do modelo (ML ou média móvel), matriz ABC×XYZ, insights e sugestões de compra com exportação do pedido em CSV. O experimento de regressão (notebook) está descrito em [machine-learning/README.md](../machine-learning/README.md); seus modelos alimentam a tela Simulação de Vendas, não esta.
 
 ## Componentes reutilizáveis
 
@@ -137,11 +151,11 @@ npm run lint    # ESLint
 | Estrutura e navegação | Implementada | Layouts, componentes, tema claro/escuro e menu por papel. |
 | Integração com a API | Implementada nas telas operacionais | `tsc`, ESLint e `next build` sem erros na última verificação (19/10/2026). A interface não é exercitada por testes automatizados em navegador. |
 | Foto de produto e inventário assíncrono | Implementados | Dependem do S3/SQS configurados no backend; upload real ao bucket e fila real na AWS ainda não foram exercitados ponta a ponta. |
-| IA — Produtos | Protótipo | Modelo de visão não integrado. |
+| IA — Produtos e Simulação de Vendas | Implementadas | Dependem de `OPENAI_API_KEY` e do `ml-service` no backend, respectivamente; testadas na interface com o serviço de simulação no ar e com a IA sem chave (mensagem clara). |
 
 ## Próximos passos
 
 1. Exercitar o fluxo completo em navegador com S3 e SQS reais (foto de produto e conclusão de inventário) e registrar evidências;
 2. Adicionar testes de interface (ex.: Playwright) para os fluxos críticos;
-3. Integrar o modelo de visão na tela `IA — Produtos` quando existir;
+3. Exercitar a IA por foto com uma chave real da OpenAI e ajustar o prompt com imagens do catálogo;
 4. Avaliar miniaturas/redimensionamento de fotos para listas grandes.

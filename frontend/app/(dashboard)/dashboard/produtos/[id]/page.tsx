@@ -134,7 +134,12 @@ export default function ProdutoDetailPage() {
           </div>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm">Movimentar</Button>
+          <Link href={`/dashboard/entradas?productId=${encodeURIComponent(product.id)}`}>
+            <Button variant="outline" size="sm" leftIcon={<ArrowDownToLine className="w-3.5 h-3.5" />}>Nova entrada</Button>
+          </Link>
+          <Link href={`/dashboard/saidas?productId=${encodeURIComponent(product.id)}`}>
+            <Button variant="outline" size="sm" leftIcon={<ArrowUpFromLine className="w-3.5 h-3.5" />}>Nova saída</Button>
+          </Link>
           <Link href={`/dashboard/produtos/${product.id}/editar`}>
             <Button size="sm" leftIcon={<Edit className="w-3.5 h-3.5" />}>Editar</Button>
           </Link>
