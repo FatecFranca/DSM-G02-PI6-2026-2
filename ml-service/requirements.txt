@@ -1,0 +1,7 @@
+# Serviço de simulação de vendas (modelos do notebook machine-learning/Previsao_Vendas.ipynb)
+fastapi>=0.110
+uvicorn>=0.29
+pandas>=2.2
+numpy>=1.26
+scikit-learn>=1.4
+joblib>=1.3

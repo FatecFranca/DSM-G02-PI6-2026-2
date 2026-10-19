@@ -29,7 +29,7 @@ Experimento de **previsão de vendas por regressão** sobre a base pública *Sto
 - A divisão treino/teste é aleatória (não cronológica): o R² é otimista para prever dias futuros.
 - Não usa vendas passadas (*lags*), feriados nem transações; só 5 lojas do mesmo tipo.
 - O `test.csv` não é usado: o notebook avalia, mas não gera a previsão dos dias futuros.
-- **Não está integrado à API.** A tela IA Analítica do sistema usa o analytics do backend (`GET /api/analytics`): média móvel, curva ABC, matriz ABC×XYZ e sugestões de compra. O backend aceita um serviço de previsão externo opcional (`ML_SERVICE_URL`); este repositório não inclui esse serviço.
+- **Integração com o sistema:** os modelos deste notebook são servidos, sem alterá-lo, pelo serviço [`ml-service/`](../ml-service/README.md) e usados na tela **Simulação de Vendas** (`/api/simulation/*`). A tela IA Analítica continua usando o analytics do backend (`GET /api/analytics`): média móvel, curva ABC, matriz ABC×XYZ e sugestões de compra.
 
 ## Como executar
 
