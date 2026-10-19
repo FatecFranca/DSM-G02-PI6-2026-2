@@ -1,0 +1,73 @@
+/* Design system dos PDFs de documentação do StockIQ (renderizado pelo Chrome headless). */
+:root { --navy:#0b1b3a; --blue:#2563eb; --ink:#0f172a; --muted:#475569; --line:#e2e8f0; --soft:#f1f5f9;
+        --ok:#16a34a; --warn:#d97706; --bad:#dc2626; --info:#0891b2; --violet:#7c3aed; }
+@page { size: A4; margin: 22mm 18mm 20mm;
+  @top-left { content: string(doctitle); font: 8pt 'Noto Sans', sans-serif; color:#94a3b8; }
+  @top-right { content: "StockIQ — WMS / ERP Lite"; font: 8pt 'Noto Sans', sans-serif; color:#94a3b8; }
+  @bottom-center { content: counter(page); font: 8.5pt 'Noto Sans', sans-serif; color:#94a3b8; } }
+@page cover { margin: 0; @top-left{content:none} @top-right{content:none} @bottom-center{content:none} }
+* { box-sizing: border-box; }
+html { font: 10pt/1.55 'Noto Sans', 'Liberation Sans', sans-serif; color: var(--ink); -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+body { margin: 0; }
+.doctitle { string-set: doctitle content(); display:none; }
+
+/* Capa */
+.cover { page: cover; height: 296.6mm; overflow: hidden; color:#fff; padding: 26mm 22mm 20mm; display:flex; flex-direction:column;
+  background: linear-gradient(155deg,#0a1530 0%,#10265c 55%,#1d4ed8 120%); break-after: page; }
+.cover .kicker { font-size: 8.5pt; letter-spacing: .32em; color:#93c5fd; text-transform: uppercase; margin-top: 8mm; }
+.cover h1 { font-size: 40pt; line-height: 1.05; margin: 10mm 0 0; font-weight: 800; letter-spacing:-.01em; }
+.cover .bar { width: 38mm; height: 2.4mm; background: var(--blue); margin: 9mm 0; border-radius: 2mm; }
+.cover .lead { font-size: 12pt; color:#cbd5e1; max-width: 120mm; line-height:1.6; }
+.cover .chips { display:flex; flex-wrap:wrap; gap:6px; margin-top: 10mm; }
+.cover .chip { border:1px solid #3b5bb5; color:#bfdbfe; border-radius: 99px; padding: 2px 10px; font-size: 7.5pt; }
+.cover .foot { margin-top:auto; display:flex; justify-content:space-between; gap:12mm; font-size: 8.5pt; color:#cbd5e1; border-top:1px solid #2b4488; padding-top: 6mm; }
+.cover .foot b { color:#fff; font-weight:600; }
+
+/* Sumário */
+.toc h1 { font-size: 20pt; margin: 0 0 6mm; }
+.toc .row { display:grid; grid-template-columns: 11mm 1fr auto; gap: 4mm; padding: 2.2mm 0; border-bottom: 1px solid var(--line); align-items: baseline; }
+.toc .n { color: var(--blue); font-weight: 700; } .toc .t { font-weight: 600; } .toc .d { color: var(--muted); font-size: 8.5pt; }
+
+/* Títulos */
+h2.sec { font-size: 17pt; margin: 9mm 0 3mm; padding-bottom: 2mm; border-bottom: 2px solid var(--ink); break-after: avoid; }
+h2.sec .num { color: var(--blue); margin-right: 3mm; }
+h2.sec.newpage { break-before: page; margin-top: 0; }
+h3 { font-size: 11.5pt; margin: 6mm 0 2mm; break-after: avoid; }
+h3::before { content:""; display:inline-block; width:2.4mm; height:2.4mm; background:var(--blue); border-radius:50%; margin-right: 2.4mm; }
+h4 { font-size: 10pt; margin: 4mm 0 1mm; color: var(--muted); text-transform: uppercase; letter-spacing:.06em; break-after: avoid; }
+p { margin: 0 0 3mm; text-align: left; } ul, ol { margin: 0 0 3mm; padding-left: 5mm; } li { margin-bottom: 1mm; }
+code { font: 8.6pt 'DejaVu Sans Mono', monospace; background: var(--soft); padding: 0 3px; border-radius: 3px; color:#1e3a8a; }
+a { color: var(--blue); text-decoration:none; }
+
+/* Tabelas */
+table { width:100%; border-collapse: collapse; margin: 2mm 0 4mm; font-size: 8.6pt; break-inside: auto; }
+th { background: var(--ink); color:#fff; text-align:left; padding: 1.6mm 2.4mm; font-weight:600; }
+td { padding: 1.5mm 2.4mm; border-bottom: 1px solid var(--line); vertical-align: top; }
+tr { break-inside: avoid; } tr:nth-child(even) td { background:#f8fafc; }
+td.c, th.c { text-align:center; } td.m { font-family:'DejaVu Sans Mono',monospace; font-size:8pt; }
+.tag { display:inline-block; padding: 0 6px; border-radius: 99px; font-size: 7.4pt; font-weight: 700; line-height: 1.7; white-space: nowrap; }
+.tag.ok { background:#dcfce7; color:#15803d; } .tag.warn { background:#fef3c7; color:#b45309; } .tag.bad { background:#fee2e2; color:#b91c1c; }
+.tag.info { background:#dbeafe; color:#1d4ed8; } .tag.gray { background:#e2e8f0; color:#475569; }
+.m-get{background:#dcfce7;color:#15803d}.m-post{background:#dbeafe;color:#1d4ed8}.m-patch{background:#fef3c7;color:#b45309}.m-delete{background:#fee2e2;color:#b91c1c}
+
+/* Cartões, KPIs, destaque, código */
+.kpis { display:grid; grid-template-columns: repeat(4,1fr); gap: 3mm; margin: 3mm 0 5mm; }
+.kpi { border:1px solid var(--line); border-radius: 3mm; text-align:center; padding: 3.5mm 2mm; break-inside: avoid; }
+.kpi b { display:block; font-size: 20pt; color: var(--blue); line-height:1.1; } .kpi span { font-size: 7pt; letter-spacing:.1em; color: var(--muted); text-transform:uppercase; }
+.cards { display:grid; grid-template-columns: repeat(3,1fr); gap: 3mm; margin: 3mm 0 5mm; }
+.cards.two { grid-template-columns: repeat(2,1fr); }
+.card { border:1px solid var(--line); border-radius: 3mm; padding: 3.5mm; break-inside: avoid; background:#fff; }
+.card h5 { margin:0 0 1mm; font-size: 9.5pt; } .card p { margin:0; font-size: 8.4pt; color: var(--muted); }
+.card .ic { width:7mm; height:7mm; border-radius:2mm; background:#dbeafe; color:var(--blue); display:flex; align-items:center; justify-content:center; font-size: 10pt; margin-bottom: 2mm; }
+.note { border-left: 3px solid var(--blue); background:#eff6ff; padding: 3mm 4mm; border-radius: 0 2mm 2mm 0; margin: 3mm 0 4mm; font-size: 9pt; break-inside: avoid; }
+.note b.t { display:block; font-size:7.4pt; letter-spacing:.12em; text-transform:uppercase; color:var(--blue); margin-bottom:1mm; }
+.note.warn { border-color: var(--warn); background:#fffbeb; } .note.warn b.t { color: var(--warn); }
+.note.bad { border-color: var(--bad); background:#fef2f2; } .note.bad b.t { color: var(--bad); }
+.note.ok { border-color: var(--ok); background:#f0fdf4; } .note.ok b.t { color: var(--ok); }
+pre { background:#0f172a; color:#e2e8f0; padding: 3.5mm 4mm; border-radius: 2.5mm; font: 7.9pt/1.5 'DejaVu Sans Mono', monospace; overflow:hidden; white-space: pre-wrap; margin: 2mm 0 4mm; break-inside: avoid; }
+pre .c { color:#94a3b8; } pre .k { color:#7dd3fc; } pre .s { color:#86efac; }
+figure { margin: 3mm 0 5mm; text-align:center; break-inside: avoid; } figure svg { width:100%; height:auto; max-height: 112mm; }
+figcaption { font-size: 8pt; color: var(--muted); margin-top: 1.5mm; font-style: italic; }
+.small { font-size: 8.4pt; color: var(--muted); }
+
+table.keep { break-inside: avoid; }

@@ -1,0 +1,95 @@
+{
+ "generated": "2026-10-19",
+ "total": 173,
+ "passed": 173,
+ "suites": [
+  {
+   "file": "audit-sanitize.test.ts",
+   "tests": 1
+  },
+  {
+   "file": "auth.test.ts",
+   "tests": 9
+  },
+  {
+   "file": "category.test.ts",
+   "tests": 9
+  },
+  {
+   "file": "critical-security.test.ts",
+   "tests": 10
+  },
+  {
+   "file": "flows.test.ts",
+   "tests": 21
+  },
+  {
+   "file": "inventory-async-e2e.test.ts",
+   "tests": 4
+  },
+  {
+   "file": "inventory-processing.test.ts",
+   "tests": 10
+  },
+  {
+   "file": "inventory-queue-flow.test.ts",
+   "tests": 8
+  },
+  {
+   "file": "inventory-service.test.ts",
+   "tests": 3
+  },
+  {
+   "file": "inventory-worker.test.ts",
+   "tests": 5
+  },
+  {
+   "file": "ml-analytics.test.ts",
+   "tests": 4
+  },
+  {
+   "file": "ml-service.test.ts",
+   "tests": 6
+  },
+  {
+   "file": "movement-service.test.ts",
+   "tests": 6
+  },
+  {
+   "file": "movement.test.ts",
+   "tests": 5
+  },
+  {
+   "file": "product-image-service.test.ts",
+   "tests": 12
+  },
+  {
+   "file": "product.test.ts",
+   "tests": 8
+  },
+  {
+   "file": "queue-service.test.ts",
+   "tests": 10
+  },
+  {
+   "file": "queue-sqs-integration.test.ts",
+   "tests": 2
+  },
+  {
+   "file": "report-service.test.ts",
+   "tests": 1
+  },
+  {
+   "file": "storage-service.test.ts",
+   "tests": 16
+  },
+  {
+   "file": "user.test.ts",
+   "tests": 15
+  },
+  {
+   "file": "warehouse.test.ts",
+   "tests": 8
+  }
+ ]
+}

@@ -16,7 +16,7 @@ transferir de endereço e contar inventário no celular.
 ## Como rodar
 
 ```bash
-# 1) backend e (opcional) serviço de ML no ar — ver ../backend/README.md e ../machine-learning/README.md
+# 1) backend no ar — ver ../backend/README.md (o serviço de previsão de ML é opcional; sem ele a API usa média móvel)
 cd backend && npm run prisma:seed && npm run dev
 
 # 2) app

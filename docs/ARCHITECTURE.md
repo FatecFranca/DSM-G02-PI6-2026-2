@@ -1,6 +1,6 @@
 # Arquitetura — StockIQ
 
-Este documento consolida a arquitetura lógica da aplicação, o modelo de dados, a arquitetura de nuvem (AWS) e o planejamento de mineração de dados definidos na Sprint 1. Conteúdo extraído e organizado a partir da documentação técnica de planejamento (`Sprint 1 - Gabriel e Lívia.pdf`), mantido aqui em Markdown para ficar versionado junto ao código.
+Este documento consolida a arquitetura lógica da aplicação, o modelo de dados, a arquitetura de nuvem (AWS) e o planejamento de mineração de dados definidos na Sprint 1. Conteúdo extraído e organizado a partir da documentação técnica de planejamento (`Sprint 1 - Gabriel e Lívia.pdf`), mantido aqui em Markdown para ficar versionado junto ao código. **Atualizado na Sprint 2 (19/10/2026)** para refletir o código atual: front-end integrado, fotos no S3, fila SQS do inventário e a mineração de dados em seu estado atual. Versões em PDF, com diagramas: [StockIQ-Backend.pdf](StockIQ-Backend.pdf), [StockIQ-Frontend.pdf](StockIQ-Frontend.pdf), [StockIQ-Machine-Learning.pdf](StockIQ-Machine-Learning.pdf) e [StockIQ-Computacao-em-Nuvem.pdf](StockIQ-Computacao-em-Nuvem.pdf).
 
 ## Índice
 
@@ -15,17 +15,24 @@ Este documento consolida a arquitetura lógica da aplicação, o modelo de dados
 
 ## Visão lógica da aplicação
 
-Arquitetura lógica pretendida: o front-end consome a API REST, que acessa o banco relacional pelo Prisma ORM. No código atual, a integração do front-end é parcial: há telas e componentes demonstrativos que ainda usam dados mockados. O diagrama descreve a separação de camadas, não comprova publicação ou implantação dos serviços.
+O front-end (Next.js) e o app mobile (Expo) consomem a API REST, que acessa o banco relacional pelo Prisma ORM. **As telas operacionais usam dados reais da API**; não há mais dados de demonstração embutidos no front-end. A API também fala com a AWS: guarda fotos de produto no **Amazon S3** e publica o ajuste de estoque do inventário numa fila **Amazon SQS**, consumida por um worker. O diagrama descreve a separação de camadas; a implantação em nuvem (EC2, balanceador) ainda é proposta.
 
 ```
 ┌────────────────┐  HTTPS/JSON  ┌──────────────────────────┐  Prisma   ┌──────────────┐  SQL  ┌────────────┐
-│   Front-end     │ ───────────► │        API REST           │ Client   │  Prisma ORM   │ ────► │ PostgreSQL │
-│ Next.js 16/React│              │ Node.js/Express/TypeScript│ ───────► │  Migrations    │       │  (banco    │
-│                 │ ◄─────────── │ JWT · Zod · Helmet · Rate │          │  Query builder │ ◄──── │ relacional)│
-└────────────────┘              └──────────────────────────┘          └──────────────┘       └────────────┘
+│   Front-end     │ ───────────► │        API REST           │ ───────► │  Prisma ORM   │ ────► │ PostgreSQL │
+│ Next.js 16/React│              │ Node.js/Express/TypeScript│          │  Migrations    │       │  (banco    │
+│ App mobile      │ ◄─────────── │ JWT · Zod · Helmet · Rate │          │  Query builder │ ◄──── │ relacional)│
+└────────────────┘              └─────────┬──────────┬──────┘          └──────────────┘       └─────▲──────┘
+                                           │          │                                               │
+                          PutObject / URL  │          │ publica job                                   │ movimentações
+                          assinada         ▼          ▼                                               │ + estoque
+                                    ┌───────────┐  ┌───────────┐  consome  ┌──────────┐              │
+                                    │ Amazon S3  │  │ Amazon SQS │ ───────► │  Worker   │ ─────────────┘
+                                    │ (fotos)    │  │ + DLQ      │          │(inventário)│
+                                    └───────────┘  └───────────┘          └──────────┘
 ```
 
-> Diagrama de classes e diagramas de sequência dos fluxos críticos (registro de movimentação, alerta de estoque) ficam para a sprint em que o módulo de IA analítica for integrado.
+> Diagramas de sequência dos fluxos críticos (login, registro de movimentação, upload de foto e ajuste assíncrono do inventário) estão nos PDFs de [Backend](StockIQ-Backend.pdf) e de [Computação em Nuvem](StockIQ-Computacao-em-Nuvem.pdf).
 
 ## Casos de uso e perfis de acesso
 
@@ -48,7 +55,7 @@ Detalhamento completo dos requisitos funcionais e não funcionais em [docs/REQUI
 
 ## Modelo de dados
 
-Modelo lógico definido no **Prisma Schema** e versionado por migrations — 13 modelos e 11 enumerações de domínio (`backend/prisma/schema.prisma`). A aplicação efetiva de cada migration depende de um banco PostgreSQL acessível.
+Modelo lógico definido no **Prisma Schema** e versionado por migrations — 14 modelos e 12 enumerações de domínio (`backend/prisma/schema.prisma`). A aplicação efetiva de cada migration depende de um banco PostgreSQL acessível.
 
 ### Entidades centrais e cardinalidades
 
@@ -88,6 +95,7 @@ Modelo lógico definido no **Prisma Schema** e versionado por migrations — 13 
 | `purchasePrice`, `salePrice` | Decimal(12,2) | Precificação |
 | `minStock`, `maxStock`, `currentStock` | Int | Base para alertas de ruptura/excesso |
 | `status` | Enum `ProductStatus` | `active` · `inactive` · `discontinued` |
+| `imageKey`, `imageUrl` | String? | Foto: `imageKey` é a chave do objeto no S3 (a API devolve `imageUrl` como URL assinada temporária); `imageUrl` também aceita uma URL externa |
 | `categoryId`, `brandId`, `supplierId` | String | FK → Category, Brand, Supplier |
 
 **`movements`**
@@ -107,7 +115,7 @@ Modelo lógico definido no **Prisma Schema** e versionado por migrations — 13 
 
 **`warehouse_addresses`** — `code`, `aisle`, `street`, `shelf`, `level`, `position`, `status` (`free`·`occupied`·`blocked`·`reserved`), `capacity`, `occupied`, `productId`.
 
-**`inventory_count_items`** — associa produto e contagem; mantém quantidade esperada, quantidade contada, divergência, data e usuário da contagem.
+**`inventory_count_items`** — associa produto e contagem; mantém quantidade esperada, quantidade contada, divergência, data e usuário da contagem, além de `adjustedAt` (quando o worker aplicou a divergência ao estoque; garante idempotência) e `adjustmentError` (motivo de o ajuste automático não ter sido possível).
 
 ### Demais entidades
 
@@ -118,9 +126,10 @@ Modelo lógico definido no **Prisma Schema** e versionado por migrations — 13 
 | `brands` | name, slug, logoUrl | 1:N com Product |
 | `suppliers` | name, tradeName, cnpj, email, phone, category, status | 1:N com Product, Movement, Lot |
 | `customers` | name, tradeName, cnpj, email, city, state, status | referenciado por Movement |
-| `inventory_counts` | type, status, startDate, endDate, totalItems, countedItems, divergences | N:1 com User (responsável); 1:N com InventoryCountItem |
+| `inventory_counts` | type, status, startDate, endDate, totalItems, countedItems, divergences, **jobStatus**, jobError, jobQueuedAt, jobFinishedAt, adjustedItems, failedItems | N:1 com User (responsável); 1:N com InventoryCountItem |
 | `notifications` | alertKey, readAt | N:1 com User; único por (alertKey, userId) |
 | `audit_logs` | action, entity, entityId, oldValue (JSON), newValue (JSON), ip | N:1 com User |
+| `settings` | key (`company`, `preferences`), value (JSON) | — |
 
 ### Enumerações de domínio
 
@@ -131,6 +140,7 @@ Modelo lógico definido no **Prisma Schema** e versionado por migrations — 13 
 | `LotStatus` | `valid` · `expiring` · `expired` · `quarantine` |
 | `PositionStatus` | `free` · `occupied` · `blocked` · `reserved` |
 | `InventoryCountType` / `Status` | `full`·`partial`·`cyclic` / `planned`·`in_progress`·`review`·`completed` |
+| `InventoryJobStatus` | `pending` · `processing` · `completed` · `partial` · `failed` (andamento do ajuste de estoque assíncrono) |
 
 O schema inclui índices para consultas operacionais comuns. Próximo passo: medir planos e tempos de consultas analíticas com dados representativos e adicionar índices ou particionamento apenas se a medição justificar.
 
@@ -180,11 +190,24 @@ A infraestrutura do StockIQ será hospedada na AWS, utilizando instâncias **EC2
 | **CloudWatch** | Monitoramento de CPU/memória das instâncias, logs centralizados da API e alarmes (ex.: uso de disco do banco, filas SQS acumulando mensagens) |
 | **IAM** | Papéis com permissões mínimas necessárias para cada instância acessar S3/SQS, seguindo o princípio do menor privilégio |
 
-**Status:** proposta arquitetural, não implantação. Este repositório não contém evidência de provisionamento AWS, deploy das aplicações, Load Balancer ou filas SQS.
+**Status (19/10/2026):**
+
+| Componente | Situação |
+|---|---|
+| Amazon S3 (fotos de produto) | **Implementado** no código (driver `s3`/`local`, URLs assinadas, validação, limpeza de órfãos); bucket configurado via `.env`. Upload real ao bucket ainda não exercitado nos testes automatizados |
+| Amazon SQS (inventário) | **Implementado** no código (fila, worker, DLQ, reprocessamento) e validado contra um servidor SQS compatível (ElasticMQ); a **fila real na AWS não foi criada** — o usuário IAM atual não tem permissão de SQS (`sqs:CreateQueue` negado) |
+| IAM | Políticas mínimas definidas em [StockIQ-Computacao-em-Nuvem.pdf](StockIQ-Computacao-em-Nuvem.pdf) |
+| EC2, Application Load Balancer, RDS/PostgreSQL em EC2, VPC, Route 53, ACM, CloudWatch, Auto Scaling | **Proposta**: não há provisionamento nem deploy neste repositório; o banco de desenvolvimento é local |
 
 ## Mensageria assíncrona (Amazon SQS)
 
-Três usos concretos foram identificados para o projeto:
+### Implementado: ajuste de estoque do inventário
+
+Ao concluir um inventário (`review → completed`), a API grava `jobStatus = pending` e publica uma mensagem na fila `<prefixo>-inventory`; o **worker** (`npm run worker`, ou embutido na API em desenvolvimento) consome a mensagem e registra, para cada item com divergência, uma movimentação `inventory` (o estoque passa a ser a quantidade contada), em lotes, atualizando `adjustedItems`/`failedItems` para a tela acompanhar. O processamento é **idempotente** (`adjustedAt` por item, na mesma transação da movimentação), itens que não podem ser ajustados automaticamente (produto em vários endereços/lotes) viram pendência manual (`partial`), falhas inesperadas devolvem a mensagem à fila e, após `QUEUE_MAX_RECEIVES` tentativas, o job vira `failed` e a mensagem vai para a DLQ. `POST /api/inventory/:id/reprocess` reenfileira. Detalhes e evidências em [StockIQ-Computacao-em-Nuvem.pdf](StockIQ-Computacao-em-Nuvem.pdf).
+
+### Usos planejados
+
+Três outros usos foram identificados para o projeto:
 
 1. **Fila de alertas e notificações** — quando uma movimentação deixa o estoque abaixo do mínimo ou um lote se aproxima do vencimento, a API publica uma mensagem na fila em vez de processar o envio de e-mail/notificação de forma síncrona. Um worker consome a fila e envia a notificação, evitando que a requisição do usuário fique lenta esperando esse envio.
 2. **Geração assíncrona de relatórios pesados** — relatórios como a curva ABC ou exportações em PDF/Excel podem demorar com grande volume de dados. A API enfileira o pedido, um worker processa em segundo plano e o resultado fica disponível para download, mantendo a API responsiva mesmo sob carga.
@@ -194,7 +217,7 @@ Três usos concretos foram identificados para o projeto:
 
 ### Base de dados
 
-A base-alvo da mineração são os dados operacionais do StockIQ (`movements`, `products`, `lots`, `suppliers` e `warehouse_addresses`). O experimento Python atual ainda não consome essas tabelas: utiliza dataset externo de vendas para testar o pipeline. O uso de dados operacionais permanece pendente.
+A base-alvo da mineração são os dados operacionais do StockIQ (`movements`, `products`, `lots`, `suppliers` e `warehouse_addresses`). O experimento (notebook `machine-learning/Previsao_Vendas.ipynb`) usa o dataset público *Store Sales — Time Series Forecasting* para validar o método; o analytics do backend (`GET /api/analytics`) já calcula previsão por média móvel, ABC×XYZ e sugestões de compra sobre as **saídas reais** (`movements`). O treino do modelo com dados operacionais permanece pendente.
 
 Plano de trabalho em duas fases:
 1. Uso de **dados simulados** (seed/massa de testes, já presente em `backend/prisma/seed.ts`) para prototipar e validar as técnicas de mineração;
@@ -235,7 +258,7 @@ StockIQ (PostgreSQL operacional)
 |---|---|---|
 | Curva ABC | Classificar produtos por valor acumulado de movimentação, priorizando controle sobre os itens de maior impacto financeiro | ✅ Implementado (`/api/reports/abc`, `/api/dashboard/abc`) |
 | Classificação XYZ | Classificar produtos pela variabilidade/regularidade da demanda, complementando a curva ABC (matriz ABC/XYZ) | ✅ Implementado em `GET /api/analytics` (coeficiente de variação da demanda mensal) e exibido na tela IA Analítica |
-| Previsão de demanda (séries temporais) | Estimar a quantidade de saída futura por produto/categoria, antecipando risco de ruptura | ✅ Integrado: modelo global de gradient boosting (Python, `machine-learning/`) treinado no Store Sales, servido por API FastAPI e consumido pelo backend (`GET /api/analytics`) com fallback para média móvel; backtest por janela temporal contra baselines. Ainda treinado em dados externos — retreino com movimentações reais é o próximo passo |
+| Previsão de demanda (séries temporais) | Estimar a quantidade de saída futura por produto/categoria, antecipando risco de ruptura | ✅ Baseline integrado: média móvel no backend (`GET /api/analytics`), com suporte a um serviço de previsão externo opcional (`ML_SERVICE_URL`; o serviço Python **não** faz parte deste repositório). 🧪 Experimento de regressão (notebook, Store Sales): Random Forest com RFE, R² = 0,92 no teste (divisão aleatória); não integrado à API |
 | Regras de associação (Apriori/Market Basket) | Identificar produtos frequentemente movimentados juntos, apoiando decisões de slotting | 📋 Planejado |
 | Clustering de produtos (k-means) | Agrupar produtos por padrão de consumo para sugerir políticas de estoque mínimo/máximo | 📋 Planejado |
 | Detecção de anomalias | Sinalizar movimentações de ajuste/perda fora do padrão histórico, cruzando com o log de auditoria | 📋 Planejado |
@@ -251,15 +274,15 @@ StockIQ (PostgreSQL operacional)
 
 | Etapa | Situação na Sprint 1 |
 |---|---|
-| 1. Entendimento do negócio | Documentado em [docs/REQUIREMENTS.md](REQUIREMENTS.md) |
-| 2. Entendimento dos dados | Schema operacional documentado; experimento usa dataset externo |
-| 3. Preparação dos dados | Agregação semanal no experimento; integração com dados operacionais pendente |
-| 4. Modelagem | Regressão linear simples no experimento; ABC/XYZ da UI é apenas mock |
-| 5. Avaliação | Validação temporal expansiva implementada para o dataset externo; não certifica desempenho em produção |
-| 6. Implantação | Pendente — não integrado à API ou à interface |
+| 1. Entendimento do negócio | Documentado em [docs/REQUIREMENTS.md](REQUIREMENTS.md); objetivo do experimento: prever vendas por dia, loja e família |
+| 2. Entendimento dos dados | Schema operacional documentado; dataset externo mapeado e verificado (duplicados, vazios, extremos, lojas ainda não abertas) |
+| 3. Preparação dos dados | Concluída no notebook (remoção de pré-abertura, recorte, integração, datas, agrupamento de promoções, codificação); integração com dados operacionais pendente |
+| 4. Modelagem | Regressão Linear e Random Forest com seleção de atributos (SelectKBest e RFE); ABC/XYZ e média móvel calculados no backend |
+| 5. Avaliação | R², MAE e RMSE no teste (divisão aleatória, otimista); validação cronológica pendente; não certifica desempenho em produção |
+| 6. Implantação | Parcial — analytics (média móvel, ABC×XYZ, sugestões) na API e na tela IA Analítica; o modelo do notebook não está integrado |
 
 ---
 
 ## Maior risco identificado
 
-As principais pendências são completar fluxos de interface ainda demonstrativos, validar migrations em banco dedicado, ampliar testes e decidir se/como provisionar a arquitetura de nuvem e integrar a mineração de dados. A arquitetura descrita acima não significa que esses componentes estejam implantados.
+As principais pendências são provisionar a infraestrutura de nuvem (inclusive a fila SQS na conta AWS, hoje bloqueada por permissão de IAM), exercitar fotos e inventário ponta a ponta com S3/SQS reais, validar o modelo de previsão com divisão cronológica e integrá-lo ao sistema, e adicionar testes automatizados de interface. A arquitetura de nuvem descrita acima não significa que esses componentes estejam implantados.

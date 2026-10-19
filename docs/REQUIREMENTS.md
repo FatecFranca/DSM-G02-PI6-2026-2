@@ -1,6 +1,6 @@
 # Requisitos do Sistema — StockIQ
 
-Este documento consolida o escopo e os requisitos definidos na Sprint 1, extraídos da documentação técnica de planejamento (`Sprint 1 - Gabriel e Lívia.pdf`). Mantido em Markdown para ficar versionado e consultável junto ao código, sem depender de reabrir o PDF a cada sprint.
+Este documento consolida o escopo e os requisitos definidos na Sprint 1, extraídos da documentação técnica de planejamento (`Sprint 1 - Gabriel e Lívia.pdf`). Mantido em Markdown para ficar versionado e consultável junto ao código, sem depender de reabrir o PDF a cada sprint. **Status atualizados na Sprint 2 (19/10/2026).**
 
 ## Escopo
 
@@ -16,20 +16,22 @@ Os status distinguem API/regra de negócio da experiência integrada. “Parcial
 |---|---|---|
 | RF01 | Cadastro e autenticação de usuários (e-mail/senha) com emissão de token JWT | Implementado na API |
 | RF02 | Controle de acesso por perfil (Administrador, Supervisor, Operador, Visualizador) | Implementado na API; ações dependem de autorização por rota |
-| RF03 | CRUD de produtos (SKU, código interno, código de barras, dimensões, peso, preços, estoque mín/máx) | Implementado na API e telas principais |
+| RF03 | CRUD de produtos (SKU, código interno, código de barras, dimensões, peso, preços, estoque mín/máx) | Implementado na API e nas telas (inclui edição) |
 | RF04 | Consulta de produto por leitura de código de barras (scanner) | Consulta pela API disponível; interação de leitura física depende do dispositivo e não é validada aqui |
 | RF05 | Cadastro de categorias e marcas de produtos | Implementado na API e telas principais |
 | RF06 | Cadastro de fornecedores e clientes (dados cadastrais, CNPJ, contato) | Implementado na API e telas principais |
 | RF07 | Cadastro de endereços de armazenagem com status e capacidade | Implementado na API; integração de tela disponível |
 | RF08 | Registro de movimentações de estoque vinculadas a produto, usuário, fornecedor/cliente e endereços | Implementado na API; exige banco/migrations e respeita as dimensões rastreadas pelo produto |
 | RF09 | Controle de lotes com datas de fabricação/validade e status automático | Parcial: cadastro e consultas por validade existem; o status salvo não é atualizado automaticamente por agendamento |
-| RF10 | Planejamento e execução de contagens de inventário (completa, parcial, cíclica) | Parcial: contagens e divergências por item são registradas; concluir a revisão não reconcilia automaticamente o saldo do produto |
-| RF11 | Alertas automáticos de estoque abaixo do mínimo e de lotes próximos ao vencimento | API disponível; tela e notificações do frontend ainda são demonstrativas |
+| RF10 | Planejamento e execução de contagens de inventário (completa, parcial, cíclica) | Implementado: contagens e divergências por item; ao concluir, o **ajuste de estoque é processado de forma assíncrona** (fila SQS + worker, idempotente, com reprocessamento). Produtos em vários endereços/lotes exigem ajuste manual; inventários concluídos antes do recurso não são reprocessados. Fila real na AWS pendente (ver RNF11) |
+| RF11 | Alertas automáticos de estoque abaixo do mínimo e de lotes próximos ao vencimento | Implementado na API e no front-end (tela de alertas e sino com contador de não lidos, leitura por usuário). Não há envio de e-mail/push |
 | RF12 | Log de auditoria (ação, entidade, valor antigo/novo, usuário, IP, data/hora) | Middleware conectado a operações críticas; cobertura não implica auditoria de toda mutação possível |
 | RF13 | Dashboard com resumo geral, movimentações recentes e produtos mais movimentados | Implementado via API; integração do dashboard disponível |
 | RF14 | Relatórios de movimentações, posição de estoque, validade de lotes, ocupação, curva ABC, inventário e compras por fornecedor | Parcial: endpoints existem; alguns relatórios ainda retornam conjuntos completos sem paginação |
-| RF15 | Módulo de IA Analítica com previsão de demanda, classificação ABC/XYZ e sugestões de reposição | Protótipo: tela usa dados demonstrativos; experimento Python externo ainda não alimenta a interface nem usa dados operacionais |
-| RF16 | Documentação interativa da API (Swagger/OpenAPI) | Implementado |
+| RF15 | Módulo de IA Analítica com previsão de demanda, classificação ABC/XYZ e sugestões de reposição | Parcial: a tela consome `GET /api/analytics` (previsão por média móvel; serviço de ML externo opcional, não incluído no repositório), matriz ABC×XYZ e sugestões de compra calculadas sobre as movimentações reais. O modelo de regressão do notebook (R² 0,92 no teste) não alimenta a interface |
+| RF16 | Documentação interativa da API (Swagger/OpenAPI) | Implementado (88 endpoints; `docs/swagger.json` exportado do código) |
+| RF17 | Foto do produto: envio pelo front-end, armazenamento no Amazon S3 e exibição por URL assinada | Implementado (driver `s3` e `local`, validação do arquivo, remoção e limpeza de órfãos). Upload real ao bucket ainda não exercitado nos testes automatizados |
+| RF18 | Configurações do sistema (dados da empresa e preferências: dias de alerta de validade, prazo de reposição) | Implementado (`/api/settings`; edição restrita ao administrador) |
 
 ## Requisitos Não Funcionais
 
@@ -42,9 +44,10 @@ Os status distinguem API/regra de negócio da experiência integrada. “Parcial
 | RNF05 | **Desempenho** — listagens com paginação e filtros para evitar sobrecarga em grandes volumes | Parcial; algumas listagens são paginadas e indexadas, mas relatórios ainda podem carregar conjuntos completos |
 | RNF06 | **Responsividade** — front-end utilizável em desktop e dispositivos móveis (leitura de código de barras em coletores/celulares) | Layout responsivo; leitura física e validação em dispositivos não verificadas |
 | RNF07 | **Manutenibilidade** — código em camadas (rotas, controllers, services, schemas, middlewares), 100% tipado em TypeScript | Estrutura em camadas e TypeScript; não se declara cobertura tipada total |
-| RNF08 | **Testabilidade** — cobertura de testes automatizados (Jest + Supertest) nos principais fluxos da API | Parcial; CI e testes existem, mas cobertura não é exaustiva |
+| RNF08 | **Testabilidade** — cobertura de testes automatizados (Jest + Supertest) nos principais fluxos da API | 173 testes em 22 suítes passando contra PostgreSQL real (19/10/2026), incluindo S3/SQS simulados e o fluxo do inventário assíncrono; cobertura não é exaustiva e não há testes de interface |
 | RNF09 | **Rastreabilidade** — toda alteração crítica é auditável via log de auditoria | Middleware conectado às rotas críticas; cobertura precisa ser mantida conforme novas operações são adicionadas |
 | RNF10 | **Observabilidade** — logs de aplicação (Morgan) e métricas de infraestrutura monitoradas (CloudWatch, na nuvem) | Morgan disponível; CloudWatch e métricas de infraestrutura não configurados |
+| RNF11 | **Processamento assíncrono** — operações pesadas executadas fora da requisição HTTP, por fila de mensagens, com tolerância a falhas | Implementado para o ajuste de estoque do inventário (SQS + worker, DLQ, idempotência, reprocessamento); validado com servidor SQS compatível e banco real. A fila na conta AWS depende de permissões de SQS no usuário IAM |
 
 ## Perfis de acesso (RBAC)
 

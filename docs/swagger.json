@@ -22,7 +22,7 @@
     },
     {
       "name": "Products",
-      "description": "Cadastro de produtos e leitura por código de barras"
+      "description": "Cadastro de produtos, foto (S3) e leitura por código de barras"
     },
     {
       "name": "Categories",
@@ -54,7 +54,7 @@
     },
     {
       "name": "Inventory",
-      "description": "Contagens de inventário"
+      "description": "Contagens de inventário e ajuste de estoque assíncrono (fila SQS)"
     },
     {
       "name": "Dashboard",
@@ -865,7 +865,8 @@
           },
           "imageUrl": {
             "type": "string",
-            "nullable": true
+            "nullable": true,
+            "description": "Foto do produto. Quando enviada pelo upload, é uma URL assinada temporária (renovada a cada resposta)."
           },
           "categoryId": {
             "type": "string",
@@ -1727,6 +1728,43 @@
             "type": "integer",
             "example": 1
           },
+          "jobStatus": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "processing",
+              "completed",
+              "partial",
+              "failed"
+            ],
+            "example": "completed",
+            "nullable": true,
+            "description": "Ajuste de estoque assíncrono (fila SQS) após concluir o inventário. null em inventários anteriores ao recurso. partial = algum item precisa de ajuste manual."
+          },
+          "jobError": {
+            "type": "string",
+            "nullable": true
+          },
+          "jobQueuedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "jobFinishedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "adjustedItems": {
+            "type": "integer",
+            "example": 1,
+            "description": "Itens com divergência cujo estoque já foi ajustado."
+          },
+          "failedItems": {
+            "type": "integer",
+            "example": 0,
+            "description": "Itens que o worker não conseguiu ajustar (veja adjustmentError em cada item)."
+          },
           "responsibleId": {
             "type": "string",
             "example": "cmq1x2y3z0001abcd"
@@ -1834,6 +1872,17 @@
             "type": "string",
             "format": "date-time",
             "nullable": true
+          },
+          "adjustedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Quando o worker aplicou a divergência ao estoque."
+          },
+          "adjustmentError": {
+            "type": "string",
+            "nullable": true,
+            "description": "Por que o ajuste automático não foi possível."
           },
           "product": {
             "type": "object",
@@ -5756,6 +5805,122 @@
         }
       }
     },
+    "/api/products/{id}/image": {
+      "post": {
+        "summary": "Upload the product photo",
+        "description": "Envia a foto (multipart/form-data, campo `image`) para o storage (S3) e a vincula ao produto. Aceita JPEG, PNG, WebP e GIF (até STORAGE_MAX_IMAGE_MB, padrão 5 MB). O tipo é verificado pelo conteúdo do arquivo. Substitui a foto anterior. A resposta traz `imageUrl` como URL assinada temporária.\n\n\n**Perfis permitidos:** admin, supervisor.",
+        "tags": [
+          "Products"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "image"
+                ],
+                "properties": {
+                  "image": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Product with the new imageUrl",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Product"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "No file sent or invalid multipart body",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "413": {
+            "description": "Image larger than the allowed size"
+          },
+          "415": {
+            "description": "File is not a JPEG, PNG, WebP or GIF image"
+          },
+          "503": {
+            "description": "Storage not configured or unavailable"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Remove the product photo",
+        "description": "Desvincula a foto do produto e apaga o objeto do storage.\n\n**Perfis permitidos:** admin, supervisor.",
+        "tags": [
+          "Products"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Product without photo",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Product"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
     "/api/movements": {
       "get": {
         "summary": "List movements",
@@ -6472,7 +6637,7 @@
         },
         "responses": {
           "200": {
-            "description": "Updated",
+            "description": "Updated. Ao concluir (`review` → `completed`) o ajuste de estoque é enfileirado (SQS) e executado por um worker: acompanhe `jobStatus` (`pending`, `processing`, `completed`, `partial`, `failed`), `adjustedItems` e `failedItems`.\n",
             "content": {
               "application/json": {
                 "schema": {
@@ -6604,6 +6769,97 @@
                 "$ref": "#/components/schemas/CountInventoryItemRequest"
               }
             }
+          }
+        }
+      }
+    },
+    "/api/inventory/{id}/reprocess": {
+      "post": {
+        "summary": "Re-enqueue the stock adjustment of a concluded inventory",
+        "description": "Reenvia à fila o ajuste de estoque de um inventário concluído cujo processamento falhou (`failed`), terminou com pendências (`partial`) ou travou (`pending`/`processing` há mais de 15 minutos). Itens já ajustados não são ajustados de novo.\n\n\n**Perfis permitidos:** admin, supervisor.",
+        "tags": [
+          "Inventory"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Inventory with jobStatus pending",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryCount"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "503": {
+            "description": "Queue unavailable"
+          }
+        }
+      }
+    },
+    "/api/files/*": {
+      "get": {
+        "summary": "Download a stored file (local storage driver only)",
+        "description": "Serve arquivos do driver `local` (desenvolvimento) por URL assinada com validade (`exp`, `sig`). Com STORAGE_DRIVER=s3 as fotos são servidas direto pelo S3 e esta rota responde 404.\n",
+        "tags": [
+          "Products"
+        ],
+        "security": [],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "exp",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "sig",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "File content"
+          },
+          "403": {
+            "description": "Invalid or expired link"
+          },
+          "404": {
+            "description": "File not found"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
           }
         }
       }
