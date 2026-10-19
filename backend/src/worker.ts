@@ -1,6 +1,7 @@
 import 'dotenv/config'
 import { prisma } from './prisma/client'
 import { startInventoryWorker } from './workers/inventory.worker'
+import { startLotStatusJob } from './jobs/lot-status.job'
 
 /**
  * Processo dedicado ao consumo das filas (`npm run worker`). Em produção, rode-o separado da API e
@@ -9,9 +10,11 @@ import { startInventoryWorker } from './workers/inventory.worker'
 async function main() {
   await prisma.$connect()
   const worker = startInventoryWorker()
+  const lotStatusJob = startLotStatusJob()
 
   const shutdown = async (signal: string) => {
     console.log(`${signal} recebido, encerrando o worker...`)
+    lotStatusJob.stop()
     await worker.stop()
     await prisma.$disconnect()
     process.exit(0)

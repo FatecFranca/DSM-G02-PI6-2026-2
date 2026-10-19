@@ -10,17 +10,25 @@ const INCLUDE = {
 
 /**
  * Keeps the stored lot status in line with the expiration date (quarantine is manual).
- * Cheap enough (three indexed updates) to run before every lot read.
+ * Cheap enough (three indexed updates) to run before every lot read; also run periodically by the lot-status job
+ * so the stored status stays current even when nobody reads lots.
  */
-export async function syncLotStatuses(): Promise<void> {
+export interface LotStatusSync {
+  expired: number
+  expiring: number
+  valid: number
+}
+
+export async function syncLotStatuses(): Promise<LotStatusSync> {
   const now = new Date()
   const cutoff = new Date()
   cutoff.setDate(cutoff.getDate() + (await getExpiryAlertDays()))
-  await prisma.$transaction([
+  const [expired, expiring, valid] = await prisma.$transaction([
     prisma.lot.updateMany({ where: { status: { in: ['valid', 'expiring'] }, expirationDate: { lt: now } }, data: { status: 'expired' } }),
     prisma.lot.updateMany({ where: { status: { in: ['valid', 'expired'] }, expirationDate: { gte: now, lte: cutoff } }, data: { status: 'expiring' } }),
     prisma.lot.updateMany({ where: { status: 'expiring', expirationDate: { gt: cutoff } }, data: { status: 'valid' } }),
   ])
+  return { expired: expired.count, expiring: expiring.count, valid: valid.count }
 }
 
 export type LotQuery = Partial<LotQueryInput>

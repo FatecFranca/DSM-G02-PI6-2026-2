@@ -28,11 +28,13 @@ import reportRoutes from './routes/report.routes'
 import analyticsRoutes from './routes/analytics.routes'
 import settingsRoutes from './routes/settings.routes'
 import fileRoutes from './routes/file.routes'
+import aiRoutes from './routes/ai.routes'
+import simulationRoutes from './routes/simulation.routes'
 
 const GROUP_ICONS: Record<string, string> = {
   Auth: '🔐', Users: '👤', Products: '📦', Categories: '🗂️', Brands: '🏷️', Suppliers: '🏭', Customers: '🏪',
   Warehouse: '🏢', Movements: '🔄', Lots: '📋', Inventory: '📊', Dashboard: '📈', Alerts: '🔔',
-  Audit: '🕵️', Reports: '📑', Analytics: '🧠', Settings: '⚙️',
+  Audit: '🕵️', Reports: '📑', Analytics: '🧠', Settings: '⚙️', AI: '✨', Simulation: '🧪',
 }
 
 /** Builds the landing-page endpoint list from the OpenAPI spec so it never drifts from the code. */
@@ -501,6 +503,8 @@ app.use('/api/reports', reportRoutes)
 app.use('/api/analytics', analyticsRoutes)
 app.use('/api/settings', settingsRoutes)
 app.use('/api/files', fileRoutes)
+app.use('/api/ai', aiRoutes)
+app.use('/api/simulation', simulationRoutes)
 
 app.use(errorHandler)
 

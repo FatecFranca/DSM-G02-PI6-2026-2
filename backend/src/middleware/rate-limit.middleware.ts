@@ -15,3 +15,12 @@ export const authLimiter = rateLimit({
   legacyHeaders: false,
   message: { message: 'Too many authentication attempts, please try again later.' },
 })
+
+/** Chamadas de IA têm custo no provedor: limite bem mais baixo que o global. */
+export const aiLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  max: process.env.NODE_ENV === 'production' ? 30 : 300,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'Too many AI requests, please try again later.' },
+})

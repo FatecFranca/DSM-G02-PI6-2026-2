@@ -634,6 +634,57 @@ const schemas: Record<string, Json> = {
     leadTimeDays: { type: 'integer', minimum: 1, maximum: 60, example: 7, description: 'Supplier lead time used by purchase suggestions.' },
   }),
   Settings: obj({ company: ref('Company'), preferences: ref('Preferences') }),
+  SimulationStatus: obj({
+    available: { type: 'boolean', example: true },
+    status: enumOf(['offline', 'loading', 'training', 'ready', 'error'], 'ready'),
+    message: str('Modelos prontos'),
+    trainedAt: { type: 'string', nullable: true },
+  }),
+  SimulationModelInfo: obj({
+    trainedAt: str(),
+    dataset: { type: 'object', description: 'Linhas, divisão treino/teste, lojas e famílias usadas no treino.' },
+    stores: { type: 'array', items: obj({ id: int(1), city: str('Quito'), type: str('D'), cluster: int(13) }) },
+    families: { type: 'array', items: str('GROCERY I') },
+    oil: { type: 'object', description: 'Preço do petróleo padrão (último da base), mínimo e máximo.' },
+    promoBands: { type: 'array', items: obj({ band: int(0), label: str('0 itens') }) },
+    models: {
+      type: 'array',
+      items: obj({
+        id: str('rfe_rf'), name: str('Random Forest'), selection: str('RFE'), origin: enumOf(['notebook', 'complementar']),
+        usesDate: { type: 'boolean' }, features: { type: 'array', items: str() },
+        metrics: obj({ r2: num(0.9156), mae: num(172.82), rmse: num(407.87) }),
+        importance: { type: 'array', items: obj({ feature: str('onpromotion'), weight: num(0.4) }) },
+      }),
+    },
+  }),
+  SimulationPredictRequest: obj({
+    scenarios: {
+      type: 'array',
+      maxItems: 400,
+      items: obj({ store: int(1), family: str('GROCERY I'), date: str('2017-08-20'), onpromotion: int(4), oil: num(47.2) }, ['store', 'family', 'date']),
+    },
+    models: { type: 'array', items: str('rfe_rf') },
+  }, ['scenarios']),
+  SimulationPredictResponse: obj({ predictions: { type: 'array', items: { type: 'object', additionalProperties: { type: 'number' }, example: { rfe_rf: 2095.61, rf_full: 736.82 } } } }),
+  ProductIdentification: obj({
+    identified: { type: 'boolean', example: true },
+    confidence: { type: 'number', minimum: 0, maximum: 1, example: 0.86 },
+    model: str('gpt-4o-mini'),
+    suggestion: obj({
+      name: str('Capacete de segurança amarelo'),
+      description: str(),
+      keywords: { type: 'array', items: str() },
+      categoryName: { type: 'string', nullable: true },
+      categoryId: { type: 'string', nullable: true },
+      brandName: { type: 'string', nullable: true },
+      brandId: { type: 'string', nullable: true },
+    }),
+    candidates: {
+      type: 'array',
+      description: 'Produtos parecidos já cadastrados (até 5).',
+      items: obj({ id, name: str(), internalCode: str(), sku: str(), currentStock: int(), categoryName: str(), imageUrl: { type: 'string', nullable: true }, matchScore: int() }),
+    },
+  }),
   UpdateSettingsRequest: obj({
     company: { ...ref('Company'), description: 'Partial update' },
     preferences: { ...ref('Preferences'), description: 'Partial update' },
@@ -840,6 +891,10 @@ const OPS: Record<string, OpDoc & { partial?: boolean }> = {
   'GET /api/analytics/model': { res: 'ForecastModel' },
   'GET /api/settings': { res: 'Settings' },
   'PUT /api/settings': { res: 'Settings', body: 'UpdateSettingsRequest', roles: ADMIN },
+  'POST /api/ai/identify-product': { res: 'ProductIdentification', roles: WRITERS, status: 200 },
+  'GET /api/simulation/status': { res: 'SimulationStatus' },
+  'GET /api/simulation/model': { res: 'SimulationModelInfo' },
+  'POST /api/simulation/predict': { res: 'SimulationPredictResponse', body: 'SimulationPredictRequest', status: 200 },
   'PATCH /api/auth/profile': { res: 'User', body: 'UpdateProfileRequest' },
   'PATCH /api/users/{id}/password': { body: 'ResetPasswordRequest', roles: ADMIN, status: 204, notFound: true },
 }
@@ -933,6 +988,8 @@ const TAGS = [
   ['Reports', 'Relatórios gerenciais'],
   ['Analytics', 'Previsão de demanda, matriz ABC×XYZ e sugestões de compra'],
   ['Settings', 'Dados da empresa e preferências do sistema'],
+  ['AI', 'Identificação de produtos por foto (visão computacional)'],
+  ['Simulation', 'Simulação de vendas com os modelos de regressão do notebook (serviço Python)'],
 ].map(([name, description]) => ({ name, description }))
 
 const options: swaggerJsdoc.Options = {

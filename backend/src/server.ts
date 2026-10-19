@@ -2,6 +2,7 @@ import app from './app'
 import { prisma } from './prisma/client'
 import { getQueueConfig } from './services/queue.service'
 import { startInventoryWorker } from './workers/inventory.worker'
+import { startLotStatusJob } from './jobs/lot-status.job'
 
 const PORT = Number(process.env.PORT) || 3001
 
@@ -17,8 +18,10 @@ async function main() {
   // Por padrão a própria API consome a fila (prático em desenvolvimento). Em produção, use `npm run worker`
   // em outro processo e QUEUE_WORKER=off aqui.
   const worker = getQueueConfig().worker === 'embedded' ? startInventoryWorker() : null
+  const lotStatusJob = startLotStatusJob()
   const shutdown = () => {
     server.close()
+    lotStatusJob.stop()
     void (worker?.stop() ?? Promise.resolve()).finally(() => process.exit(0))
   }
   process.on('SIGTERM', shutdown)

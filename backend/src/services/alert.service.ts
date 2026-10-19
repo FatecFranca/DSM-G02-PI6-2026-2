@@ -124,7 +124,7 @@ export async function getAllAlerts(userId: string, days?: number) {
   const alerts: {
     id: string
     type: 'critical' | 'warning' | 'info'
-    category: 'stock' | 'expiry'
+    category: 'stock' | 'expiry' | 'inventory'
     title: string
     desc: string
     read: boolean
@@ -196,6 +196,31 @@ export async function getAllAlerts(userId: string, days?: number) {
       desc: `${l.quantity} unidades do ${l.product.name} vencem em ${l.expirationDate.toLocaleDateString('pt-BR')}.`,
       read: readSet.has(key),
       createdAt: now.toISOString(),
+    })
+  })
+
+  // Inventários cujo ajuste de estoque (fila) falhou ou ficou com pendências: o usuário precisa agir (reprocessar/ajustar à mão).
+  // A chave inclui o estado, então uma mudança (ex.: falhou → parcial) volta a notificar quem já tinha lido.
+  const since = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
+  const inventoryJobs = await prisma.inventoryCount.findMany({
+    where: { jobStatus: { in: ['failed', 'partial'] }, updatedAt: { gte: since } },
+    select: { id: true, name: true, jobStatus: true, jobError: true, adjustedItems: true, failedItems: true, jobFinishedAt: true, updatedAt: true },
+    orderBy: { updatedAt: 'desc' },
+    take: 20,
+  })
+  inventoryJobs.forEach((inv) => {
+    const failed = inv.jobStatus === 'failed'
+    const key = `inventory-job-${inv.id}-${inv.jobStatus}-${inv.failedItems}`
+    alerts.push({
+      id: key,
+      type: failed ? 'critical' : 'warning',
+      category: 'inventory',
+      title: failed ? `Ajuste de estoque falhou: ${inv.name}` : `Inventário com pendências: ${inv.name}`,
+      desc: failed
+        ? `${inv.jobError ?? 'Não foi possível ajustar o estoque.'} Reprocesse na tela de Inventário.`
+        : `${inv.failedItems} item(ns) precisam de ajuste manual (${inv.adjustedItems} já ajustados).`,
+      read: readSet.has(key),
+      createdAt: (inv.jobFinishedAt ?? inv.updatedAt).toISOString(),
     })
   })
 

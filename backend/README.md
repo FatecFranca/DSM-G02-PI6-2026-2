@@ -157,6 +157,10 @@ Definidas em `.env` (veja `.env.example`):
 | `QUEUE_VISIBILITY_TIMEOUT_SECONDS`, `QUEUE_MAX_RECEIVES` | Prazo de visibilidade (padrão `120`) e tentativas antes da DLQ (padrão `3`; igual ao `maxReceiveCount` da fila) |
 | `QUEUE_WORKER` | `embedded` (padrão: a API também consome a fila) ou `off` (use `npm run worker` em outro processo) |
 | `INVENTORY_BATCH_SIZE` | Itens por lote no ajuste de estoque (padrão `25`) |
+| `OPENAI_API_KEY` | Chave da OpenAI para identificar produtos por foto (só no servidor). Sem ela, `POST /api/ai/identify-product` responde 503 |
+| `OPENAI_VISION_MODEL`, `OPENAI_BASE_URL` | Modelo com visão (padrão `gpt-4o-mini`) e endpoint (padrão `https://api.openai.com/v1`) |
+| `SALES_MODEL_URL`, `SALES_MODEL_TIMEOUT_MS` | Serviço de simulação de vendas (`ml-service`, padrão `http://localhost:8100`) |
+| `LOT_STATUS_JOB`, `LOT_STATUS_INTERVAL_MINUTES` | Job do status dos lotes: `off` desliga; intervalo em minutos (padrão `60`) |
 | `STORAGE_LOCAL_DIR`, `STORAGE_SIGNING_SECRET`, `API_PUBLIC_URL` | Driver `local`: pasta das fotos, segredo que assina as URLs de `/api/files` (obrigatório) e a URL pública da API |
 
 ## Upload de fotos de produto
@@ -187,6 +191,25 @@ PATCH /api/inventory/:id {status: completed} ─► grava jobStatus=pending ─�
 - **Sem AWS:** `QUEUE_DRIVER=local` usa uma fila em memória (mensagens se perdem ao reiniciar). Para testar o driver SQS localmente: `docker run -d --rm -p 127.0.0.1:9324:9324 softwaremill/elasticmq-native` e `SQS_TEST_ENDPOINT=http://127.0.0.1:9324 npm test -- queue-sqs-integration`.
 - **Migration:** `20261019150000_inventory_async_processing` (status do job e marcas por item).
 - Inventários concluídos antes deste recurso têm `jobStatus = null` e **não** são reprocessados (seus ajustes nunca foram aplicados ao estoque).
+
+## IA: identificação de produto por foto (OpenAI)
+
+`POST /api/ai/identify-product` (admin, supervisor e operador) recebe a foto em `multipart/form-data` (campo `image`; JPEG, PNG, WebP ou GIF até 5 MB) e a envia a um modelo de visão da OpenAI. A resposta traz nome, categoria, marca e descrição **já casados com as categorias e marcas do catálogo** e até 5 **produtos parecidos** já cadastrados (para evitar duplicar o cadastro). Cada chamada custa no provedor, então há um limite próprio (30 por 10 minutos por IP em produção).
+
+- **Chave só no servidor:** `OPENAI_API_KEY` nunca vai ao navegador nem é registrada em log. Sem ela → 503; chave recusada → 503; limite do provedor → 429; falha/resposta inesperada → 502; timeout → 504.
+- **Entrada validada:** o tipo é conferido pelo conteúdo (mesma regra das fotos de produto) e a imagem vai como `detail: low` para limitar custo.
+- **Resposta estruturada:** o modelo devolve JSON, validado por schema (Zod) antes de ser usado.
+- **Telas:** web `IA — Produtos` e app mobile (`ia`); o botão *Cadastrar com estes dados* abre o cadastro pré-preenchido.
+
+## Simulação de vendas (modelos do notebook)
+
+`GET /api/simulation/status`, `GET /api/simulation/model` e `POST /api/simulation/predict` (qualquer usuário autenticado) fazem a ponte com o serviço Python em [`ml-service/`](../ml-service/README.md), que serve os modelos de regressão do notebook `machine-learning/Previsao_Vendas.ipynb` (reproduzidos sem alterar o notebook; mesmas métricas). O backend valida o cenário (Zod), exige JWT e traduz falhas do serviço: fora do ar → 503 com a instrução `npm run ml:service`; treinando → 503; cenário inválido → 422. A tela web `Simulação de Vendas` usa essas rotas.
+
+## Rotinas em segundo plano
+
+- **Worker do inventário** (`npm run worker`, ou embutido na API): ver *Mensageria* acima.
+- **Status dos lotes** (`src/jobs/lot-status.job.ts`): ao subir a API/worker e a cada `LOT_STATUS_INTERVAL_MINUTES` (60), atualiza `valid`/`expiring`/`expired` conforme a validade (janela de alerta das configurações); `quarantine` é manual. Antes o status só era corrigido quando alguém consultava lotes ou o dashboard. É idempotente e não se sobrepõe a uma execução lenta.
+- **Alertas no sino:** além de estoque e validade, avisa quando o ajuste de estoque de um inventário **falha** (crítico) ou termina **com pendências** (atenção); a chave inclui o estado, então uma mudança volta a notificar.
 
 ## Banco de dados
 
@@ -268,6 +291,8 @@ Os módulos abaixo correspondem às rotas montadas pela aplicação. Consulte `/
 | Autenticação | `/api/auth` | Cadastro, login, identidade e senha |
 | Usuários | `/api/users` | Consulta e gestão de usuários/status |
 | Produtos | `/api/products` | Listagem filtrada, detalhe, scanner, CRUD e foto (upload para S3) |
+| IA | `/api/ai` | Identificação de produto por foto (OpenAI) |
+| Simulação | `/api/simulation` | Simulação de vendas com os modelos do notebook (serviço Python) |
 | Categorias e marcas | `/api/categories`, `/api/brands` | Consulta e CRUD |
 | Fornecedores e clientes | `/api/suppliers`, `/api/customers` | Consulta e CRUD |
 | Armazém | `/api/warehouse` | Endereços, estatísticas e CRUD |
@@ -291,6 +316,9 @@ Os módulos abaixo correspondem às rotas montadas pela aplicação. Consulte `/
 | Testes | Jest + Supertest com PostgreSQL real (CI e Docker); inclui testes dos fluxos de foto (S3) e de ajuste assíncrono do inventário. A cobertura não é exaustiva |
 | Validação e tratamento de erros | Implementados em várias rotas; consulte schemas e documentação OpenAPI |
 | Fotos de produto (S3) | Implementadas (driver `s3` e `local`); bucket configurado via `.env`. Upload real ao bucket ainda não exercitado nos testes automatizados |
+| IA por foto (OpenAI) | Implementada e testada com respostas simuladas do provedor; requer `OPENAI_API_KEY` no servidor para uso real |
+| Simulação de vendas | Implementada; requer o serviço `ml-service` no ar (`npm run ml:service`) |
+| Status dos lotes | Atualizado por job periódico (e a cada leitura) |
 | Mensageria (SQS) | Implementada (fila, worker, DLQ, reprocessamento) e validada contra um servidor SQS compatível (ElasticMQ); a fila na conta AWS depende de um usuário IAM com permissões de SQS (`npm run queues:setup`) |
 | EC2/Load Balancer e exportação para data lake | Planejados, não implementados neste repositório |
 

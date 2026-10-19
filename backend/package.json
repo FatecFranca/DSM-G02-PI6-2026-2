@@ -19,7 +19,8 @@
     "worker": "ts-node-dev --respawn --transpile-only src/worker.ts",
     "worker:start": "node dist/worker.js",
     "queues:setup": "ts-node scripts/setup-queues.ts",
-    "docs:export": "ts-node --transpile-only scripts/export-swagger.ts"
+    "docs:export": "ts-node --transpile-only scripts/export-swagger.ts",
+    "ml:service": "bash ../ml-service/start.sh"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1152.0",
