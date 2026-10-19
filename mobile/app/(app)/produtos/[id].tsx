@@ -2,6 +2,7 @@ import { Stack, useLocalSearchParams, useRouter } from 'expo-router'
 import { useState } from 'react'
 import { StyleSheet, View } from 'react-native'
 import { MovementRow } from '@/components/MovementRow'
+import { ProductThumb } from '@/components/ProductThumb'
 import { AppText, Badge, Banner, Button, Card, CardHeader, ConfirmDialog, KeyValue, Loading, ProgressBar, Screen, Sheet, StatCard } from '@/components/ui'
 import { api, errorMessage } from '@/lib/api'
 import { useAuth } from '@/lib/auth'
@@ -66,15 +67,18 @@ export default function ProdutoDetalheScreen() {
       <Stack.Screen options={{ title: p.internalCode }} />
       {error ? <Banner>{error}</Banner> : null}
 
-      <View style={{ gap: 6 }}>
-        <AppText variant="heading">{p.name}</AppText>
-        <AppText variant="mono" color="tertiary">{p.internalCode} · {p.sku}</AppText>
-        <View style={{ flexDirection: 'row', gap: 6, flexWrap: 'wrap' }}>
-          <Badge label={PRODUCT_STATUS_LABELS[p.status]} tone={p.status === 'active' ? 'success' : 'neutral'} dot />
-          <Badge label={STOCK_STATUS_LABELS[p.stockStatus]} tone={tone} dot />
+      <View style={{ flexDirection: 'row', gap: space.md, alignItems: 'flex-start' }}>
+        <ProductThumb uri={p.imageUrl} size={88} radius={16} />
+        <View style={{ flex: 1, gap: 6 }}>
+          <AppText variant="heading">{p.name}</AppText>
+          <AppText variant="mono" color="tertiary">{p.internalCode} · {p.sku}</AppText>
+          <View style={{ flexDirection: 'row', gap: 6, flexWrap: 'wrap' }}>
+            <Badge label={PRODUCT_STATUS_LABELS[p.status]} tone={p.status === 'active' ? 'success' : 'neutral'} dot />
+            <Badge label={STOCK_STATUS_LABELS[p.stockStatus]} tone={tone} dot />
+          </View>
         </View>
-        {p.description ? <AppText color="secondary" style={{ marginTop: 4 }}>{p.description}</AppText> : null}
       </View>
+      {p.description ? <AppText color="secondary">{p.description}</AppText> : null}
 
       <View style={styles.actions}>
         {canMove ? <Button title="Movimentar" icon="repeat" onPress={() => setMoving(true)} style={{ flex: 1 }} /> : null}

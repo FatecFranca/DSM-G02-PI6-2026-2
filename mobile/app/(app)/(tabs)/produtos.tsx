@@ -2,7 +2,8 @@ import { useRouter } from 'expo-router'
 import { useState } from 'react'
 import { StyleSheet, View } from 'react-native'
 import { ListScreen } from '@/components/ListScreen'
-import { AppText, Badge, Button, Card, Chips, Fab, Icon, SearchBar, Select } from '@/components/ui'
+import { ProductThumb } from '@/components/ProductThumb'
+import { AppText, Badge, Button, Card, Chips, Fab, SearchBar, Select } from '@/components/ui'
 import { fetchAll } from '@/lib/api'
 import { useAuth } from '@/lib/auth'
 import { formatCurrency, formatNumber } from '@/lib/format'
@@ -12,7 +13,6 @@ import { PRODUCT_STATUS_LABELS, STOCK_STATUS_LABELS } from '@/lib/status'
 import { STOCK_TONE } from '@/lib/movement'
 import { useDebounced, useFetch } from '@/lib/useFetch'
 import { usePaged } from '@/lib/usePaged'
-import { useTheme } from '@/theme/ThemeProvider'
 import { space } from '@/theme/tokens'
 import type { ApiCategory, ApiProduct } from '@/types/api'
 
@@ -21,7 +21,6 @@ type StockFilter = '' | 'ok' | 'low' | 'critical' | 'out'
 export default function ProdutosScreen() {
   const router = useRouter()
   const { user } = useAuth()
-  const { colors } = useTheme()
   const canEdit = hasRole(user?.role, STAFF)
   const [search, setSearch] = useState('')
   const [category, setCategory] = useState('')
@@ -78,7 +77,7 @@ export default function ProdutosScreen() {
         renderItem={p => (
           <Card onPress={() => router.push({ pathname: '/produtos/[id]', params: { id: p.id } })}>
             <View style={styles.row}>
-              <View style={[styles.thumb, { backgroundColor: colors.bgMuted }]}><Icon name="package" size={18} color="tertiary" /></View>
+              <ProductThumb uri={p.imageUrl} size={44} />
               <View style={{ flex: 1, gap: 2 }}>
                 <AppText bold numberOfLines={2}>{p.name}</AppText>
                 <AppText variant="mono" color="tertiary" numberOfLines={1}>{p.internalCode} · {p.sku}</AppText>
@@ -102,5 +101,4 @@ const styles = StyleSheet.create({
   filters: { flexDirection: 'row', gap: space.sm },
   summary: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   row: { flexDirection: 'row', gap: space.md, alignItems: 'flex-start' },
-  thumb: { width: 40, height: 40, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
 })

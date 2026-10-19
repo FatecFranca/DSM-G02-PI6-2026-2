@@ -4,7 +4,7 @@ import { View } from 'react-native'
 import { ListScreen } from '@/components/ListScreen'
 import { AppText, Badge, Card, Chips, Fab, Icon, ProgressBar, StatCard } from '@/components/ui'
 import { useAuth } from '@/lib/auth'
-import { INVENTORY_STATUS, INVENTORY_TYPES } from '@/lib/inventory'
+import { INVENTORY_JOB, INVENTORY_STATUS, INVENTORY_TYPES } from '@/lib/inventory'
 import { formatDate, formatNumber } from '@/lib/format'
 import { hasRole, STAFF } from '@/lib/permissions'
 import { usePaged } from '@/lib/usePaged'
@@ -52,6 +52,7 @@ export default function InventarioScreen() {
                 <View style={{ flexDirection: 'row', gap: 6, flexWrap: 'wrap' }}>
                   <Badge label={meta.label} tone={meta.tone} />
                   <Badge label={INVENTORY_TYPES[inv.type]} />
+                  {inv.jobStatus ? <Badge label={INVENTORY_JOB[inv.jobStatus].label} tone={INVENTORY_JOB[inv.jobStatus].tone} dot /> : null}
                 </View>
                 <AppText variant="caption" color="tertiary">
                   {inv.responsible.name} · início {formatDate(inv.startDate)}{inv.endDate ? ` · fim ${formatDate(inv.endDate)}` : ''}

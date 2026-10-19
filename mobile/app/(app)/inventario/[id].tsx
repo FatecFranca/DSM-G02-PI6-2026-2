@@ -1,11 +1,12 @@
 import { Stack, useLocalSearchParams } from 'expo-router'
 import { useEffect, useState } from 'react'
 import { View } from 'react-native'
+import { InventoryJobNotice } from '@/components/InventoryJobNotice'
 import { AppText, Badge, Banner, Button, Card, CardHeader, ConfirmDialog, Input, KeyValue, Loading, ProgressBar, Screen } from '@/components/ui'
 import { api, errorMessage } from '@/lib/api'
 import { useAuth } from '@/lib/auth'
 import { formatDate, formatNumber } from '@/lib/format'
-import { INVENTORY_STATUS, INVENTORY_TYPES } from '@/lib/inventory'
+import { INVENTORY_STATUS, INVENTORY_TYPES, isJobActive } from '@/lib/inventory'
 import { ADMIN, hasRole, STAFF, WRITERS } from '@/lib/permissions'
 import { useFetch } from '@/lib/useFetch'
 import { useSafeBack } from '@/lib/useSafeBack'
@@ -22,6 +23,14 @@ export default function InventarioDetalheScreen() {
   const [confirmDelete, setConfirmDelete] = useState(false)
 
   const inv = detail.data
+  const jobActive = isJobActive(inv?.jobStatus)
+
+  // Enquanto o servidor ajusta o estoque (fila), atualiza a tela sozinha a cada 3 s.
+  useEffect(() => {
+    if (!jobActive) return
+    const timer = setInterval(() => { void detail.refresh() }, 3000)
+    return () => clearInterval(timer)
+  }, [jobActive]) // eslint-disable-line react-hooks/exhaustive-deps
   const isStaff = hasRole(user?.role, STAFF)
   const canCount = hasRole(user?.role, WRITERS)
   const canDelete = hasRole(user?.role, ADMIN)
@@ -37,6 +46,19 @@ export default function InventarioDetalheScreen() {
     setError('')
     try {
       await api.patch(`/inventory/${id}`, { status })
+      await detail.reload()
+    } catch (err) {
+      setError(errorMessage(err))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function reprocess() {
+    setBusy(true)
+    setError('')
+    try {
+      await api.post(`/inventory/${id}/reprocess`)
       await detail.reload()
     } catch (err) {
       setError(errorMessage(err))
@@ -70,6 +92,8 @@ export default function InventarioDetalheScreen() {
           <Badge label={INVENTORY_TYPES[inv.type]} />
         </View>
       </View>
+
+      {inv.jobStatus ? <InventoryJobNotice inv={inv} onRetry={isStaff ? reprocess : undefined} /> : null}
 
       <Card>
         <KeyValue label="Responsável" value={inv.responsible.name} />
@@ -135,7 +159,11 @@ function ItemRow({ item, editable, inventoryId, onSaved, onError }: { item: ApiI
           <Button title={counted ? 'Atualizar' : 'Registrar'} onPress={save} loading={saving} disabled={!dirty && counted} />
         </View>
       ) : (
-        <AppText color="secondary">{counted ? `Contado: ${formatNumber(item.countedQuantity!)} ${item.product.unit}${item.countedBy ? ` por ${item.countedBy.name}` : ''}` : 'Não contado'}</AppText>
+        <>
+          <AppText color="secondary">{counted ? `Contado: ${formatNumber(item.countedQuantity!)} ${item.product.unit}${item.countedBy ? ` por ${item.countedBy.name}` : ''}` : 'Não contado'}</AppText>
+          {item.adjustedAt ? <AppText variant="caption" color="success">Estoque ajustado</AppText> : null}
+          {item.adjustmentError ? <AppText variant="caption" color="warning">Ajuste manual: {item.adjustmentError}</AppText> : null}
+        </>
       )}
     </Card>
   )

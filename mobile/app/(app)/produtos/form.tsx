@@ -21,7 +21,8 @@ export default function ProdutoFormScreen() {
 }
 
 function ProdutoForm() {
-  const { id } = useLocalSearchParams<{ id?: string }>()
+  const { id, name: prefillName, description: prefillDescription, categoryId: prefillCategory, brandId: prefillBrand } =
+    useLocalSearchParams<{ id?: string; name?: string; description?: string; categoryId?: string; brandId?: string }>()
   const goBack = useSafeBack('/produtos')
   const editing = !!id
   const current = useFetch<ApiProduct>(editing ? `/products/${id}` : null)
@@ -30,13 +31,13 @@ function ProdutoForm() {
   const suppliers = useFetch<Paginated<ApiSupplier>>('/suppliers', { limit: 100 })
 
   const [section, setSection] = useState<'basic' | 'stock' | 'logistics'>('basic')
-  const [name, setName] = useState('')
+  const [name, setName] = useState(prefillName ?? '')
   const [internalCode, setInternalCode] = useState('')
   const [sku, setSku] = useState('')
   const [barcode, setBarcode] = useState('')
-  const [description, setDescription] = useState('')
-  const [categoryId, setCategoryId] = useState('')
-  const [brandId, setBrandId] = useState('')
+  const [description, setDescription] = useState(prefillDescription ?? '')
+  const [categoryId, setCategoryId] = useState(prefillCategory ?? '')
+  const [brandId, setBrandId] = useState(prefillBrand ?? '')
   const [supplierId, setSupplierId] = useState('')
   const [unit, setUnit] = useState('')
   const [status, setStatus] = useState<Status>('active')

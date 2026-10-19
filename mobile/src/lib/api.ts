@@ -82,8 +82,9 @@ async function request<T>(path: string, { method = 'GET', body, params, timeoutM
   try {
     res = await fetch(`${apiUrl}${path}${buildQuery(params)}`, {
       method,
-      headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-      body: body !== undefined ? JSON.stringify(body) : undefined,
+      // FormData (upload): o runtime define o Content-Type com o boundary; fixar JSON aqui quebraria o envio.
+      headers: { ...(body instanceof FormData ? {} : { 'Content-Type': 'application/json' }), ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+      body: body === undefined ? undefined : body instanceof FormData ? body : JSON.stringify(body),
       signal: controller.signal,
     })
   } catch (err) {
@@ -110,6 +111,8 @@ export const api = {
   patch: <T>(path: string, body?: unknown) => request<T>(path, { method: 'PATCH', body }),
   put: <T>(path: string, body?: unknown) => request<T>(path, { method: 'PUT', body }),
   delete: <T>(path: string) => request<T>(path, { method: 'DELETE' }),
+  /** Envia arquivos (multipart/form-data); timeout maior porque a análise de imagem por IA pode demorar. */
+  upload: <T>(path: string, form: FormData) => request<T>(path, { method: 'POST', body: form, timeoutMs: 60000 }),
 }
 
 /** Percorre todas as páginas de um endpoint paginado (a API limita `limit` a 100). */

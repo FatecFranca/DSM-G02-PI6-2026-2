@@ -107,3 +107,10 @@ npm run e2e           # fluxos reais: login, entrada, saída, inventário, CRUD,
 O bundle nativo foi validado com `expo export --platform android` e `--platform ios`. **Não foi testado em
 aparelho/emulador físico** nesta entrega (verificação feita no build web); a câmera e o compartilhamento de
 arquivos dependem de dispositivo real.
+
+## Novidades (Sprint 2)
+
+- **Foto do produto** na lista e no detalhe (URL assinada devolvida pela API; ícone de reserva se faltar ou expirar).
+- **Inventário assíncrono:** ao concluir, mostra o andamento do ajuste de estoque (fila → ajustando → ajustado/pendências/falhou), atualiza sozinho a cada 3 s e permite reprocessar (admin/supervisor).
+- **Identificação por foto (IA):** tire/escolha a foto e a API sugere nome, categoria e marca (OpenAI) e lista produtos parecidos; *Cadastrar com estes dados* abre o formulário pré-preenchido. Requer `OPENAI_API_KEY` no backend.
+- Alertas passam a incluir avisos de ajuste de inventário com falha ou pendências.

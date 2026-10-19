@@ -94,6 +94,9 @@ export interface ApiLot {
 
 export type InventoryStatus = 'planned' | 'in_progress' | 'review' | 'completed'
 
+/** Ajuste de estoque assíncrono (fila) feito depois de concluir o inventário. null em inventários antigos. */
+export type InventoryJobStatus = 'pending' | 'processing' | 'completed' | 'partial' | 'failed'
+
 export interface ApiInventoryCount {
   id: string
   name: string
@@ -106,6 +109,10 @@ export interface ApiInventoryCount {
   divergences: number
   responsible: Ref
   _count?: { items: number }
+  jobStatus?: InventoryJobStatus | null
+  jobError?: string | null
+  adjustedItems?: number
+  failedItems?: number
 }
 
 export interface ApiInventoryItem {
@@ -113,6 +120,8 @@ export interface ApiInventoryItem {
   expectedQuantity: number
   countedQuantity: number | null
   discrepancy: number
+  adjustedAt?: string | null
+  adjustmentError?: string | null
   product: { id: string; name: string; internalCode: string; unit: string }
   countedBy: Ref | null
 }
@@ -164,7 +173,7 @@ export interface ApiAuditLog {
 export interface ApiAlert {
   id: string
   type: 'critical' | 'warning' | 'info'
-  category: 'stock' | 'expiry'
+  category: 'stock' | 'expiry' | 'inventory'
   title: string
   desc: string
   read: boolean
