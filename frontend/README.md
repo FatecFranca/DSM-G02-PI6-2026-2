@@ -6,11 +6,9 @@ Aplicação web (**Next.js/React**) responsável pela interface de operação do
 
 Autores: **Gabriel da Silveira Pessoni** e **Lívia Portela Ferreira**
 
+Documentação técnica detalhada (design system, componentes, mapa de telas): [docs/StockIQ-Frontend.pdf](../docs/StockIQ-Frontend.pdf).
+
 ---
-
-## Sobre este documento
-
-Este README descreve o estado atual do front-end. A aplicação é navegável e parte dos fluxos está integrada à API, mas algumas telas e elementos ainda são demonstrativos e não devem ser tratados como operações persistidas.
 
 ## Índice
 
@@ -19,7 +17,6 @@ Este README descreve o estado atual do front-end. A aplicação é navegável e 
 - [Estrutura de pastas](#estrutura-de-pastas)
 - [Telas e integração atual](#telas-e-integração-atual)
 - [Componentes reutilizáveis](#componentes-reutilizáveis)
-- [Dados mockados](#dados-mockados)
 - [Como rodar o projeto](#como-rodar-o-projeto)
 - [Convenções de código](#convenções-de-código)
 - [Status atual e pendências](#status-atual-e-pendências)
@@ -28,15 +25,15 @@ Este README descreve o estado atual do front-end. A aplicação é navegável e 
 
 ## Visão geral
 
-O front-end é a interface web do StockIQ e está em integração progressiva com a API. Os fluxos que fazem chamadas à API e os que ainda exibem dados demonstrativos estão separados abaixo.
-
-A solução segue uma arquitetura cliente-servidor desacoplada:
+O front-end é a interface web do StockIQ. **As telas operacionais leem e gravam dados reais na API**; os dados de demonstração embutidos no código (`mocks/`) foram removidos. Os dados de exemplo ficam no seed do backend (`npm run prisma:seed`).
 
 ```
 Front-end (Next.js/React)  --HTTPS/JSON-->  API REST (Node/Express)  --Prisma-->  PostgreSQL
+                                                    ├── Amazon S3  (fotos de produto)
+                                                    └── Amazon SQS (ajuste de estoque do inventário)
 ```
 
-O cliente HTTP em `lib/api.ts` envia o token de autenticação e é usado nas telas já conectadas. A presença de uma tela ou rota no menu não significa, por si só, que seus dados sejam persistidos. A referência dos endpoints disponíveis está no Swagger do backend (`/docs`).
+O cliente HTTP em `lib/api.ts` envia o token de autenticação (JWT em `localStorage`, chave `wms_token`), converte erros em `ApiError` e redireciona ao login em respostas 401. A referência dos endpoints está no Swagger do backend (`/docs`).
 
 ## Stack tecnológica
 
@@ -55,78 +52,59 @@ O cliente HTTP em `lib/api.ts` envia o token de autenticação e é usado nas te
 ```
 frontend/
 ├── app/
-│   ├── (auth)/
-│   │   └── login/               # Tela de autenticação
+│   ├── (auth)/login/            # Tela de autenticação
 │   ├── (dashboard)/
-│   │   ├── layout.tsx           # Layout com sidebar + topbar
+│   │   ├── layout.tsx           # Guarda de sessão + AppShell (sidebar + topbar)
 │   │   └── dashboard/
 │   │       ├── page.tsx         # Dashboard geral (indicadores e gráficos)
-│   │       ├── produtos/        # Listagem, cadastro ([id], novo) e detalhe de produtos
-│   │       ├── categorias/
-│   │       ├── marcas/
-│   │       ├── fornecedores/
-│   │       ├── clientes/
-│   │       ├── enderecos/       # Endereços físicos de armazém
-│   │       ├── entradas/        # Entradas de estoque
-│   │       ├── saidas/          # Saídas de estoque
-│   │       ├── movimentacoes/   # Histórico geral de movimentações
-│   │       ├── lotes/           # Controle de validade de lotes
-│   │       ├── inventario/      # Contagens de inventário
-│   │       ├── alertas/
-│   │       ├── auditoria/
-│   │       ├── relatorios/
-│   │       ├── scanner/         # Leitura de código de barras
-│   │       ├── usuarios/
-│   │       ├── configuracoes/
-│   │       ├── ia/
-│   │       └── ia-analitica/    # Módulo de IA analítica (destaque — Mineração de Dados)
-│   ├── layout.tsx
-│   ├── page.tsx
-│   └── globals.css
+│   │       ├── produtos/        # Lista, novo, [id] (detalhe) e [id]/editar — com foto
+│   │       ├── categorias/ marcas/ fornecedores/ clientes/
+│   │       ├── enderecos/ entradas/ saidas/ movimentacoes/ lotes/
+│   │       ├── inventario/      # Contagens e acompanhamento do ajuste de estoque (fila)
+│   │       ├── alertas/ auditoria/ relatorios/ scanner/ usuarios/ configuracoes/
+│   │       ├── ia/              # Identificação por imagem (protótipo; modelo não integrado)
+│   │       └── ia-analitica/    # Previsão de demanda, matriz ABC×XYZ e sugestões de compra
+│   ├── lp/                      # Página de apresentação
+│   ├── layout.tsx · page.tsx · globals.css
 ├── components/
 │   ├── layout/                  # AppShell, Sidebar, Topbar
-│   └── ui/                      # Componentes reutilizáveis (ver seção abaixo)
+│   ├── ui/                      # 18 componentes reutilizáveis
+│   ├── products/                # ProductForm, ProductImage, ProductImageUploader
+│   ├── inventory/               # InventoryJobBanner
+│   └── partners/                # PartnerManager (fornecedores e clientes)
 ├── constants/                   # navigation.ts, status.ts
-├── hooks/                       # useDebounce, useSidebar, useTheme
-├── lib/                         # cn.ts, utils.ts
-├── mocks/                       # Dados de exemplo por domínio
-└── types/                       # Tipagens compartilhadas (product, movement, user, warehouse, common)
+├── hooks/                       # useDebounce, useFetch, useSidebar, useTheme
+├── lib/                         # api, auth-context, alerts-context, permissions, csv, fetch-all, image, utils, cn
+└── types/                       # api.ts (respostas da API), movement.ts, user.ts
 ```
 
 ## Telas e integração atual
 
-O estado é baseado nas chamadas presentes nas páginas; “integrada” significa que a página consulta ou altera dados pela API. Elementos isolados, como busca global/notificações da barra superior, ainda podem ser demonstrativos.
-
 | Estado | Módulos / rotas | Observação |
 |---|---|---|
-| Integradas à API | Login; dashboard; produtos (lista, cadastro e detalhe); categorias; marcas; fornecedores; clientes; endereços; entradas; saídas; movimentações; lotes; inventário; auditoria; relatórios; scanner; usuários | Os dados dependem da API e do banco configurados. Inventário registra contagens e divergências; o encerramento não ajusta automaticamente o estoque de produtos. |
-| Ainda demonstrativas ou parciais | Alertas; IA; IA Analítica; configurações; busca global e notificações da barra superior | A tela Alertas não consome atualmente o endpoint de alertas; os protótipos de IA não recebem a previsão do módulo Python. |
+| Integradas à API | Login; dashboard; produtos (lista, cadastro, edição, detalhe e **foto**); categorias; marcas; fornecedores; clientes; endereços; entradas; saídas; movimentações; lotes; **inventário**; alertas (e sino da barra superior); auditoria; relatórios; scanner; usuários; configurações; **IA Analítica** | Os dados dependem da API e do banco configurados. |
+| Protótipo | `IA — Produtos` (`/dashboard/ia`) | Aceita e pré-visualiza a imagem, mas o modelo de visão não está integrado; a tela não inventa resultados. |
+| Estática | `/lp` (apresentação) | Conteúdo institucional. |
 
-### Destaque — Módulo de IA Analítica
+### Foto do produto
 
-A tela `ia-analitica` é apenas um protótipo visual com dados de exemplo (incluindo elementos ABC/XYZ e sugestões); não está ligada ao script Python nem representa previsões ou recomendações calculadas sobre os dados do sistema. O experimento disponível e suas limitações estão descritos em [machine-learning/README.md](../machine-learning/README.md).
+No cadastro/edição, o card **Foto do Produto** aceita arrastar ou escolher um arquivo (JPEG, PNG, WebP ou GIF, até 5 MB), mostra a pré-visualização e permite trocar/remover. A foto é enviada **ao salvar**, para `POST /products/:id/image` (a API grava no Amazon S3); se o produto foi salvo mas o envio falhou, salvar de novo tenta só a foto. Listas e detalhe exibem a foto (URL assinada temporária) com ícone de reserva.
+
+### Inventário e ajuste de estoque assíncrono
+
+Ao **concluir** um inventário a API enfileira o ajuste de estoque (SQS). A tela mostra um banner com o andamento (*Na fila*, *Ajustando… X de Y*, *Ajustado*, *Com pendências*, *Falhou*), atualiza sozinha a cada 3 s enquanto houver job em andamento e oferece **Reprocessar** (admin/supervisor). Cada item divergente indica se foi ajustado ou o motivo da pendência manual.
+
+### IA Analítica
+
+Consome `GET /api/analytics`: previsão de demanda (real × previsto com faixa de incerteza), origem do modelo (ML ou média móvel), matriz ABC×XYZ, insights e sugestões de compra com exportação do pedido em CSV. O experimento de regressão (notebook) está descrito em [machine-learning/README.md](../machine-learning/README.md) e não alimenta a tela.
 
 ## Componentes reutilizáveis
 
-Localizados em `components/ui/`:
+`components/ui/`: `Alert` · `Avatar` · `Badge` · `Breadcrumb` · `Button` · `Card` · `ConfirmDialog` · `DataTable` · `EmptyState` · `Input` · `Loading` · `Modal` · `Pagination` · `Select` · `Skeleton` · `StatCard` · `Tabs` · `Textarea`.
 
-`Avatar` · `Badge` · `Breadcrumb` · `Button` · `Card` · `DataTable` · `EmptyState` · `Input` · `Modal` · `Pagination` · `Select` · `Skeleton` · `StatCard` · `Tabs`
+`components/layout/`: `AppShell`, `Sidebar`, `Topbar` — estrutura de navegação responsiva compartilhada pelas telas autenticadas. O menu e as ações respeitam o papel do usuário (`lib/permissions.ts`), espelhando as listas de `authorize(...)` do backend (a autorização definitiva é a da API).
 
-E em `components/layout/`: `AppShell`, `Sidebar`, `Topbar` — estrutura de navegação responsiva compartilhada por todas as telas autenticadas.
-
-Hooks utilitários em `hooks/`: `useDebounce`, `useSidebar`, `useTheme`.
-
-## Dados mockados
-
-Os arquivos `mocks/` ainda são usados em algumas partes demonstrativas, inclusive dados de alertas e busca da barra superior. Não são fonte de verdade para as telas que consultam a API. A remoção de um arquivo mock não implica integração concluída; confirme o fluxo da tela antes de considerar a funcionalidade persistente.
-
-- `dashboard.ts` — indicadores e séries do dashboard geral
-- `movements.ts` — movimentações de estoque
-- `products.ts` — produtos, categorias e marcas
-- `users.ts` — usuários e perfis de acesso
-- `warehouse.ts` — endereços físicos de armazenagem
-
-As tipagens de domínio ficam em `types/` (`product.ts`, `movement.ts`, `user.ts`, `warehouse.ts`, `common.ts`); algumas são compartilhadas entre protótipos e telas conectadas.
+Hooks em `hooks/`: `useDebounce`, `useFetch`, `useSidebar`, `useTheme`; contextos em `lib/`: `useAuth`, `useAlerts`.
 
 ## Como rodar o projeto
 
@@ -136,35 +114,34 @@ npm install
 npm run dev
 ```
 
-Acesse [http://localhost:3000](http://localhost:3000). Para a experiência completa (autenticação e dados reais), suba também a [API do back-end](../backend/README.md) — por padrão em `http://localhost:3001`.
-
-Outros scripts disponíveis:
+Acesse [http://localhost:3000](http://localhost:3000). Para autenticação e dados reais, suba também a [API do back-end](../backend/README.md) (por padrão em `http://localhost:3001`; configure `NEXT_PUBLIC_API_URL` se for diferente).
 
 ```bash
 npm run build   # build de produção
 npm run start   # servir o build de produção
-npm run lint    # checagem de lint (ESLint)
+npm run lint    # ESLint
 ```
 
 ## Convenções de código
 
-- **App Router** do Next.js — rotas organizadas por grupo de layout: `(auth)` para telas públicas e `(dashboard)` para telas autenticadas;
-- Componentes de UI genéricos e sem regra de negócio ficam em `components/ui/`; componentes de estrutura de página ficam em `components/layout/`;
-- Tipagens de domínio centralizadas em `types/`, compartilhadas entre mocks, componentes e (futuramente) as chamadas à API;
-- `lib/cn.ts` concentra o helper de composição de classes Tailwind (`clsx`).
+- **App Router** — grupos de layout: `(auth)` para telas públicas e `(dashboard)` para telas autenticadas;
+- componentes de UI genéricos, sem regra de negócio, em `components/ui/`; estrutura de página em `components/layout/`;
+- todo acesso ao backend passa por `lib/api.ts` (ou `useFetch`); upload usa `api.upload(path, FormData)`;
+- estilos somente por tokens (`var(--…)`) e utilitários Tailwind; helper `cn` (`clsx`) para classes condicionais;
+- tipagens das respostas da API em `types/api.ts`.
 
 ## Status atual e pendências
 
 | Área | Status | Observação |
 |---|---|---|
-| Estrutura e navegação | Implementada | Inclui layouts e componentes reutilizáveis; isso não garante que cada ação da tela tenha persistência. |
-| Integração com a API | Parcial | Ver a tabela de telas; configure `NEXT_PUBLIC_API_URL` e suba backend e banco. |
-| Alertas e configurações | Demonstrativos/parciais | Ainda não refletem integralmente operações persistidas. |
-| IA / IA Analítica | Protótipo | Não recebe saídas do experimento Python nem dados operacionais ao vivo. |
+| Estrutura e navegação | Implementada | Layouts, componentes, tema claro/escuro e menu por papel. |
+| Integração com a API | Implementada nas telas operacionais | `tsc`, ESLint e `next build` sem erros na última verificação (19/10/2026). A interface não é exercitada por testes automatizados em navegador. |
+| Foto de produto e inventário assíncrono | Implementados | Dependem do S3/SQS configurados no backend; upload real ao bucket e fila real na AWS ainda não foram exercitados ponta a ponta. |
+| IA — Produtos | Protótipo | Modelo de visão não integrado. |
 
 ## Próximos passos
 
-1. Ligar a tela de alertas e as notificações da barra superior aos endpoints de alertas, incluindo estados de carregamento/erro e ações de leitura;
-2. Substituir ou identificar claramente os dados demonstrativos na busca global, IA, IA Analítica e configurações;
-3. Validar os fluxos integrados com o backend e banco de teste, incluindo permissões por papel e estados de erro;
-4. Integrar a previsão de demanda à UI apenas após validar o modelo e conectar sua entrada a dados operacionais.
+1. Exercitar o fluxo completo em navegador com S3 e SQS reais (foto de produto e conclusão de inventário) e registrar evidências;
+2. Adicionar testes de interface (ex.: Playwright) para os fluxos críticos;
+3. Integrar o modelo de visão na tela `IA — Produtos` quando existir;
+4. Avaliar miniaturas/redimensionamento de fotos para listas grandes.

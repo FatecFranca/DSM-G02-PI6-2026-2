@@ -102,6 +102,10 @@ export interface ApiInventoryCount {
   countedItems: number
   divergences: number
   responsible: Ref
+  jobStatus?: 'pending' | 'processing' | 'completed' | 'partial' | 'failed' | null
+  jobError?: string | null
+  adjustedItems?: number
+  failedItems?: number
 }
 
 export type PositionStatus = 'free' | 'occupied' | 'blocked' | 'reserved'

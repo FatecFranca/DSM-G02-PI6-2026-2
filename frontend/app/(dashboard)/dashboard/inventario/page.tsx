@@ -1,6 +1,6 @@
 'use client'
-import { useEffect, useState } from 'react'
-import { Plus, CheckCircle2, Clock, AlertTriangle, Play, ChevronLeft, ChevronRight, Search } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { Plus, CheckCircle2, Clock, AlertTriangle, Play, ChevronLeft, ChevronRight, Search, Download } from 'lucide-react'
 import { Breadcrumb } from '@/components/ui/Breadcrumb'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
@@ -9,8 +9,11 @@ import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { api } from '@/lib/api'
 import { useAuth } from '@/lib/auth-context'
+import { hasRole, STAFF } from '@/lib/permissions'
+import { InventoryJobBanner, isJobActive, type InventoryJobStatus } from '@/components/inventory/InventoryJobBanner'
 import { formatDate, formatNumber } from '@/lib/utils'
 import { ApiError } from '@/lib/api'
+import { downloadCsv } from '@/lib/csv'
 import { cn } from '@/lib/cn'
 
 const STATUS_CONFIG = {
@@ -36,12 +39,19 @@ interface InventoryRecord {
   divergences: number
   responsible: { id: string; name: string }
   _count?: { items: number }
+  /** Ajuste de estoque assíncrono (fila). null em inventários antigos. */
+  jobStatus?: InventoryJobStatus | null
+  jobError?: string | null
+  adjustedItems?: number
+  failedItems?: number
 }
 interface InventoryItem {
   id: string
   expectedQuantity: number
   countedQuantity: number | null
   discrepancy: number
+  adjustedAt?: string | null
+  adjustmentError?: string | null
   product: { id: string; name: string; internalCode: string; unit: string }
   countedBy: { id: string; name: string } | null
 }
@@ -78,7 +88,33 @@ export default function InventarioPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [retryingId, setRetryingId] = useState<string | null>(null)
+  const [openingId, setOpeningId] = useState<string | null>(null)
+  const [report, setReport] = useState<InventoryDetails | null>(null)
+  const [reportingId, setReportingId] = useState<string | null>(null)
+  const itemsPanelRef = useRef<HTMLDivElement>(null)
   const inventories = inventoryResult?.data ?? []
+  const canRetry = hasRole(user?.role, STAFF)
+
+  // Enquanto o worker processa o ajuste de estoque (fila), atualiza a tela sozinha a cada 3 s.
+  const hasActiveJob = inventories.some((inventory) => isJobActive(inventory.jobStatus))
+  const selectedId = selectedInventory?.id
+  const selectedActive = isJobActive(selectedInventory?.jobStatus)
+  useEffect(() => {
+    if (!hasActiveJob && !selectedActive) return
+    const timer = setInterval(() => {
+      if (hasActiveJob) {
+        api.get<NonNullable<typeof inventoryResult>>('/inventory', { page: inventoryPage, limit: 20 })
+          .then(setInventoryResult).catch(() => undefined)
+      }
+      if (selectedActive && selectedId) {
+        api.get<InventoryDetails>(`/inventory/${selectedId}`)
+          .then((details) => setSelectedInventory((current) => (current?.id === details.id ? details : current)))
+          .catch(() => undefined)
+      }
+    }, 3000)
+    return () => clearInterval(timer)
+  }, [hasActiveJob, selectedActive, selectedId, inventoryPage])
 
   useEffect(() => {
     let active = true
@@ -151,8 +187,50 @@ export default function InventarioPage() {
     }
   }
 
+  const reprocess = async (inventory: InventoryRecord) => {
+    setError('')
+    setRetryingId(inventory.id)
+    try {
+      const updated = await api.post<InventoryRecord>(`/inventory/${inventory.id}/reprocess`)
+      setInventoryResult((current) => current
+        ? { ...current, data: current.data.map((item) => item.id === updated.id ? { ...item, ...updated } : item) }
+        : current)
+      setSelectedInventory((current) => current && current.id === updated.id ? { ...current, ...updated } : current)
+      setReport((current) => current && current.id === updated.id ? { ...current, ...updated } : current)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Falha ao reprocessar o inventário')
+    } finally {
+      setRetryingId(null)
+    }
+  }
+
+  const openReport = async (inventory: InventoryRecord) => {
+    setError('')
+    setReportingId(inventory.id)
+    try {
+      setReport(await api.get<InventoryDetails>(`/inventory/${inventory.id}`))
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Falha ao carregar o relatório do inventário')
+    } finally {
+      setReportingId(null)
+    }
+  }
+
+  const adjustmentLabel = (item: InventoryItem) =>
+    item.adjustedAt ? 'Ajustado'
+      : item.adjustmentError ? `Ajuste manual: ${item.adjustmentError}`
+        : item.countedQuantity !== null && item.discrepancy !== 0 ? 'Aguardando ajuste'
+          : item.countedQuantity === null ? 'Não contado' : 'Sem divergência'
+
+  const exportReport = (r: InventoryDetails) => downloadCsv(
+    `inventario-${r.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || r.id}.csv`,
+    ['Código', 'Produto', 'Unidade', 'Esperado', 'Contado', 'Divergência', 'Ajuste de estoque', 'Contado por'],
+    r.items.map((item) => [item.product.internalCode, item.product.name, item.product.unit, item.expectedQuantity, item.countedQuantity ?? '', item.countedQuantity === null ? '' : item.discrepancy, adjustmentLabel(item), item.countedBy?.name ?? '']),
+  )
+
   const openInventory = async (inventory: InventoryRecord) => {
     setError('')
+    setOpeningId(inventory.id)
     try {
       const details = await api.get<InventoryDetails>(`/inventory/${inventory.id}`)
       setSelectedInventory(details)
@@ -162,8 +240,15 @@ export default function InventarioPage() {
       ])))
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Falha ao carregar os itens do inventário')
+    } finally {
+      setOpeningId(null)
     }
   }
+
+  // O painel de itens fica abaixo da lista: ao abrir (ou trocar de inventário), rola até ele para o usuário ver.
+  useEffect(() => {
+    if (selectedId) itemsPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, [selectedId])
 
   const saveItemCount = async (item: InventoryItem) => {
     const value = Number(countInput[item.id])
@@ -248,7 +333,7 @@ export default function InventarioPage() {
                   </div>
                 </div>
                 <div className="flex items-center gap-3 flex-shrink-0">
-                  <Button size="xs" variant="outline" onClick={() => openInventory(inv)}>Ver itens</Button>
+                  <Button size="xs" variant="outline" loading={openingId === inv.id} onClick={() => openInventory(inv)}>Ver itens</Button>
                   {inv.status === 'in_progress' && (
                     <Button size="xs" variant="outline" disabled={inv.countedItems !== inv.totalItems || inv.totalItems === 0} onClick={() => updateStatus(inv, 'review')}>Enviar para revisão</Button>
                   )}
@@ -257,10 +342,23 @@ export default function InventarioPage() {
                   )}
                   {inv.status === 'review' && <Button size="xs" onClick={() => updateStatus(inv, 'completed')}>Concluir</Button>}
                   {inv.status === 'completed' && (
-                    <Button size="xs" variant="ghost">Ver relatório</Button>
+                    <Button size="xs" variant="ghost" loading={reportingId === inv.id} onClick={() => openReport(inv)}>Ver relatório</Button>
                   )}
                 </div>
               </div>
+
+              {inv.jobStatus && (
+                <InventoryJobBanner
+                  jobStatus={inv.jobStatus}
+                  divergences={inv.divergences}
+                  adjustedItems={inv.adjustedItems ?? 0}
+                  failedItems={inv.failedItems ?? 0}
+                  jobError={inv.jobError}
+                  canRetry={canRetry}
+                  retrying={retryingId === inv.id}
+                  onRetry={() => reprocess(inv)}
+                />
+              )}
 
               {/* Progress */}
               <div className="mt-4 grid grid-cols-3 sm:grid-cols-5 gap-4">
@@ -309,7 +407,7 @@ export default function InventarioPage() {
       </div>
 
       {selectedInventory && (
-        <div className="space-y-4 rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-[color:var(--bg-base)] p-5">
+        <div ref={itemsPanelRef} className="scroll-mt-4 space-y-4 rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-[color:var(--bg-base)] p-5">
           <div className="flex items-center justify-between gap-3">
             <div>
               <h2 className="text-sm font-semibold text-[color:var(--text-primary)]">{selectedInventory.name} · Itens</h2>
@@ -320,7 +418,7 @@ export default function InventarioPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead><tr className="border-b border-[color:var(--border)]">
-                {['Produto', 'Esperado', 'Contado', 'Divergência', ''].map((heading) => <th key={heading} className="px-3 py-2 text-left text-[10px] font-bold uppercase text-[color:var(--text-tertiary)]">{heading}</th>)}
+                {['Produto', 'Esperado', 'Contado', 'Divergência', selectedInventory.jobStatus ? 'Ajuste de estoque' : ''].map((heading) => <th key={heading} className="px-3 py-2 text-left text-[10px] font-bold uppercase text-[color:var(--text-tertiary)]">{heading}</th>)}
               </tr></thead>
               <tbody>
                 {selectedInventory.items.map((item) => (
@@ -333,8 +431,14 @@ export default function InventarioPage() {
                         : item.countedQuantity === null ? '—' : formatNumber(item.countedQuantity)}
                     </td>
                     <td className={cn('px-3 py-2 font-semibold', item.discrepancy === 0 ? 'text-[color:var(--success)]' : 'text-[color:var(--danger)]')}>{item.countedQuantity === null ? '—' : item.discrepancy > 0 ? `+${item.discrepancy}` : item.discrepancy}</td>
-                    <td className="px-3 py-2">
+                    <td className="px-3 py-2 text-xs">
                       {selectedInventory.status === 'in_progress' && <Button size="xs" onClick={() => saveItemCount(item)}>Salvar</Button>}
+                      {selectedInventory.jobStatus && (
+                        item.adjustedAt ? <span className="text-[color:var(--success)]">Ajustado</span>
+                        : item.adjustmentError ? <span className="text-[color:var(--warning)]" title={item.adjustmentError}>Manual: {item.adjustmentError}</span>
+                        : item.countedQuantity !== null && item.discrepancy !== 0 ? <span className="text-[color:var(--text-tertiary)]">Aguardando…</span>
+                        : <span className="text-[color:var(--text-tertiary)]">—</span>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -344,6 +448,82 @@ export default function InventarioPage() {
           </div>
         </div>
       )}
+
+      <Modal
+        open={report !== null}
+        onClose={() => setReport(null)}
+        title={report ? `Relatório · ${report.name}` : 'Relatório'}
+        description={report ? `${TYPE_LABELS[report.type]} · responsável ${report.responsible.name}` : undefined}
+        size="xl"
+        footer={report && (
+          <>
+            <Button variant="outline" size="sm" leftIcon={<Download className="w-3.5 h-3.5" />} onClick={() => exportReport(report)}>Exportar CSV</Button>
+            <Button size="sm" onClick={() => setReport(null)}>Fechar</Button>
+          </>
+        )}
+      >
+        {report && (() => {
+          const divergent = report.items.filter((item) => item.countedQuantity !== null && item.discrepancy !== 0)
+          const accuracy = report.totalItems > 0 ? (((report.totalItems - report.divergences) / report.totalItems) * 100).toFixed(1) : null
+          const net = divergent.reduce((total, item) => total + item.discrepancy, 0)
+          const stats = [
+            { label: 'Itens', value: formatNumber(report.totalItems) },
+            { label: 'Contados', value: formatNumber(report.countedItems) },
+            { label: 'Divergências', value: formatNumber(report.divergences) },
+            { label: 'Acuracidade', value: accuracy === null ? '—' : `${accuracy}%` },
+            { label: 'Estoque ajustado', value: report.jobStatus ? formatNumber(report.adjustedItems ?? 0) : '—' },
+            { label: 'Ajuste manual', value: report.jobStatus ? formatNumber(report.failedItems ?? 0) : '—' },
+          ]
+          return (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+                {stats.map((stat) => (
+                  <div key={stat.label} className="rounded-[var(--radius-md)] border border-[color:var(--border)] p-3">
+                    <p className="text-[10px] uppercase tracking-wide text-[color:var(--text-tertiary)]">{stat.label}</p>
+                    <p className="text-lg font-bold text-[color:var(--text-primary)]">{stat.value}</p>
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs text-[color:var(--text-secondary)]">
+                Período: {formatDate(report.startDate)}{report.endDate ? ` a ${formatDate(report.endDate)}` : ''} ·
+                Saldo líquido das divergências: <strong className={net === 0 ? '' : net > 0 ? 'text-[color:var(--success)]' : 'text-[color:var(--danger)]'}>{net > 0 ? `+${net}` : net}</strong>
+                {!report.jobStatus && ' · Inventário anterior ao ajuste automático: o estoque não foi alterado por este relatório.'}
+              </p>
+              {report.jobStatus && (
+                <InventoryJobBanner
+                  jobStatus={report.jobStatus}
+                  divergences={report.divergences}
+                  adjustedItems={report.adjustedItems ?? 0}
+                  failedItems={report.failedItems ?? 0}
+                  jobError={report.jobError}
+                  canRetry={canRetry}
+                  retrying={retryingId === report.id}
+                  onRetry={() => reprocess(report)}
+                />
+              )}
+              <div className="max-h-72 overflow-auto rounded-[var(--radius-md)] border border-[color:var(--border)]">
+                <table className="w-full text-sm">
+                  <thead className="sticky top-0 bg-[color:var(--bg-subtle)]"><tr className="border-b border-[color:var(--border)]">
+                    {['Produto', 'Esperado', 'Contado', 'Divergência', 'Ajuste de estoque'].map((heading) => <th key={heading} className="px-3 py-2 text-left text-[10px] font-bold uppercase text-[color:var(--text-tertiary)]">{heading}</th>)}
+                  </tr></thead>
+                  <tbody>
+                    {divergent.map((item) => (
+                      <tr key={item.id} className="border-b border-[color:var(--border)] last:border-0">
+                        <td className="px-3 py-2"><p className="font-medium">{item.product.name}</p><p className="font-mono text-[10px] text-[color:var(--text-tertiary)]">{item.product.internalCode}</p></td>
+                        <td className="px-3 py-2">{formatNumber(item.expectedQuantity)} {item.product.unit}</td>
+                        <td className="px-3 py-2">{formatNumber(item.countedQuantity ?? 0)}</td>
+                        <td className={cn('px-3 py-2 font-semibold', item.discrepancy > 0 ? 'text-[color:var(--success)]' : 'text-[color:var(--danger)]')}>{item.discrepancy > 0 ? `+${item.discrepancy}` : item.discrepancy}</td>
+                        <td className="px-3 py-2 text-xs text-[color:var(--text-secondary)]">{adjustmentLabel(item)}</td>
+                      </tr>
+                    ))}
+                    {divergent.length === 0 && <tr><td colSpan={5} className="px-3 py-8 text-center text-[color:var(--text-tertiary)]">Nenhuma divergência: o estoque conferiu com a contagem.</td></tr>}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )
+        })()}
+      </Modal>
 
       <Modal
         open={showModal}
