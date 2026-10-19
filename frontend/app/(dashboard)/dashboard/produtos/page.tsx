@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { Input } from '@/components/ui/Input'
 import { Alert } from '@/components/ui/Alert'
+import { ProductImage } from '@/components/products/ProductImage'
 import { Pagination } from '@/components/ui/Pagination'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
@@ -212,9 +213,7 @@ export default function ProdutosPage() {
                   <tr key={p.id} className="border-b border-[color:var(--border)] last:border-0 hover:bg-[color:var(--bg-subtle)] transition-colors group">
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-[var(--radius-md)] bg-[color:var(--bg-muted)] flex items-center justify-center flex-shrink-0">
-                          <Package className="w-4 h-4 text-[color:var(--text-tertiary)]" />
-                        </div>
+                        <ProductImage src={p.imageUrl} alt={p.name} className="w-9 h-9 rounded-[var(--radius-md)] flex-shrink-0" />
                         <div className="min-w-0">
                           <Link href={`/dashboard/produtos/${p.id}`}>
                             <p className="font-semibold text-[color:var(--text-primary)] hover:text-[color:var(--brand)] truncate max-w-[200px] transition-colors">{p.name}</p>
@@ -274,9 +273,7 @@ export default function ProdutosPage() {
             {products.map(p => (
               <Link key={p.id} href={`/dashboard/produtos/${p.id}`}>
                 <div className="bg-[color:var(--bg-base)] border border-[color:var(--border)] rounded-[var(--radius-lg)] p-4 hover:shadow-[var(--shadow-md)] hover:border-[color:var(--brand-muted)] transition-all group cursor-pointer">
-                  <div className="w-full aspect-square rounded-[var(--radius-md)] bg-[color:var(--bg-muted)] flex items-center justify-center mb-3 group-hover:bg-[color:var(--brand-subtle)] transition-colors">
-                    <Package className="w-8 h-8 text-[color:var(--text-tertiary)] group-hover:text-[color:var(--brand)] transition-colors" />
-                  </div>
+                  <ProductImage src={p.imageUrl} alt={p.name} className="w-full aspect-square rounded-[var(--radius-md)] mb-3" iconClassName="w-8 h-8" />
                   <p className="text-sm font-semibold text-[color:var(--text-primary)] truncate">{p.name}</p>
                   <p className="text-xs text-[color:var(--text-tertiary)] font-mono mt-0.5">{p.internalCode}</p>
                   <div className="flex items-center justify-between mt-2">

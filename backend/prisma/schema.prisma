@@ -170,6 +170,8 @@ model Product {
   currentStock  Int           @default(0)
   status        ProductStatus @default(active)
   imageUrl      String?
+  /// Chave do objeto no storage (S3/local) da foto enviada. Quando presente, a API devolve em imageUrl uma URL assinada temporária.
+  imageKey      String?
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 

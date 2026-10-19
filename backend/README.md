@@ -144,6 +144,24 @@ Definidas em `.env` (veja `.env.example`):
 | `JWT_SECRET` | Segredo usado para assinar/verificar tokens JWT |
 | `JWT_EXPIRES_IN` | Tempo de expiração do token (ex.: `7d`) |
 | `NODE_ENV` | `development` \| `test` \| `production` |
+| `STORAGE_DRIVER` | `s3` (AWS S3 ou compatível) ou `local` (pasta em disco, só desenvolvimento). Padrão: `local` |
+| `S3_BUCKET`, `S3_REGION`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` | Bucket e credenciais do driver `s3` (o IAM precisa de `s3:PutObject`, `s3:GetObject`, `s3:DeleteObject` e `s3:ListBucket` no prefixo usado) |
+| `S3_FORCE_PATH_STYLE`, `S3_ENDPOINT` | Opcionais, para S3 compatível (MinIO etc.) |
+| `STORAGE_KEY_PREFIX` | Prefixo das chaves no bucket (padrão `stockiq/`), útil quando o bucket é compartilhado |
+| `STORAGE_URL_TTL_SECONDS` | Validade das URLs assinadas devolvidas pela API (padrão `3600`) |
+| `STORAGE_MAX_IMAGE_MB` | Tamanho máximo de cada foto (padrão `5`) |
+| `STORAGE_ORPHAN_GRACE_DAYS` | Carência antes de `npm run storage:cleanup` apagar fotos sem produto (padrão `7`) |
+| `STORAGE_LOCAL_DIR`, `STORAGE_SIGNING_SECRET`, `API_PUBLIC_URL` | Driver `local`: pasta das fotos, segredo que assina as URLs de `/api/files` (obrigatório) e a URL pública da API |
+
+## Upload de fotos de produto
+
+`POST /api/products/:id/image` (admin e supervisor) recebe `multipart/form-data` com o arquivo no campo **`image`** e o envia para o S3; `DELETE /api/products/:id/image` remove. As respostas de produto (`GET /api/products`, `/:id`, `/scan/:code`) trazem `imageUrl` como **URL assinada temporária** — o bucket pode continuar privado.
+
+- **Validação:** JPEG, PNG, WebP ou GIF, até `STORAGE_MAX_IMAGE_MB`. O tipo é conferido pelo *conteúdo* do arquivo (não pelo que o cliente declara) e SVG é recusado.
+- **Armazenamento:** chave `<prefixo>products/<idDoProduto>/<uuid>.<ext>`; o banco guarda só a chave (`products.imageKey`).
+- **Consistência:** envia o novo objeto → grava no banco (se falhar, apaga o novo) → só então apaga o antigo. Excluir o produto também apaga a foto.
+- **Órfãos:** `npm run storage:cleanup -- --dry-run` lista (e sem `--dry-run` apaga) objetos que nenhum produto referencia e que passaram da carência.
+- **Migration:** `20261019120000_add_product_image_key` adiciona a coluna `imageKey`; aplique com `npm run prisma:migrate` (dev) ou `npx prisma migrate deploy`.
 
 ## Banco de dados
 
@@ -224,7 +242,7 @@ Os módulos abaixo correspondem às rotas montadas pela aplicação. Consulte `/
 |---|---|---|
 | Autenticação | `/api/auth` | Cadastro, login, identidade e senha |
 | Usuários | `/api/users` | Consulta e gestão de usuários/status |
-| Produtos | `/api/products` | Listagem filtrada, detalhe, scanner e CRUD |
+| Produtos | `/api/products` | Listagem filtrada, detalhe, scanner, CRUD e foto (upload para S3) |
 | Categorias e marcas | `/api/categories`, `/api/brands` | Consulta e CRUD |
 | Fornecedores e clientes | `/api/suppliers`, `/api/customers` | Consulta e CRUD |
 | Armazém | `/api/warehouse` | Endereços, estatísticas e CRUD |

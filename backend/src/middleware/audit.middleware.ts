@@ -16,10 +16,14 @@ const MODEL_BY_ENTITY: Record<string, string> = {
 
 const SENSITIVE_FIELDS = ['password']
 
-function sanitize(value: unknown): object | undefined {
+// URLs assinadas (S3 pré-assinada ou /api/files) funcionam como senha temporária: não podem ir para o log.
+const SIGNED_URL = /X-Amz-Signature=|[?&]sig=/
+
+export function sanitize(value: unknown): object | undefined {
   if (!value || typeof value !== 'object') return undefined
   const copy = JSON.parse(JSON.stringify(value)) as Record<string, unknown>
   for (const field of SENSITIVE_FIELDS) delete copy[field]
+  if (typeof copy.imageUrl === 'string' && SIGNED_URL.test(copy.imageUrl)) delete copy.imageUrl
   return copy
 }
 

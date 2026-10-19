@@ -11,6 +11,7 @@ import { Select } from '@/components/ui/Select'
 import { Textarea } from '@/components/ui/Textarea'
 import { Tabs } from '@/components/ui/Tabs'
 import { Alert } from '@/components/ui/Alert'
+import { ProductImageUploader } from '@/components/products/ProductImageUploader'
 import { cn } from '@/lib/cn'
 import { api } from '@/lib/api'
 import { errorMessage, useFetch } from '@/hooks/useFetch'
@@ -67,6 +68,12 @@ export function ProductForm({ product }: { product?: ApiProduct }) {
   const [height, setHeight] = useState(String(product?.height ?? 0))
   const [depth, setDepth] = useState(String(product?.depth ?? 0))
 
+  // Foto: o arquivo só é enviado ao salvar (depois de criar/atualizar o produto, que é quem dá o id).
+  const [imageFile, setImageFile] = useState<File | null>(null)
+  const [removeImage, setRemoveImage] = useState(false)
+  // Produto novo já criado cujo envio da foto falhou: salvar de novo tenta só a foto (sem duplicar o produto).
+  const [createdId, setCreatedId] = useState<string | null>(null)
+
   const parseMoney = (v: string) => Number(v.replace(',', '.')) || 0
   const backHref = editing ? `/dashboard/produtos/${product.id}` : '/dashboard/produtos'
 
@@ -106,19 +113,37 @@ export function ProductForm({ product }: { product?: ApiProduct }) {
       maxStock: Number(maxStock) || 0,
       status,
     }
+    let productId = product?.id ?? createdId
     try {
-      if (editing) {
-        await api.patch(`/products/${product.id}`, body)
-        router.push(`/dashboard/produtos/${product.id}`)
+      if (productId) {
+        await api.patch(`/products/${productId}`, body)
       } else {
         const created = await api.post<ApiProduct>('/products', body)
-        router.push(`/dashboard/produtos/${created.id}`)
+        productId = created.id
+        setCreatedId(created.id)
       }
     } catch (err) {
       setError(errorMessage(err, 'Falha ao salvar produto'))
-    } finally {
       setSaving(false)
+      return
     }
+
+    try {
+      if (imageFile) {
+        const form = new FormData()
+        form.append('image', imageFile)
+        await api.upload(`/products/${productId}/image`, form)
+      } else if (removeImage && product?.imageUrl) {
+        await api.delete(`/products/${productId}/image`)
+      }
+    } catch (err) {
+      setError(`Produto salvo, mas a foto não foi enviada: ${errorMessage(err, 'falha no envio')}. Ajuste a foto e salve novamente.`)
+      setSaving(false)
+      return
+    }
+
+    setSaving(false)
+    router.push(`/dashboard/produtos/${productId}`)
   }
 
   const margin =
@@ -198,6 +223,14 @@ export function ProductForm({ product }: { product?: ApiProduct }) {
           </div>
 
           <div className="space-y-5">
+            <ProductImageUploader
+              currentUrl={product?.imageUrl}
+              file={imageFile}
+              removed={removeImage}
+              disabled={saving}
+              onSelect={setImageFile}
+              onRemove={setRemoveImage}
+            />
             <Card>
               <CardHeader><CardTitle>Progresso</CardTitle></CardHeader>
               <div className="space-y-3">

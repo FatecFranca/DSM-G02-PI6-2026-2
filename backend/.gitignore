@@ -3,3 +3,6 @@ dist/
 .env
 coverage/
 *.log
+
+# Fotos do driver de storage local (desenvolvimento)
+storage-data/

@@ -4,13 +4,14 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import {
-  ChevronLeft, Edit, Package, TrendingDown,
+  ChevronLeft, Edit, TrendingDown,
   TrendingUp, ArrowDownToLine, ArrowUpFromLine, History,
 } from 'lucide-react'
 import { Breadcrumb } from '@/components/ui/Breadcrumb'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { Card, CardHeader, CardTitle } from '@/components/ui/Card'
+import { ProductImage } from '@/components/products/ProductImage'
 import { api } from '@/lib/api'
 import { formatCurrency, formatNumber, formatDate } from '@/lib/utils'
 import { cn } from '@/lib/cn'
@@ -39,6 +40,7 @@ interface ProductDetail {
   weight: number
   dimensions: { width: number; height: number; depth: number }
   description: string | null
+  imageUrl?: string | null
   purchasePrice: number
   salePrice: number
   supplierName: string
@@ -133,7 +135,9 @@ export default function ProdutoDetailPage() {
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm">Movimentar</Button>
-          <Button size="sm" leftIcon={<Edit className="w-3.5 h-3.5" />}>Editar</Button>
+          <Link href={`/dashboard/produtos/${product.id}/editar`}>
+            <Button size="sm" leftIcon={<Edit className="w-3.5 h-3.5" />}>Editar</Button>
+          </Link>
         </div>
       </div>
 
@@ -143,9 +147,7 @@ export default function ProdutoDetailPage() {
           {/* Image + basic */}
           <Card padding={false}>
             <div className="flex gap-5 p-5">
-              <div className="w-28 h-28 rounded-[var(--radius-lg)] bg-[color:var(--bg-muted)] flex items-center justify-center flex-shrink-0">
-                <Package className="w-12 h-12 text-[color:var(--text-tertiary)]" />
-              </div>
+              <ProductImage src={product.imageUrl} alt={product.name} className="w-28 h-28 rounded-[var(--radius-lg)] flex-shrink-0" iconClassName="w-12 h-12" />
               <div className="flex-1 min-w-0">
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                   <div>

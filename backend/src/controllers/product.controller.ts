@@ -201,3 +201,73 @@ export async function scan(req: Request, res: Response, next: NextFunction): Pro
     next(err)
   }
 }
+
+/**
+ * @swagger
+ * /api/products/{id}/image:
+ *   post:
+ *     summary: Upload the product photo
+ *     description: >
+ *       Envia a foto (multipart/form-data, campo `image`) para o storage (S3) e a vincula ao produto.
+ *       Aceita JPEG, PNG, WebP e GIF (até STORAGE_MAX_IMAGE_MB, padrão 5 MB). O tipo é verificado pelo conteúdo do arquivo.
+ *       Substitui a foto anterior. A resposta traz `imageUrl` como URL assinada temporária.
+ *     tags: [Products]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required: [image]
+ *             properties:
+ *               image: { type: string, format: binary }
+ *     responses:
+ *       200:
+ *         description: Product with the new imageUrl
+ *       400:
+ *         description: No file sent or invalid multipart body
+ *       413:
+ *         description: Image larger than the allowed size
+ *       415:
+ *         description: File is not a JPEG, PNG, WebP or GIF image
+ *       503:
+ *         description: Storage not configured or unavailable
+ */
+export async function uploadImage(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const product = await productService.setImage(req.params.id as string, req.file!.buffer)
+    res.json(product)
+  } catch (err) {
+    next(err)
+  }
+}
+
+/**
+ * @swagger
+ * /api/products/{id}/image:
+ *   delete:
+ *     summary: Remove the product photo
+ *     description: Desvincula a foto do produto e apaga o objeto do storage.
+ *     tags: [Products]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Product without photo
+ */
+export async function removeImage(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const product = await productService.removeImage(req.params.id as string)
+    res.json(product)
+  } catch (err) {
+    next(err)
+  }
+}

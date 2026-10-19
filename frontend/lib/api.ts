@@ -39,13 +39,16 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
   const { method = 'GET', body, params } = options
   const token = getToken()
 
+  // FormData (upload): o navegador define o Content-Type com o boundary; fixar JSON aqui quebraria o envio.
+  const isForm = typeof FormData !== 'undefined' && body instanceof FormData
+
   const res = await fetch(`${API_URL}${path}${buildQuery(params)}`, {
     method,
     headers: {
-      'Content-Type': 'application/json',
+      ...(isForm ? {} : { 'Content-Type': 'application/json' }),
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
-    body: body !== undefined ? JSON.stringify(body) : undefined,
+    body: body === undefined ? undefined : isForm ? (body as FormData) : JSON.stringify(body),
   })
 
   if (res.status === 204) return undefined as T
@@ -73,4 +76,6 @@ export const api = {
   patch: <T>(path: string, body?: unknown) => request<T>(path, { method: 'PATCH', body }),
   put: <T>(path: string, body?: unknown) => request<T>(path, { method: 'PUT', body }),
   delete: <T>(path: string) => request<T>(path, { method: 'DELETE' }),
+  /** Envia arquivos (multipart/form-data). */
+  upload: <T>(path: string, form: FormData) => request<T>(path, { method: 'POST', body: form }),
 }

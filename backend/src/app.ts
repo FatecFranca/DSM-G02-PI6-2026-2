@@ -27,6 +27,7 @@ import auditRoutes from './routes/audit.routes'
 import reportRoutes from './routes/report.routes'
 import analyticsRoutes from './routes/analytics.routes'
 import settingsRoutes from './routes/settings.routes'
+import fileRoutes from './routes/file.routes'
 
 const GROUP_ICONS: Record<string, string> = {
   Auth: '🔐', Users: '👤', Products: '📦', Categories: '🗂️', Brands: '🏷️', Suppliers: '🏭', Customers: '🏪',
@@ -499,6 +500,7 @@ app.use('/api/audit', auditRoutes)
 app.use('/api/reports', reportRoutes)
 app.use('/api/analytics', analyticsRoutes)
 app.use('/api/settings', settingsRoutes)
+app.use('/api/files', fileRoutes)
 
 app.use(errorHandler)
 

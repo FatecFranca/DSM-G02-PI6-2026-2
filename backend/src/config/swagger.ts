@@ -210,7 +210,7 @@ const schemas: Record<string, Json> = {
     currentStock: int(87),
     status: enumOf(['active', 'inactive', 'discontinued'], 'active'),
     stockStatus: enumOf(['ok', 'low', 'critical', 'out'], 'ok'),
-    imageUrl: { type: 'string', nullable: true },
+    imageUrl: { type: 'string', nullable: true, description: 'Foto do produto. Quando enviada pelo upload, é uma URL assinada temporária (renovada a cada resposta).' },
     categoryId: id,
     brandId: id,
     supplierId: id,
@@ -770,6 +770,9 @@ const OPS: Record<string, OpDoc & { partial?: boolean }> = {
 
   'GET /api/products/scan/{code}': { res: 'ProductScan', notFound: true },
   ...crud('/api/products', 'Product', 'ProductRequest', { paged: true }),
+  'POST /api/products/{id}/image': { res: 'Product', roles: STAFF, status: 200, notFound: true },
+  'DELETE /api/products/{id}/image': { res: 'Product', roles: STAFF, notFound: true },
+  'GET /api/files/*': { public: true },
   ...crud('/api/categories', 'Category', 'CategoryRequest', { deleteConflict: true }),
   ...crud('/api/brands', 'Brand', 'BrandRequest', { deleteConflict: true }),
   ...crud('/api/suppliers', 'Supplier', 'SupplierRequest', { paged: true, deleteConflict: true }),
@@ -901,7 +904,7 @@ function enrich(spec: Json): Json {
 const TAGS = [
   ['Auth', 'Login, cadastro e dados do usuário autenticado'],
   ['Users', 'Gestão de usuários e perfis de acesso'],
-  ['Products', 'Cadastro de produtos e leitura por código de barras'],
+  ['Products', 'Cadastro de produtos, foto (S3) e leitura por código de barras'],
   ['Categories', 'Categorias de produtos'],
   ['Brands', 'Marcas de produtos'],
   ['Suppliers', 'Fornecedores'],

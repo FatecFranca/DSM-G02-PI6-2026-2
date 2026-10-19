@@ -3,6 +3,7 @@ import { authenticate, authorize } from '../middleware/auth.middleware'
 import { audit } from '../middleware/audit.middleware'
 import { validate, validateQuery } from '../middleware/validate.middleware'
 import { createProductSchema, productQuerySchema, updateProductSchema } from '../schemas/product.schema'
+import { uploadImage } from '../middleware/upload.middleware'
 import * as ctrl from '../controllers/product.controller'
 
 const router = Router()
@@ -15,5 +16,7 @@ router.get('/:id', ctrl.getById)
 router.post('/', authorize('admin', 'supervisor'), validate(createProductSchema), audit('Product', 'CREATE'), ctrl.create)
 router.patch('/:id', authorize('admin', 'supervisor'), validate(updateProductSchema), audit('Product', 'UPDATE'), ctrl.update)
 router.delete('/:id', authorize('admin'), audit('Product', 'DELETE'), ctrl.remove)
+router.post('/:id/image', authorize('admin', 'supervisor'), audit('Product', 'UPDATE'), uploadImage, ctrl.uploadImage)
+router.delete('/:id/image', authorize('admin', 'supervisor'), audit('Product', 'UPDATE'), ctrl.removeImage)
 
 export default router
