@@ -53,6 +53,7 @@ pi/
 │                     # → mobile/README.md
 ├── machine-learning/ # Experimento de previsão de vendas por regressão (notebook + relatório)
 │                     # → machine-learning/README.md
+├── ml-service/       # Serviço Python (FastAPI) que serve os modelos do notebook → ml-service/README.md
 └── docs/             # Documentação: arquitetura, requisitos, Swagger e PDFs técnicos
     ├── ARCHITECTURE.md · REQUIREMENTS.md · swagger.json
     ├── StockIQ-Backend.pdf · StockIQ-Frontend.pdf
@@ -62,9 +63,10 @@ pi/
 
 | Repositório | Documentação | Responsabilidade |
 |---|---|---|
-| [`backend/`](backend) | [backend/README.md](backend/README.md) | API REST com 17 módulos e 88 endpoints; fotos no S3, fila SQS e worker; `/docs` (Swagger) é a referência dos endpoints |
-| [`frontend/`](frontend) | [frontend/README.md](frontend/README.md) | Aplicação Next.js integrada à API nas telas operacionais (foto de produto, acompanhamento do inventário assíncrono, IA Analítica) |
-| [`machine-learning/`](machine-learning) | [machine-learning/README.md](machine-learning/README.md) | Notebook de previsão de vendas por regressão (pré-processamento, seleção de atributos, Regressão Linear e Random Forest) sobre o Store Sales, com relatório ABNT |
+| [`backend/`](backend) | [backend/README.md](backend/README.md) | API REST com 19 módulos e 92 endpoints; fotos no S3, fila SQS e worker, IA por foto (OpenAI) e simulação de vendas; `/docs` (Swagger) é a referência dos endpoints |
+| [`frontend/`](frontend) | [frontend/README.md](frontend/README.md) | Aplicação Next.js integrada à API nas telas operacionais (foto de produto, inventário assíncrono, IA por foto, IA Analítica e Simulação de Vendas) |
+| [`machine-learning/`](machine-learning) | [ml-service/README.md](ml-service/README.md) | Serviço que serve os modelos do notebook: modelos, API, teste de equivalência e limitações |
+| [machine-learning/README.md](machine-learning/README.md) | Notebook de previsão de vendas por regressão (pré-processamento, seleção de atributos, Regressão Linear e Random Forest) sobre o Store Sales, com relatório ABNT |
 
 ## Arquitetura da solução
 
@@ -77,7 +79,9 @@ Mobile (Expo)         JWT · Zod · Helmet          Query builder
                       Rate limit
                           │
                           ├──► Amazon S3   fotos de produto (URLs assinadas)
-                          └──► Amazon SQS  fila de inventário ──► worker ──► ajuste de estoque
+                          ├──► Amazon SQS  fila de inventário ──► worker ──► ajuste de estoque
+                          ├──► OpenAI      identificação de produto por foto (chave só no servidor)
+                          └──► ml-service  modelos do notebook (simulação de vendas)
 ```
 
 O modelo de dados (14 modelos, 12 enumerações), o diagrama de casos de uso, a arquitetura AWS e a mineração de dados estão detalhados em [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) e nos PDFs técnicos em [docs/](docs).
@@ -97,7 +101,12 @@ npm run dev
 cd frontend
 npm install
 npm run dev
+
+# 3. (opcional) Serviço de simulação de vendas — porta 8100, para a tela Simulação de Vendas
+cd backend && npm run ml:service
 ```
+
+Para a identificação de produto por foto, defina `OPENAI_API_KEY` no `backend/.env`.
 
 Instruções detalhadas, variáveis de ambiente e scripts em [backend/README.md](backend/README.md#como-rodar-o-projeto) e [frontend/README.md](frontend/README.md#como-rodar-o-projeto).
 
@@ -124,14 +133,15 @@ Instruções detalhadas, variáveis de ambiente e scripts em [backend/README.md]
 | Fotos de produto (S3) | Implementado | Driver `s3`/`local`; bucket configurado no `.env`. Upload real ao bucket ainda não exercitado nos testes automatizados. |
 | Mensageria (SQS) | Implementada; fila real pendente | Fila, worker, DLQ e reprocessamento validados com servidor SQS compatível (ElasticMQ) e banco real; a criação da fila na conta AWS depende de um usuário IAM com permissões de SQS. |
 | Infraestrutura AWS (EC2, ALB, RDS) | Planejada | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) descreve a proposta; não há provisionamento nem deploy neste repositório. |
-| Mineração de dados | Experimento + analytics | Notebook de regressão (melhor R² = 0,92, divisão aleatória); a IA Analítica usa média móvel, ABC×XYZ e sugestões de compra do backend. O notebook não está integrado à API. |
+| IA por foto (OpenAI) | Implementada | Backend, web e mobile; testada com respostas simuladas. Precisa de `OPENAI_API_KEY` no `.env` do backend. |
+| Mineração de dados | Experimento + analytics | Notebook de regressão (melhor R² = 0,92, divisão aleatória); a IA Analítica usa média móvel, ABC×XYZ e sugestões de compra do backend. Os modelos do notebook são servidos por `ml-service` e usados na tela **Simulação de Vendas** (o notebook não foi alterado). |
 
 ## Próximos passos
 
 1. Obter credenciais AWS do projeto com permissão de SQS e S3, criar a fila (`npm run queues:setup`) e exercitar fotos e inventário ponta a ponta, registrando evidências (prints);
 2. Aplicar as migrations novas no banco de desenvolvimento (`npx prisma migrate deploy`);
 3. Provisionar a infraestrutura de nuvem (API e worker em EC2, banco em RDS, Application Load Balancer, CloudWatch);
-4. Evoluir a mineração de dados: divisão treino/teste por data, vendas passadas como atributo, previsão dos dias futuros e integração com a IA Analítica;
+4. Evoluir a mineração de dados: divisão treino/teste por data, vendas passadas como atributo, previsão dos dias futuros e uso dos modelos na IA Analítica (hoje eles alimentam a Simulação de Vendas);
 5. Adicionar testes de interface (Playwright) para os fluxos críticos.
 
 ## Considerações finais

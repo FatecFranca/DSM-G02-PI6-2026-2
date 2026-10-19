@@ -40,11 +40,15 @@ PT = {
  "GET /api/reports/warehouse": "Ocupação do armazém", "GET /api/reports/abc": "Curva ABC", "GET /api/reports/inventory": "Contagens e divergências", "GET /api/reports/suppliers": "Compras por fornecedor",
  "GET /api/analytics": "Previsão de demanda, matriz ABC×XYZ, sugestões de compra e insights", "GET /api/analytics/model": "Situação e métricas do modelo de previsão",
  "GET /api/settings": "Dados da empresa e preferências do sistema", "PUT /api/settings": "Atualizar empresa e/ou preferências",
+ "POST /api/ai/identify-product": "Identificar produto por foto (OpenAI): nome, categoria, marca e produtos parecidos",
+ "GET /api/simulation/status": "Situação do serviço de simulação (fora do ar, treinando, pronto)", "GET /api/simulation/model": "Modelos do notebook, métricas, lojas, famílias e faixas de promoção",
+ "POST /api/simulation/predict": "Venda diária prevista por cenário e por modelo",
 }
 TAGS = [("Auth", "Autenticação", "/api/auth"), ("Users", "Usuários", "/api/users"), ("Products", "Produtos", "/api/products"), ("Categories", "Categorias", "/api/categories"),
         ("Brands", "Marcas", "/api/brands"), ("Suppliers", "Fornecedores", "/api/suppliers"), ("Customers", "Clientes", "/api/customers"), ("Warehouse", "Armazém (endereços)", "/api/warehouse"),
         ("Movements", "Movimentações", "/api/movements"), ("Lots", "Lotes", "/api/lots"), ("Inventory", "Inventário", "/api/inventory"), ("Dashboard", "Dashboard", "/api/dashboard"),
-        ("Alerts", "Alertas", "/api/alerts"), ("Audit", "Auditoria", "/api/audit"), ("Reports", "Relatórios", "/api/reports"), ("Analytics", "Analytics (IA)", "/api/analytics"), ("Settings", "Configurações", "/api/settings")]
+        ("Alerts", "Alertas", "/api/alerts"), ("Audit", "Auditoria", "/api/audit"), ("Reports", "Relatórios", "/api/reports"), ("Analytics", "Analytics (IA)", "/api/analytics"), ("Settings", "Configurações", "/api/settings"),
+        ("AI", "IA — identificação por foto", "/api/ai"), ("Simulation", "Simulação de vendas", "/api/simulation")]
 
 def access(op):
     if op.get("security") == []:
@@ -69,12 +73,12 @@ d = Doc("Backend — Documentação Técnica", "StockIQ · Documentação do Bac
 # 01 ─────────────────────────────────────────────────────────────────────────
 d.section("01", "Visão geral", "Escopo, números e responsabilidades")
 d.p("O backend do StockIQ é uma API REST em Node.js/Express com TypeScript que concentra toda a regra de negócio, a persistência em PostgreSQL (via Prisma ORM) e a autenticação do sistema. É consumida pelo front-end Next.js e pelo aplicativo mobile por HTTP/JSON.")
-d.kpis([("17", "Módulos"), (str(N_ENDPOINTS), "Endpoints"), ("14", "Entidades"), (str(tests["total"]), "Testes")])
-d.p("A API cobre o ciclo completo de operação de um armazém: produtos (com foto no S3), categorias, marcas, fornecedores e clientes; endereçamento físico; movimentações de estoque; lotes com validade; contagens de inventário com **ajuste de estoque assíncrono por fila (SQS)**; alertas; auditoria; dashboard, relatórios e analytics (previsão de demanda e matriz ABC×XYZ); e configurações do sistema.")
+d.kpis([(str(len(TAGS)), "Módulos"), (str(N_ENDPOINTS), "Endpoints"), ("14", "Entidades"), (str(tests["total"]), "Testes")])
+d.p("A API cobre o ciclo completo de operação de um armazém: produtos (com foto no S3), categorias, marcas, fornecedores e clientes; endereçamento físico; movimentações de estoque; lotes com validade; contagens de inventário com **ajuste de estoque assíncrono por fila (SQS)**; alertas; auditoria; dashboard, relatórios e analytics (previsão de demanda e matriz ABC×XYZ); e configurações do sistema. Também **identifica produtos por foto** (OpenAI) e expõe a **simulação de vendas** com os modelos de regressão do notebook (serviço Python).")
 d.cards([("🔐", "Segurança", "JWT, bcrypt, Helmet, CORS, rate limiting e trilha de auditoria."),
          ("✔", "Validação", "Schemas Zod por módulo antes de qualquer regra de negócio."),
          ("⚙", "Camadas claras", "routes → controllers → services → Prisma."),
-         ("☁", "Nuvem", "Fotos no Amazon S3 e fila de inventário no Amazon SQS, com worker dedicado."),
+         ("☁", "Nuvem e IA", "Fotos no Amazon S3, fila de inventário no Amazon SQS com worker dedicado, visão por foto (OpenAI) e simulação de vendas (serviço Python)."),
          ("📄", "Documentada", "Swagger UI e OpenAPI 3.0 gerados das rotas (`/docs`)."),
          ("🧪", "Testada", f"{tests['total']} testes (Jest + Supertest) contra PostgreSQL real.")])
 
@@ -90,6 +94,7 @@ d.table(["Camada", "Tecnologia", "Finalidade"], [
     ["Segurança", "Helmet · CORS · express-rate-limit", "Cabeçalhos seguros, origem e limite de requisições"],
     ["Upload", "multer 2", "Recepção de multipart em memória, com limite de tamanho e tipo"],
     ["Nuvem", "AWS SDK v3 (S3, SQS)", "Armazenamento de fotos e mensageria assíncrona"],
+    ["IA", "OpenAI (visão) · FastAPI + scikit-learn (ml-service)", "Identificação de produto por foto; modelos de regressão do notebook servidos por API"],
     ["Documentação", "swagger-jsdoc · swagger-ui-express", "OpenAPI 3.0 em `/docs` e `/docs.json`"],
     ["Testes", "Jest 29 · Supertest · ts-jest", "Testes unitários e de integração"],
     ["Logs", "Morgan", "Log de requisições HTTP (silenciado nos testes)"],
@@ -125,16 +130,17 @@ d.code('''backend/
 │   ├── server.ts               # Bootstrap: banco, HTTP e worker embutido
 │   ├── worker.ts               # Processo dedicado ao consumo das filas (npm run worker)
 │   ├── config/swagger.ts       # Definição OpenAPI
-│   ├── routes/        (18)     # Endpoints + guards de acesso
-│   ├── controllers/   (13)     # req/res
-│   ├── services/      (20)     # Regra de negócio, Prisma, storage (S3) e fila (SQS)
-│   ├── schemas/       (10)     # Schemas Zod de entrada
+│   ├── routes/        (20)     # Endpoints + guards de acesso
+│   ├── controllers/   (15)     # req/res
+│   ├── services/      (22)     # Regra de negócio, Prisma, S3, SQS, visão (OpenAI) e simulação
+│   ├── schemas/       (11)     # Schemas Zod de entrada
 │   ├── middleware/    (6)      # auth · validate · audit · upload · error · rate-limit
-│   ├── workers/                # inventory.worker.ts
+│   ├── workers/                # inventory.worker.ts (consumo da fila)
+│   ├── jobs/                   # lot-status.job.ts (status dos lotes)
 │   └── prisma/client.ts        # Prisma Client singleton
 ├── prisma/                     # schema.prisma · seed.ts · migrations/ (5)
 ├── scripts/                    # setup-queues · cleanup-storage · export-swagger · check-swagger
-├── __tests__/                  # Testes (Jest + Supertest) — 22 suítes
+├── __tests__/                  # Testes (Jest + Supertest) — 26 suítes
 └── .env.example''')
 
 # 04 ─────────────────────────────────────────────────────────────────────────
@@ -219,6 +225,8 @@ d.table(["Módulo", "Leitura", "Criar", "Alterar", "Excluir"], [
     ["Lotes", "Autenticado", "admin, supervisor, operator", "admin, supervisor", "admin"],
     ["Inventário (contagens)", "Autenticado", "admin, supervisor", "admin, supervisor, operator (reprocessar: admin, supervisor)", "admin"],
     ["Dashboard · Relatórios · Analytics", "Autenticado", "—", "—", "—"],
+    ["IA — identificação por foto", "—", "admin, supervisor, operator (chamada)", "—", "—"],
+    ["Simulação de vendas", "Autenticado", "Autenticado (cálculo)", "—", "—"],
     ["Alertas", "Autenticado", "—", "marcar como lido: autenticado", "—"],
     ["Auditoria", "admin, supervisor", "—", "—", "—"],
     ["Configurações", "Autenticado", "—", "admin", "—"],
@@ -245,6 +253,12 @@ d.h3("Alertas, lotes e curva ABC")
 d.p("O módulo de alertas consolida, em tempo real, produtos em ruptura, críticos e com estoque baixo, além de lotes a vencer (janela configurável, padrão 30 dias) e vencidos; a leitura é persistida por usuário em `notifications` (`alertKey`). Lotes têm número único, fabricação, validade, endereço e status. A curva ABC ordena os produtos pelo valor movimentado (`Σ totalValue`): classe A até 80% acumulado, B até 95%, C acima.")
 d.h3("Analytics (previsão de demanda e matriz ABC×XYZ)")
 d.p("`GET /api/analytics` entrega a previsão semanal de demanda (histórico real × projeção, com faixa de incerteza), a matriz **ABC × XYZ** (valor movimentado × variabilidade da demanda, CV = desvio ÷ média: X < 0,5; Y até 1,0; Z acima), o giro e as **sugestões de compra** (cobertura de 28 dias de demanda prevista + estoque de segurança, considerando o prazo de reposição das configurações) com urgência e motivo, além de *insights*. A previsão vem de um serviço de ML **opcional** (`ML_SERVICE_URL`); sem ele — que é o caso deste repositório, que não inclui o serviço Python — o backend usa **média móvel**, e `GET /api/analytics/model` informa a origem usada.")
+d.h3("IA: identificação de produto por foto (OpenAI)")
+d.p("`POST /api/ai/identify-product` recebe a foto (campo `image`; JPEG, PNG, WebP ou GIF até 5 MB, tipo conferido pelo conteúdo) e a envia a um modelo de visão. O backend devolve nome, categoria, marca e descrição sugeridos — já **casados com as categorias e marcas do catálogo** — e até 5 **produtos parecidos** já cadastrados, para evitar duplicar o cadastro. A chave (`OPENAI_API_KEY`) existe só no servidor e não é registrada em log; a resposta do modelo é JSON validado por schema. Cada chamada custa no provedor, por isso há limite próprio (30 por 10 minutos por IP em produção). Erros: sem chave ou chave recusada → 503; limite do provedor → 429; resposta ilegível → 502; timeout → 504.")
+d.h3("Simulação de vendas (modelos do notebook)")
+d.p("`/api/simulation/*` faz a ponte, autenticada e validada, com o serviço Python `ml-service`, que serve os modelos de regressão do notebook (Regressão Linear e Random Forest, com SelectKBest e RFE) — **reproduzidos sem alterar o notebook** e com métricas idênticas — mais um modelo complementar com todos os atributos, que varia com a data. Cada cenário (loja, família, data, itens em promoção, petróleo) devolve a venda diária prevista por modelo. Serviço fora do ar → 503 com a instrução `npm run ml:service`; treinando → 503; cenário inválido → 422.")
+d.h3("Rotinas em segundo plano")
+d.p("Além do worker do inventário, o **job de status dos lotes** (`lot-status.job.ts`) atualiza `valid`, `expiring` e `expired` conforme a validade ao subir a API/worker e a cada 60 minutos (`LOT_STATUS_INTERVAL_MINUTES`; `LOT_STATUS_JOB=off` desliga). Antes, o status só era corrigido quando alguém consultava lotes ou o dashboard. `quarantine` é manual. O **sino de alertas** também avisa quando o ajuste de estoque de um inventário falha (crítico) ou termina com pendências (atenção).")
 d.h3("Dashboard e configurações")
 d.p("O dashboard oferece resumo geral (KPIs, ocupação e valor de estoque), tendência mensal de entradas e saídas, distribuição por categoria, produtos mais movimentados, curva ABC e mapa de calor por dia/hora. `GET/PUT /api/settings` guarda os dados da empresa e as preferências (dias de alerta de validade e prazo de reposição); só o administrador altera.")
 
@@ -291,7 +305,7 @@ d.table(["Mecanismo", "Detalhes"], [
     ["Senhas", "Hash bcrypt (custo 10); o hash nunca é devolvido nas respostas"], ["JWT", "Assinado com `JWT_SECRET`, expiração configurável (`JWT_EXPIRES_IN`)"],
     ["Validação", "Toda entrada passa por schema Zod antes da regra de negócio"],
     ["Upload", "Autenticado, papel admin/supervisor, limite de tamanho, tipo conferido pelo conteúdo, SVG recusado, chaves restritas ao prefixo do projeto"],
-    ["Credenciais de nuvem", "Apenas em variáveis de ambiente (`.env` fora do Git); URLs assinadas têm validade curta"],
+    ["Credenciais de nuvem e de IA", "Apenas em variáveis de ambiente (`.env` fora do Git); URLs assinadas têm validade curta; a chave da OpenAI fica só no servidor e a rota de IA tem limite próprio"],
     ["Erros", "`AppError` + handler central; erros internos não vazam detalhes ao cliente"]], ["", ""])
 d.p("A tabela `audit_logs` registra ação, entidade, id e nome, valor novo/antigo (JSON), IP e usuário. O middleware `audit(entity, action)` intercepta a resposta JSON de operações bem-sucedidas e grava o log sem atrasar a resposta; senhas e **URLs assinadas** são removidas antes de gravar. A consulta fica em `/api/audit`, restrita a supervisor e administrador.")
 
@@ -303,7 +317,7 @@ SC = {"auth.test.ts": "Registro, login, perfil e senha", "user.test.ts": "CRUD d
       "critical-security.test.ts": "Segurança: acesso, tokens, validações críticas", "inventory-service.test.ts": "Transições e contagem do inventário", "report-service.test.ts": "Relatórios",
       "ml-service.test.ts": "Cliente do serviço de previsão e fallback", "ml-analytics.test.ts": "Analytics, ABC×XYZ e sugestões", "storage-service.test.ts": "Storage S3/local, URLs assinadas, tipos de imagem",
       "product-image-service.test.ts": "Foto de produto: ordem, falhas, limites, URL assinada", "audit-sanitize.test.ts": "Remoção de segredos no log de auditoria",
-      "queue-service.test.ts": "Fila SQS/local: envio, visibilidade, DLQ", "queue-sqs-integration.test.ts": "Driver SQS contra servidor SQS real (opcional)",
+      "queue-service.test.ts": "Fila SQS/local: envio, visibilidade, DLQ", "vision-service.test.ts": "IA por foto: prompt, casamento com o catálogo, erros do provedor", "simulation-service.test.ts": "Ponte com o serviço de simulação e validação de cenários", "lot-status-job.test.ts": "Job do status dos lotes: intervalo, falhas, sem sobreposição", "alerts-inventory.test.ts": "Alertas de inventário no sino (falhou/pendências/lido)", "queue-sqs-integration.test.ts": "Driver SQS contra servidor SQS real (opcional)",
       "inventory-processing.test.ts": "Ajuste de estoque: idempotência, lotes, pendências", "inventory-worker.test.ts": "Worker: retry, falha final, mensagem inválida",
       "inventory-queue-flow.test.ts": "Concluir inventário enfileira; reprocessamento", "inventory-async-e2e.test.ts": "Inventário assíncrono ponta a ponta (banco real)"}
 d.table(["Arquivo", "Escopo", "Casos"], [[f"`{s['file']}`", SC.get(s["file"], ""), s["tests"]] for s in tests["suites"]] + [["**Total**", "", f"**{tests['total']}**"]], ["", "", "c"])
@@ -324,12 +338,15 @@ d.table(["Variável", "Descrição"], [
     ["`DATABASE_URL` · `TEST_DATABASE_URL`", "PostgreSQL de aplicação e de testes (nome com “test”)"], ["`PORT` · `NODE_ENV`", "Porta (3001) e ambiente"], ["`JWT_SECRET` · `JWT_EXPIRES_IN`", "Assinatura e validade dos tokens"],
     ["`STORAGE_DRIVER`, `S3_*`, `STORAGE_*`", "Fotos de produto: driver `s3`/`local`, bucket, região, credenciais, prefixo, validade das URLs, limite de tamanho, carência de órfãos"],
     ["`QUEUE_DRIVER`, `SQS_*`, `QUEUE_*`, `INVENTORY_BATCH_SIZE`", "Mensageria: driver `sqs`/`local`, URL da fila, credenciais, visibilidade, tentativas, worker `embedded`/`off`, tamanho do lote"],
-    ["`ML_SERVICE_URL` · `ML_TIMEOUT_MS`", "Serviço de previsão opcional; sem ele a previsão usa média móvel"]], ["", ""])
+    ["`ML_SERVICE_URL` · `ML_TIMEOUT_MS`", "Serviço de previsão por série (opcional); sem ele a previsão usa média móvel"],
+    ["`OPENAI_API_KEY` · `OPENAI_VISION_MODEL` · `OPENAI_BASE_URL`", "IA por foto: chave (só no servidor), modelo com visão (padrão `gpt-4o-mini`) e endpoint"],
+    ["`SALES_MODEL_URL` · `SALES_MODEL_TIMEOUT_MS`", "Serviço de simulação de vendas (`ml-service`, padrão `http://localhost:8100`)"],
+    ["`LOT_STATUS_JOB` · `LOT_STATUS_INTERVAL_MINUTES`", "Job do status dos lotes (`off` desliga; padrão 60 min)"]], ["", ""])
 d.h3("Scripts")
 d.table(["Script", "Função"], [
     ["`dev` · `build` · `start`", "Hot-reload; compila para `dist/`; executa o build"], ["`worker` · `worker:start`", "Processo dedicado ao consumo da fila (use `QUEUE_WORKER=off` na API)"],
     ["`prisma:migrate` · `prisma:generate` · `prisma:studio` · `prisma:seed`", "Migrations, client, interface gráfica e massa de demonstração"],
-    ["`queues:setup`", "Cria a fila de inventário e a DLQ no SQS e imprime as variáveis"], ["`storage:cleanup`", "Remove do storage fotos sem produto (`--dry-run` só lista)"],
+    ["`queues:setup`", "Cria a fila de inventário e a DLQ no SQS e imprime as variáveis"], ["`ml:service`", "Sobe o serviço de simulação de vendas (`ml-service`, porta 8100)"], ["`storage:cleanup`", "Remove do storage fotos sem produto (`--dry-run` só lista)"],
     ["`docs:check` · `docs:export`", "Confere rotas × Swagger · exporta `docs/swagger.json`"], ["`test` · `test:coverage`", "Testes e cobertura"]], ["", ""])
 d.table(["URL", "Conteúdo"], [["`GET /`", "Painel HTML com todos os módulos e endpoints"], ["`GET /docs`", "Swagger UI com autenticação Bearer"], ["`GET /docs.json`", "Especificação OpenAPI 3.0"],
                             ["`GET /health/live` · `/health/ready`", "Liveness e prontidão (conexão com o banco)"]], ["", ""])
@@ -340,6 +357,7 @@ d.p("Os dois serviços AWS usados pelo backend estão detalhados no documento **
 d.table(["Serviço", "Papel", "Situação"], [
     ["Amazon S3", "Fotos de produto (upload via API, URLs assinadas)", ("tag", "ok", "Implementado")], ["Amazon SQS", "Fila de inventário + DLQ, consumida pelo worker", ("tag", "warn", "Implementado · fila real pendente")],
     ["EC2 · ALB · RDS · CloudWatch", "Hospedagem, balanceamento, banco e observabilidade", ("tag", "gray", "Planejado")]], ["", "", ""])
+d.p("Além da AWS, o backend usa dois serviços externos opcionais: a **OpenAI** (identificação de produto por foto) e o serviço Python de **simulação de vendas** (`ml-service`).")
 
 if __name__ == "__main__":
     print(d.build())

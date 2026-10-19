@@ -1,16 +1,16 @@
 from lib import Doc, svg, box, arrow, text
 
 d = Doc("Machine Learning — Documentação Técnica", "StockIQ · Documentação de Machine Learning", "Machine Learning<br>Mineração de Dados",
-        "Documentação do módulo analítico do StockIQ: o experimento de previsão de vendas por regressão (pré-processamento, seleção de atributos, modelos e resultados) e o analytics já integrado ao backend.",
+        "Documentação do módulo analítico do StockIQ: o experimento de previsão de vendas por regressão (pré-processamento, seleção de atributos, modelos e resultados), sua integração ao sistema (simulação de vendas) e o analytics do backend.",
         ["Python 3", "pandas · NumPy", "scikit-learn", "Regressão", "CRISP-DM"], "StockIQ-Machine-Learning.pdf")
 
 # 01
 d.section("01", "Visão geral", "Objetivo e papel no sistema")
-d.p("O módulo de Mineração de Dados transforma histórico de vendas em previsões de demanda. O trabalho tem duas frentes: (1) o **notebook `Previsao_Vendas.ipynb`**, que treina e compara modelos de regressão sobre a base pública *Store Sales — Time Series Forecasting*; e (2) o **analytics do backend** (`GET /api/analytics`), já usado pela tela IA Analítica, com previsão por média móvel, matriz ABC×XYZ e sugestões de compra.")
+d.p("O módulo de Mineração de Dados transforma histórico de vendas em previsões de demanda. O trabalho tem três frentes: (1) o **notebook `Previsao_Vendas.ipynb`**, que treina e compara modelos de regressão sobre a base pública *Store Sales — Time Series Forecasting*; (2) o **serviço de simulação** (`ml-service`), que serve esses modelos — sem alterar o notebook — ao backend e à tela *Simulação de Vendas*; e (3) o **analytics do backend** (`GET /api/analytics`), usado pela tela IA Analítica, com previsão por média móvel, matriz ABC×XYZ e sugestões de compra.")
 d.kpis([("3 mi", "registros na base"), ("97.680", "linhas no recorte"), ("41", "atributos"), ("0,92", "melhor R² (teste)")])
 d.cards([("🧹", "Pré-processamento", "Limpeza, integração de tabelas, atributos de data e codificação."), ("🎯", "Seleção de atributos", "SelectKBest e RFE comparados, com padronização só onde necessário."),
          ("📈", "Dois algoritmos", "Regressão Linear (interpretável) e Random Forest (não linear)."), ("📊", "Avaliação", "R², MAE e RMSE no conjunto de teste."),
-         ("🧠", "Analytics integrado", "Média móvel, curva ABC, matriz ABC×XYZ e sugestões de compra na API."), ("📄", "Relatório ABNT", "`machine-learning/Relatorio_Previsao_Vendas.pdf` descreve o experimento em formato acadêmico.")])
+         ("🧪", "Simulação no sistema", "Os modelos do notebook, servidos por API, alimentam a tela Simulação de Vendas."), ("📄", "Relatório ABNT", "`machine-learning/Relatorio_Previsao_Vendas.pdf` descreve o experimento em formato acadêmico.")])
 
 # 02
 d.section("02", "Metodologia CRISP-DM", "Etapas e situação")
@@ -20,7 +20,7 @@ d.table(["Etapa", "O que foi feito", "Situação"], [
     ["3 · Preparação dos dados", "Remoção do período anterior à abertura das lojas, recorte, integração (lojas e petróleo), datas, agrupamento de promoções e codificação", ("tag", "ok", "Concluída")],
     ["4 · Modelagem", "Regressão Linear e Random Forest; seleção de 10 atributos por SelectKBest e por RFE", ("tag", "ok", "Concluída")],
     ["5 · Avaliação", "R², MAE e RMSE no teste; comparação entre métodos de seleção; limitações registradas", ("tag", "ok", "Concluída (divisão aleatória)")],
-    ["6 · Implantação", "O notebook não alimenta a API; o sistema usa média móvel e ABC×XYZ calculados no backend", ("tag", "warn", "Em evolução")],
+    ["6 · Implantação", "Os modelos do notebook são servidos por `ml-service` e usados na tela Simulação de Vendas; a IA Analítica usa média móvel e ABC×XYZ calculados no backend", ("tag", "ok", "Simulação integrada")],
 ], ["", "", ""])
 
 # 03
@@ -116,20 +116,47 @@ d.table(["", "X · estável", "Y · variável", "Z · irregular"], [
     ["**B · intermediário**", "Reposição periódica programada", "Revisão periódica", "Compra sob demanda com limite"],
     ["**C · menor valor**", "Lotes grandes, pouco controle", "Controle simplificado", "Avaliar descontinuação"]], ["", "", "", ""])
 d.h3("Do experimento ao sistema")
-d.p("O notebook é a **técnica inicial de mineração de dados** do projeto: demonstra o método, os atributos que importam e o desempenho esperado. Ele ainda não está ligado à API; o caminho previsto é treinar com os dados reais de saída, expor o modelo por um serviço (compatível com `ML_SERVICE_URL`) e validar com divisão cronológica.")
+d.p("O notebook é a **técnica inicial de mineração de dados** do projeto: demonstra o método, os atributos que importam e o desempenho esperado. Seus modelos já estão ligados ao sistema pela simulação de vendas (próxima seção); o caminho seguinte é treinar com os dados reais de saída e validar com divisão cronológica.")
 
-# 09
-d.section("09", "Execução e evolução", "Como rodar e próximos passos")
-d.code('''cd machine-learning
+# 09 — simulação
+d.section("09", "Simulação de vendas no sistema", "Modelos do notebook servidos por API")
+d.p("A integração foi feita **sem alterar o notebook nem a pasta `machine-learning/`**. O serviço `ml-service` (Python/FastAPI) lê as mesmas bases CSV e reproduz, na mesma ordem e com os mesmos parâmetros, o pré-processamento, a divisão 70/30 (`random_state=1`), a seleção de atributos e os quatro modelos. Um teste de equivalência confere que o recorte (97.680 / 68.376 / 29.304 linhas, 41 atributos), os atributos selecionados e o **R² dos quatro modelos são idênticos** aos do notebook.")
+a = []
+a.append(box(6, 20, 110, 48, "Tela", "Simulação de Vendas", "slate"))
+a.append(box(150, 20, 130, 48, "Backend", "/api/simulation/*\nJWT + Zod", "blue"))
+a.append(box(314, 20, 130, 48, "ml-service", "FastAPI :8100", "cyan"))
+a.append(box(478, 20, 136, 48, "Modelos", "scikit-learn (notebook)", "violet"))
+for x1, x2 in ((116, 150), (280, 314), (444, 478)): a.append(arrow(x1, 44, x2, 44))
+d.figure(svg(620, 90, "".join(a)), "Caminho da simulação, do navegador aos modelos")
+d.table(["Rota (backend)", "Função"], [
+    ["`GET /api/simulation/status`", "Fora do ar, treinando ou pronto (nunca falha)"], ["`GET /api/simulation/model`", "Modelos, métricas (R², MAE, RMSE), atributos selecionados, importâncias, lojas, famílias, faixas de promoção e petróleo"],
+    ["`POST /api/simulation/predict`", "Venda diária prevista por cenário (loja, família, data, itens em promoção, petróleo) e por modelo — até 400 cenários"]], ["m", ""])
+d.table(["Modelo", "Seleção", "R²", "Usa a data?", "Origem"], [
+    ["Regressão Linear", "SelectKBest", "0,6270", "não", ("tag", "ok", "Notebook")], ["Random Forest", "SelectKBest", "0,6279", "não", ("tag", "ok", "Notebook")],
+    ["Regressão Linear", "RFE", "0,6337", "não", ("tag", "ok", "Notebook")], ["Random Forest", "RFE", "0,9156", "não", ("tag", "ok", "Notebook")],
+    ["Random Forest", "41 atributos", "0,9518", "sim (dia da semana, mês, petróleo)", ("tag", "warn", "Complementar")]], ["", "", "c", "", "c"])
+d.ul(["A tela permite alterar loja, família, itens em promoção, petróleo, data e horizonte e mostra: indicadores, previsão diária por modelo, o efeito de cada faixa de promoção, a comparação entre as 5 lojas e a tabela de desempenho.",
+      "Os modelos do notebook (com seleção de atributos) **não usam a data**: a linha diária é constante. O modelo complementar — que **não** faz parte do notebook e é identificado como tal — varia por dia da semana (domingos vendem menos), mês e petróleo.",
+      "Previsões negativas (possíveis na regressão linear) são cortadas em 0. Lojas válidas: 1 a 5; famílias: as 33 da base."])
+d.note("Limitações", "Valem as do notebook: divisão treino/teste aleatória (R² otimista para dias futuros), sem vendas passadas, feriados ou transações, e só 5 lojas do tipo D. As 26 famílias que a seleção RFE não distingue recebem a mesma previsão nos modelos com seleção.", "warn")
+
+# 10
+d.section("10", "Execução e evolução", "Como rodar e próximos passos")
+d.code('''# notebook (experimento)
+cd machine-learning
 # bases em store-sales-time-series-forecasting/ (train.csv, stores.csv, oil.csv, ...)
 pip install pandas numpy scikit-learn matplotlib jupyter
-jupyter notebook Previsao_Vendas.ipynb''')
+jupyter notebook Previsao_Vendas.ipynb
+
+# serviço de simulação (usado pela tela Simulação de Vendas)
+cd backend && npm run ml:service              # http://127.0.0.1:8100
+cd ml-service && python3 -m unittest -v tests.test_equivalence   # confere R² idêntico ao notebook''')
 d.table(["Etapa", "Ação", "Ganho esperado"], [
     ["1", "Dividir treino/teste **por data** (últimos dias para teste)", "Métrica realista de previsão futura"],
     ["2", "Adicionar vendas passadas (*lags* ≥ 16 dias), médias móveis, feriados e transações", "Maior poder preditivo para dias futuros"],
     ["3", "Usar todas as lojas e avaliar por loja/família", "Generalização do modelo"],
     ["4", "Gerar a previsão do `test.csv` e comparar com a média móvel do backend", "Evidência de ganho sobre o baseline"],
-    ["5", "Publicar o modelo como serviço (`ML_SERVICE_URL`) e usar os eventos de movimentação (S3/SQS) como fonte", "Integração ponta a ponta com a IA Analítica"],
+    ["5", "Treinar com os dados reais de saída (eventos de movimentação via S3/SQS) e levar o modelo à IA Analítica", "Integração ponta a ponta com a previsão do sistema"],
 ], ["c", "", ""])
 d.h4("Referências")
 d.ul(["BREIMAN, L. Random forests. *Machine Learning*, v. 45, n. 1, p. 5–32, 2001.", "GUYON, I.; ELISSEEFF, A. An introduction to variable and feature selection. *Journal of Machine Learning Research*, v. 3, p. 1157–1182, 2003.",

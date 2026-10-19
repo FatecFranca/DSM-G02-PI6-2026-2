@@ -79,6 +79,14 @@
     {
       "name": "Settings",
       "description": "Dados da empresa e preferências do sistema"
+    },
+    {
+      "name": "AI",
+      "description": "Identificação de produtos por foto (visão computacional)"
+    },
+    {
+      "name": "Simulation",
+      "description": "Simulação de vendas com os modelos de regressão do notebook (serviço Python)"
     }
   ],
   "components": {
@@ -2939,6 +2947,322 @@
           }
         }
       },
+      "SimulationStatus": {
+        "type": "object",
+        "properties": {
+          "available": {
+            "type": "boolean",
+            "example": true
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "offline",
+              "loading",
+              "training",
+              "ready",
+              "error"
+            ],
+            "example": "ready"
+          },
+          "message": {
+            "type": "string",
+            "example": "Modelos prontos"
+          },
+          "trainedAt": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "SimulationModelInfo": {
+        "type": "object",
+        "properties": {
+          "trainedAt": {
+            "type": "string"
+          },
+          "dataset": {
+            "type": "object",
+            "description": "Linhas, divisão treino/teste, lojas e famílias usadas no treino."
+          },
+          "stores": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "integer",
+                  "example": 1
+                },
+                "city": {
+                  "type": "string",
+                  "example": "Quito"
+                },
+                "type": {
+                  "type": "string",
+                  "example": "D"
+                },
+                "cluster": {
+                  "type": "integer",
+                  "example": 13
+                }
+              }
+            }
+          },
+          "families": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "example": "GROCERY I"
+            }
+          },
+          "oil": {
+            "type": "object",
+            "description": "Preço do petróleo padrão (último da base), mínimo e máximo."
+          },
+          "promoBands": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "band": {
+                  "type": "integer",
+                  "example": 0
+                },
+                "label": {
+                  "type": "string",
+                  "example": "0 itens"
+                }
+              }
+            }
+          },
+          "models": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "example": "rfe_rf"
+                },
+                "name": {
+                  "type": "string",
+                  "example": "Random Forest"
+                },
+                "selection": {
+                  "type": "string",
+                  "example": "RFE"
+                },
+                "origin": {
+                  "type": "string",
+                  "enum": [
+                    "notebook",
+                    "complementar"
+                  ],
+                  "example": "notebook"
+                },
+                "usesDate": {
+                  "type": "boolean"
+                },
+                "features": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "metrics": {
+                  "type": "object",
+                  "properties": {
+                    "r2": {
+                      "type": "number",
+                      "example": 0.9156
+                    },
+                    "mae": {
+                      "type": "number",
+                      "example": 172.82
+                    },
+                    "rmse": {
+                      "type": "number",
+                      "example": 407.87
+                    }
+                  }
+                },
+                "importance": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "feature": {
+                        "type": "string",
+                        "example": "onpromotion"
+                      },
+                      "weight": {
+                        "type": "number",
+                        "example": 0.4
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "SimulationPredictRequest": {
+        "type": "object",
+        "properties": {
+          "scenarios": {
+            "type": "array",
+            "maxItems": 400,
+            "items": {
+              "type": "object",
+              "properties": {
+                "store": {
+                  "type": "integer",
+                  "example": 1
+                },
+                "family": {
+                  "type": "string",
+                  "example": "GROCERY I"
+                },
+                "date": {
+                  "type": "string",
+                  "example": "2017-08-20"
+                },
+                "onpromotion": {
+                  "type": "integer",
+                  "example": 4
+                },
+                "oil": {
+                  "type": "number",
+                  "example": 47.2
+                }
+              },
+              "required": [
+                "store",
+                "family",
+                "date"
+              ]
+            }
+          },
+          "models": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "example": "rfe_rf"
+            }
+          }
+        },
+        "required": [
+          "scenarios"
+        ]
+      },
+      "SimulationPredictResponse": {
+        "type": "object",
+        "properties": {
+          "predictions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "number"
+              },
+              "example": {
+                "rfe_rf": 2095.61,
+                "rf_full": 736.82
+              }
+            }
+          }
+        }
+      },
+      "ProductIdentification": {
+        "type": "object",
+        "properties": {
+          "identified": {
+            "type": "boolean",
+            "example": true
+          },
+          "confidence": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "example": 0.86
+          },
+          "model": {
+            "type": "string",
+            "example": "gpt-4o-mini"
+          },
+          "suggestion": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "example": "Capacete de segurança amarelo"
+              },
+              "description": {
+                "type": "string"
+              },
+              "keywords": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "categoryName": {
+                "type": "string",
+                "nullable": true
+              },
+              "categoryId": {
+                "type": "string",
+                "nullable": true
+              },
+              "brandName": {
+                "type": "string",
+                "nullable": true
+              },
+              "brandId": {
+                "type": "string",
+                "nullable": true
+              }
+            }
+          },
+          "candidates": {
+            "type": "array",
+            "description": "Produtos parecidos já cadastrados (até 5).",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "example": "cmq1x2y3z0001abcd"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "internalCode": {
+                  "type": "string"
+                },
+                "sku": {
+                  "type": "string"
+                },
+                "currentStock": {
+                  "type": "integer"
+                },
+                "categoryName": {
+                  "type": "string"
+                },
+                "imageUrl": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "matchScore": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        }
+      },
       "UpdateSettingsRequest": {
         "type": "object",
         "properties": {
@@ -5457,6 +5781,142 @@
         "description": "**Perfis permitidos:** admin."
       }
     },
+    "/api/simulation/status": {
+      "get": {
+        "summary": "Status of the sales simulation service",
+        "description": "Informa se o serviço Python dos modelos do notebook está fora do ar, treinando ou pronto. Nunca retorna erro de serviço indisponível.",
+        "tags": [
+          "Simulation"
+        ],
+        "responses": {
+          "200": {
+            "description": "Service status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimulationStatus"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/simulation/model": {
+      "get": {
+        "summary": "Models, metrics and options of the sales simulation",
+        "description": "Modelos de regressão do notebook (Regressão Linear e Random Forest, com SelectKBest e RFE) e um modelo complementar, com R², MAE e RMSE no conjunto de teste, atributos selecionados, importâncias, lojas, famílias e faixas de promoção.\n",
+        "tags": [
+          "Simulation"
+        ],
+        "responses": {
+          "200": {
+            "description": "Model information",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimulationModelInfo"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "503": {
+            "description": "Simulation service offline or still training"
+          }
+        }
+      }
+    },
+    "/api/simulation/predict": {
+      "post": {
+        "summary": "Predict daily sales for what-if scenarios",
+        "description": "Cada cenário (loja, família, data, itens em promoção, petróleo) devolve a venda diária prevista por modelo, em unidades. Os modelos do notebook usam loja, família e faixa de promoção; só o modelo complementar `rf_full` varia com a data e o petróleo.\n",
+        "tags": [
+          "Simulation"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "scenarios"
+                ],
+                "properties": {
+                  "scenarios": {
+                    "type": "array",
+                    "maxItems": 400,
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "store",
+                        "family",
+                        "date"
+                      ],
+                      "properties": {
+                        "store": {
+                          "type": "integer",
+                          "example": 1
+                        },
+                        "family": {
+                          "type": "string",
+                          "example": "GROCERY I"
+                        },
+                        "date": {
+                          "type": "string",
+                          "example": "2017-08-20"
+                        },
+                        "onpromotion": {
+                          "type": "integer",
+                          "example": 4
+                        },
+                        "oil": {
+                          "type": "number",
+                          "example": 47.2
+                        }
+                      }
+                    }
+                  },
+                  "models": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "One prediction object (model id → units) per scenario, in order",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimulationPredictResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "503": {
+            "description": "Simulation service offline or still training"
+          }
+        }
+      }
+    },
     "/api/products": {
       "get": {
         "summary": "List all products",
@@ -7738,6 +8198,77 @@
           },
           "422": {
             "$ref": "#/components/responses/ValidationError"
+          }
+        }
+      }
+    },
+    "/api/ai/identify-product": {
+      "post": {
+        "summary": "Identify a product from a photo (OpenAI vision)",
+        "description": "Envia a foto (multipart/form-data, campo `image`; JPEG, PNG, WebP ou GIF até STORAGE_MAX_IMAGE_MB) a um modelo de visão e devolve nome, categoria, marca e descrição sugeridos — já casados com as categorias/marcas do catálogo — além de produtos parecidos já cadastrados. Exige `OPENAI_API_KEY` no servidor. Limitada a 30 chamadas por 10 minutos por IP.\n\n\n**Perfis permitidos:** admin, supervisor, operator.",
+        "tags": [
+          "AI"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "image"
+                ],
+                "properties": {
+                  "image": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Identification result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductIdentification"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "No file sent",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "413": {
+            "description": "Image too large"
+          },
+          "415": {
+            "description": "Not a supported image"
+          },
+          "429": {
+            "description": "Rate limit (this API or the AI provider)"
+          },
+          "502": {
+            "description": "AI provider failed or answered unexpectedly"
+          },
+          "503": {
+            "description": "AI not configured or the key was rejected"
           }
         }
       }

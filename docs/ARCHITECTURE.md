@@ -15,7 +15,7 @@ Este documento consolida a arquitetura lógica da aplicação, o modelo de dados
 
 ## Visão lógica da aplicação
 
-O front-end (Next.js) e o app mobile (Expo) consomem a API REST, que acessa o banco relacional pelo Prisma ORM. **As telas operacionais usam dados reais da API**; não há mais dados de demonstração embutidos no front-end. A API também fala com a AWS: guarda fotos de produto no **Amazon S3** e publica o ajuste de estoque do inventário numa fila **Amazon SQS**, consumida por um worker. O diagrama descreve a separação de camadas; a implantação em nuvem (EC2, balanceador) ainda é proposta.
+O front-end (Next.js) e o app mobile (Expo) consomem a API REST, que acessa o banco relacional pelo Prisma ORM. **As telas operacionais usam dados reais da API**; não há mais dados de demonstração embutidos no front-end. A API também fala com a AWS: guarda fotos de produto no **Amazon S3** e publica o ajuste de estoque do inventário numa fila **Amazon SQS**, consumida por um worker. Dois serviços externos completam a API: a **OpenAI** (identificação de produto por foto; a chave fica só no servidor) e o **serviço de simulação** (`ml-service`, Python), que serve os modelos de regressão do notebook. O diagrama descreve a separação de camadas; a implantação em nuvem (EC2, balanceador) ainda é proposta.
 
 ```
 ┌────────────────┐  HTTPS/JSON  ┌──────────────────────────┐  Prisma   ┌──────────────┐  SQL  ┌────────────┐
@@ -30,6 +30,9 @@ O front-end (Next.js) e o app mobile (Expo) consomem a API REST, que acessa o ba
                                     │ Amazon S3  │  │ Amazon SQS │ ───────► │  Worker   │ ─────────────┘
                                     │ (fotos)    │  │ + DLQ      │          │(inventário)│
                                     └───────────┘  └───────────┘          └──────────┘
+
+                       API ──► OpenAI (visão: identifica produto por foto)
+                       API ──► ml-service :8100 (FastAPI) ──► modelos do notebook (simulação de vendas)
 ```
 
 > Diagramas de sequência dos fluxos críticos (login, registro de movimentação, upload de foto e ajuste assíncrono do inventário) estão nos PDFs de [Backend](StockIQ-Backend.pdf) e de [Computação em Nuvem](StockIQ-Computacao-em-Nuvem.pdf).
@@ -258,6 +261,7 @@ StockIQ (PostgreSQL operacional)
 |---|---|---|
 | Curva ABC | Classificar produtos por valor acumulado de movimentação, priorizando controle sobre os itens de maior impacto financeiro | ✅ Implementado (`/api/reports/abc`, `/api/dashboard/abc`) |
 | Classificação XYZ | Classificar produtos pela variabilidade/regularidade da demanda, complementando a curva ABC (matriz ABC/XYZ) | ✅ Implementado em `GET /api/analytics` (coeficiente de variação da demanda mensal) e exibido na tela IA Analítica |
+| Simulação de vendas (modelos do notebook) | Permitir cenários "e se…" (loja, família, promoção, data) com os modelos de regressão do experimento | ✅ Integrado: serviço `ml-service` (FastAPI) reproduz o notebook sem alterá-lo (mesmas métricas, com teste de equivalência) e a API expõe `/api/simulation/*` para a tela **Simulação de Vendas**. Inclui um modelo complementar (Random Forest com 41 atributos) que varia com a data |
 | Previsão de demanda (séries temporais) | Estimar a quantidade de saída futura por produto/categoria, antecipando risco de ruptura | ✅ Baseline integrado: média móvel no backend (`GET /api/analytics`), com suporte a um serviço de previsão externo opcional (`ML_SERVICE_URL`; o serviço Python **não** faz parte deste repositório). 🧪 Experimento de regressão (notebook, Store Sales): Random Forest com RFE, R² = 0,92 no teste (divisão aleatória); não integrado à API |
 | Regras de associação (Apriori/Market Basket) | Identificar produtos frequentemente movimentados juntos, apoiando decisões de slotting | 📋 Planejado |
 | Clustering de produtos (k-means) | Agrupar produtos por padrão de consumo para sugerir políticas de estoque mínimo/máximo | 📋 Planejado |
@@ -279,7 +283,7 @@ StockIQ (PostgreSQL operacional)
 | 3. Preparação dos dados | Concluída no notebook (remoção de pré-abertura, recorte, integração, datas, agrupamento de promoções, codificação); integração com dados operacionais pendente |
 | 4. Modelagem | Regressão Linear e Random Forest com seleção de atributos (SelectKBest e RFE); ABC/XYZ e média móvel calculados no backend |
 | 5. Avaliação | R², MAE e RMSE no teste (divisão aleatória, otimista); validação cronológica pendente; não certifica desempenho em produção |
-| 6. Implantação | Parcial — analytics (média móvel, ABC×XYZ, sugestões) na API e na tela IA Analítica; o modelo do notebook não está integrado |
+| 6. Implantação | Parcial — analytics (média móvel, ABC×XYZ, sugestões) na tela IA Analítica; os modelos do notebook são servidos por `ml-service` e usados na tela Simulação de Vendas (não alimentam a previsão do analytics) |
 
 ---
 

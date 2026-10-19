@@ -1,8 +1,12 @@
 {
  "generated": "2026-10-19",
- "total": 173,
- "passed": 173,
+ "total": 202,
+ "passed": 202,
  "suites": [
+  {
+   "file": "alerts-inventory.test.ts",
+   "tests": 3
+  },
   {
    "file": "audit-sanitize.test.ts",
    "tests": 1
@@ -44,6 +48,10 @@
    "tests": 5
   },
   {
+   "file": "lot-status-job.test.ts",
+   "tests": 6
+  },
+  {
    "file": "ml-analytics.test.ts",
    "tests": 4
   },
@@ -80,12 +88,20 @@
    "tests": 1
   },
   {
+   "file": "simulation-service.test.ts",
+   "tests": 7
+  },
+  {
    "file": "storage-service.test.ts",
    "tests": 16
   },
   {
    "file": "user.test.ts",
    "tests": 15
+  },
+  {
+   "file": "vision-service.test.ts",
+   "tests": 13
   },
   {
    "file": "warehouse.test.ts",

@@ -7,13 +7,13 @@ d = Doc("Frontend — Documentação Técnica", "StockIQ · Documentação do Fr
 # 01
 d.section("01", "Visão geral", "Propósito e números do front-end")
 d.p("O front-end do StockIQ é uma aplicação web em Next.js/React que dá forma à operação do armazém: cadastros, movimentações, lotes, inventário, alertas, relatórios e inteligência analítica. **Todas as telas operacionais leem e gravam dados reais na API**; não há mais dados de demonstração embutidos no código.")
-d.kpis([("26", "Rotas"), ("18", "Componentes UI"), ("4", "Hooks"), ("2", "Temas")])
+d.kpis([("27", "Rotas"), ("18", "Componentes UI"), ("4", "Hooks"), ("2", "Temas")])
 d.cards([("🎨", "Design system", "Tokens em CSS variables, tema claro/escuro e componentes sem regra de negócio."),
          ("🔌", "Integrado à API", "Cliente HTTP único, estados de carregamento/erro e renovação automática onde há processamento assíncrono."),
          ("👤", "Perfis de acesso", "Menu e ações respeitam o papel (admin, supervisor, operador, visualizador)."),
          ("📷", "Foto do produto", "Envio para o S3 pela API, com pré-visualização, troca e remoção."),
          ("📋", "Inventário assíncrono", "Acompanha o ajuste de estoque feito pela fila e permite reprocessar."),
-         ("🧠", "IA analítica", "Previsão de demanda, matriz ABC×XYZ e sugestões de compra vindas da API.")])
+         ("🧠", "IA e simulação", "IA por foto, previsão de demanda, matriz ABC×XYZ, sugestões de compra e simulação de vendas com os modelos do notebook.")])
 
 # 02
 d.section("02", "Stack tecnológica", "Frameworks e bibliotecas")
@@ -35,7 +35,7 @@ t.append(box(300, 90, 130, 38, "(auth)/login", "formulário de acesso", "blue"))
 t.append(box(450, 90, 170, 38, "(dashboard)/layout", "guarda de sessão + AppShell", "violet"))
 for x in (75, 220, 365, 535): t.append(arrow(335, 42, x, 90))
 groups = [("Principal", "dashboard\nalertas"), ("Catálogo", "produtos · categorias\nmarcas · fornecedores\nclientes"), ("Movimentações", "entradas · saídas\nmovimentações\nlotes"),
-          ("WMS", "endereços\ninventário · scanner"), ("Inteligência", "ia · ia-analitica\nrelatórios"), ("Administração", "usuários · auditoria\nconfigurações")]
+          ("WMS", "endereços\ninventário · scanner"), ("Inteligência", "ia · ia-analitica\nsimulacao · relatórios"), ("Administração", "usuários · auditoria\nconfigurações")]
 for i, (g, s_) in enumerate(groups):
     t.append(box(6 + i * 110, 170, 104, 76, g, s_, "green", 9))
     t.append(arrow(535, 128, 58 + i * 110, 170))
@@ -57,9 +57,9 @@ d.code('''frontend/
 │       ├── categorias/ marcas/ fornecedores/ clientes/
 │       ├── entradas/ saidas/ movimentacoes/ lotes/
 │       ├── enderecos/ inventario/ scanner/
-│       ├── ia/ ia-analitica/ relatorios/
+│       ├── ia/ ia-analitica/ simulacao/ relatorios/
 │       └── usuarios/ auditoria/ alertas/ configuracoes/
-├── components/  ui/ (18) · layout/ (3) · products/ · inventory/ · partners/
+├── components/  ui/ (18) · layout/ (3) · products/ · inventory/ · movements/ · partners/
 ├── constants/   navigation.ts · status.ts
 ├── hooks/       useDebounce · useFetch · useSidebar · useTheme
 ├── lib/         api · auth-context · alerts-context · permissions · csv · fetch-all · image · utils · cn
@@ -94,7 +94,7 @@ s.append('<rect x="102" y="84" width="190" height="62" rx="5" fill="#f8fafc" str
 d.figure(svg(412, 202, "".join(s)), "Estrutura do AppShell (sidebar + topbar + conteúdo)")
 d.table(["Grupo", "Itens", "Visível para"], [
     ["Principal", "Dashboard · Alertas", "Todos"], ["Catálogo", "Produtos · Categorias · Marcas · Fornecedores · Clientes", "Todos"], ["Movimentações", "Entradas · Saídas · Histórico · Lotes", "Todos"],
-    ["WMS", "Endereços · Inventário · Scanner", "Todos"], ["Inteligência", "IA — Produtos · IA Analítica · Relatórios", "Todos"],
+    ["WMS", "Endereços · Inventário · Scanner", "Todos"], ["Inteligência", "IA — Produtos · IA Analítica · Simulação de Vendas · Relatórios", "Todos"],
     ["Administração", "Usuários · Auditoria · Configurações", "Usuários e Auditoria: admin e supervisor; Configurações: todos"]], ["", "", ""])
 d.p("Além do menu, botões de criação/edição/exclusão aparecem conforme o papel (`lib/permissions.ts`: `hasRole`, `STAFF`, `WRITERS`, `ADMIN`), espelhando as listas de `authorize(...)` do backend. A autorização definitiva continua sendo a da API.")
 
@@ -110,6 +110,7 @@ d.table(["Componente de domínio", "Função"], [
     ["`ProductForm`", "Cadastro/edição de produto em abas (informações, estoque e preço, logística), compartilhado por `/produtos/novo` e `/produtos/[id]/editar`"],
     ["`ProductImageUploader` · `ProductImage`", "Escolher/arrastar a foto, pré-visualizar, trocar e remover; exibição com ícone de reserva quando não há foto ou o link expirou"],
     ["`InventoryJobBanner`", "Situação do ajuste de estoque do inventário (na fila, ajustando com progresso, ajustado, pendências, falhou) e botão **Reprocessar**"],
+    ["`ExportMovementsButton`", "Exporta em CSV todas as movimentações que casam com os filtros da tela (Entradas, Saídas e Histórico)"],
     ["`PartnerManager`", "CRUD compartilhado de fornecedores e clientes"], ["`AppShell` · `Sidebar` · `Topbar`", "Estrutura das telas autenticadas"]], ["", ""])
 d.table(["Hook / utilitário", "Função"], [
     ["`useFetch`", "Carrega um endpoint, controla `loading`/`error`, ignora respostas atrasadas e expõe `reload`"], ["`useDebounce`", "Adia a propagação de um valor (buscas)"],
@@ -119,8 +120,8 @@ d.table(["Hook / utilitário", "Função"], [
 
 # 08
 d.section("07", "Mapa de telas", "Todas as rotas e seus objetivos")
-d.p("O sistema reúne **26 rotas**. Todas as telas operacionais usam dados reais da API; as exceções são a página de apresentação (`/lp`, conteúdo estático) e `IA — Produtos` (protótipo: aceita e pré-visualiza a imagem, mas o modelo de visão ainda não está integrado e a tela **não** inventa resultados).")
-LIVE, STAT, PROTO = ("tag", "ok", "API real"), ("tag", "gray", "Estática"), ("tag", "warn", "Protótipo")
+d.p("O sistema reúne **27 rotas**. Todas as telas operacionais usam dados reais da API; a exceção é a página de apresentação (`/lp`, conteúdo estático). `IA — Produtos` e `Simulação de Vendas` dependem de serviços externos do backend (OpenAI e `ml-service`) e, sem eles, mostram uma mensagem clara em vez de resultados inventados.")
+LIVE, STAT, PROTO = ("tag", "ok", "API real"), ("tag", "gray", "Estática"), ("tag", "info", "API + serviço")
 def rt(rows): d.table(["Rota", "Descrição", "Dados"], [[f"`{a}`", b, c] for a, b, c in rows], ["m", "", "c"])
 d.h4("Acesso"); rt([("/", "Redireciona para o login", STAT), ("/lp", "Página de apresentação do produto", STAT), ("/login", "Acesso com e-mail e senha", LIVE)])
 d.h4("Visão geral"); rt([("/dashboard", "Indicadores, tendência mensal, distribuição por categoria, curva ABC, movimentações recentes", LIVE), ("/dashboard/alertas", "Alertas de estoque e validade por severidade, com leitura por usuário", LIVE)])
@@ -130,7 +131,8 @@ d.h4("Catálogo"); rt([("/dashboard/produtos", "Lista em tabela ou cartões, bus
 d.h4("Movimentações"); rt([("/dashboard/entradas · saidas", "Registro de entradas e saídas de estoque", LIVE), ("/dashboard/movimentacoes", "Histórico geral com filtros", LIVE), ("/dashboard/lotes", "Controle de validade de lotes", LIVE)])
 d.h4("WMS"); rt([("/dashboard/enderecos", "Endereçamento físico e ocupação", LIVE), ("/dashboard/inventario", "Contagens completa/parcial/cíclica, divergências e acompanhamento do ajuste de estoque", LIVE),
                  ("/dashboard/scanner", "Leitura/entrada de código para localizar produtos (modos Entrada, Saída, Consulta e Transferência)", LIVE)])
-d.h4("Inteligência"); rt([("/dashboard/ia", "Identificação de produto por imagem (modelo ainda não integrado)", PROTO), ("/dashboard/ia-analitica", "Previsão de demanda, matriz ABC×XYZ, sugestões de compra e exportação do pedido", LIVE),
+d.h4("Inteligência"); rt([("/dashboard/ia", "Identificação de produto por foto (OpenAI): sugestão de cadastro e produtos parecidos", PROTO), ("/dashboard/ia-analitica", "Previsão de demanda, matriz ABC×XYZ, sugestões de compra e exportação do pedido", LIVE),
+                          ("/dashboard/simulacao", "Simulação de vendas \"e se…\" com os modelos de regressão do notebook", PROTO),
                           ("/dashboard/relatorios", "Relatórios gerenciais (estoque, movimentos, lotes, ocupação, ABC, inventário, fornecedores)", LIVE)])
 d.h4("Administração"); rt([("/dashboard/usuarios", "Gestão de usuários e perfis", LIVE), ("/dashboard/auditoria", "Trilha de operações críticas", LIVE), ("/dashboard/configuracoes", "Perfil, segurança, aparência, empresa, preferências e sistema", LIVE)])
 
@@ -140,6 +142,12 @@ d.h3("Produtos e foto")
 d.p("A lista alterna entre tabela e cartões e mostra a foto de cada produto. No cadastro/edição, o card **Foto do Produto** aceita arrastar ou escolher um arquivo (JPEG, PNG, WebP ou GIF até 5 MB), mostra a pré-visualização e permite trocar ou remover. A foto só é enviada ao salvar: o formulário cria/atualiza o produto e então chama `POST /products/:id/image` (ou `DELETE` para remover). Se o produto foi salvo mas o envio da foto falhou, a tela avisa e, ao salvar de novo, tenta apenas a foto, sem duplicar o produto.")
 d.h3("Inventário e ajuste de estoque assíncrono")
 d.p("Ao **Concluir** um inventário, a API enfileira o ajuste de estoque e a tela exibe um banner com o andamento: *Na fila*, *Ajustando o estoque… X de Y* (com barra de progresso), *Estoque ajustado*, *Ajuste concluído com pendências* ou *Falhou*. Enquanto houver job em andamento, a lista e os itens abertos são atualizados sozinhos a cada 3 segundos. Admin e supervisor veem o botão **Reprocessar** quando o job falhou ou terminou com pendências; na tabela de itens, cada divergência mostra *Ajustado*, *Aguardando…* ou o motivo da pendência manual.")
+d.h3("IA — Produtos (identificação por foto)")
+d.p("Envie uma foto: a API a manda a um modelo de visão (OpenAI; a chave fica só no servidor) e a tela mostra o que foi identificado — nome, categoria, marca, descrição e confiança —, os **produtos parecidos já cadastrados** (com foto e estoque) e o botão **Cadastrar produto com estes dados**, que abre o cadastro pré-preenchido. Sem a chave configurada no servidor, a tela avisa em vez de inventar um resultado.")
+d.h3("Simulação de Vendas")
+d.p("Tela \"e se…\" sobre os modelos de regressão do notebook (Regressão Linear e Random Forest, com SelectKBest e RFE) e um modelo complementar. Escolha loja, família, itens em promoção, preço do petróleo, data e horizonte e veja os indicadores, a previsão diária por modelo, o efeito de cada faixa de promoção, a comparação entre as 5 lojas e a tabela de desempenho (R², MAE, RMSE). Os modelos do notebook não usam a data; só o complementar varia por dia da semana. Se o serviço não estiver no ar, a tela explica como iniciá-lo (`npm run ml:service`) e atualiza sozinha.")
+d.h3("Exportar CSV e Movimentar")
+d.p("**Exportar** (Entradas, Saídas e Histórico) gera um CSV UTF-8 com BOM — abre no Excel — com **todas** as movimentações que casam com os filtros atuais, não só a página exibida. No detalhe do produto, **Nova entrada** e **Nova saída** abrem o formulário com o produto já escolhido (`?productId=`), o mesmo parâmetro que o Scanner usa.")
 d.h3("IA Analítica")
 d.cards([("📈", "Previsão de demanda", "Gráfico de real × previsto com faixa de incerteza e a origem do modelo (ML ou média móvel)."), ("▦", "Matriz ABC × XYZ", "Valor movimentado × regularidade da demanda, com giro e % do valor."),
          ("💡", "Insights e compras", "Alertas acionáveis e sugestões de compra com urgência, motivo, custo estimado e exportação CSV do pedido.")])
@@ -168,14 +176,16 @@ api.upload<T>(path, formData)      // POST multipart (fotos)''')
 d.table(["Tela", "Operações"], [
     ["Login / sessão", "`POST /auth/login` · `GET /auth/profile`"], ["Dashboard", "`GET /dashboard` e `/dashboard/*` (tendência, categorias, top produtos, ABC) · `GET /reports/inventory` · `/reports/lots`"],
     ["Produtos", "`GET/POST/PATCH/DELETE /products` · `POST/DELETE /products/:id/image` · `GET /categories` · `/brands` · `/suppliers`"],
-    ["Entradas · Saídas · Histórico", "`POST /movements` · `GET /movements` · `GET /products` · `/suppliers` · `/warehouse`"], ["Lotes · Endereços", "`/lots` · `/warehouse` · `/warehouse/stats`"],
-    ["Inventário", "`/inventory` · `POST /inventory/:id/items/:itemId/count` · `POST /inventory/:id/reprocess`"], ["Alertas", "`GET /alerts` · `PATCH /alerts/read-all` · `PATCH /alerts/:id/read`"],
-    ["IA Analítica · Relatórios", "`GET /analytics` · `GET /reports/*`"], ["Usuários · Auditoria · Configurações", "`/users` · `GET /audit` · `/settings` · `PATCH /auth/profile` · `PATCH /auth/password`"]], ["", ""])
+    ["Entradas · Saídas · Histórico", "`POST /movements` · `GET /movements` (também para exportar CSV) · `GET /products` · `/suppliers` · `/warehouse`"], ["Lotes · Endereços", "`/lots` · `/warehouse` · `/warehouse/stats`"],
+    ["Inventário", "`/inventory` · `POST /inventory/:id/items/:itemId/count` · `POST /inventory/:id/reprocess`"], ["Alertas e sino", "`GET /alerts` (estoque, validade e inventário) · `PATCH /alerts/read-all` · `PATCH /alerts/:id/read`"],
+    ["IA Analítica · Relatórios", "`GET /analytics` · `GET /reports/*`"],
+    ["IA — Produtos", "`POST /ai/identify-product` (multipart); os produtos parecidos vêm na resposta"],
+    ["Simulação de Vendas", "`GET /simulation/status` · `GET /simulation/model` · `POST /simulation/predict`"], ["Usuários · Auditoria · Configurações", "`/users` · `GET /audit` · `/settings` · `PATCH /auth/profile` · `PATCH /auth/password`"]], ["", ""])
 d.p("As respostas são tipadas na borda (`types/api.ts`). Listagens paginadas chegam como `{ data, total, page, limit, totalPages }`; categorias e marcas, como arrays simples. Imagens de produto chegam como **URL assinada temporária**; se expirar, o componente `ProductImage` volta ao ícone de reserva.")
 
 # 12
 d.section("11", "Aplicativo mobile", "Cliente complementar")
-d.p("O repositório inclui também um aplicativo mobile (Expo / React Native, `expo-router`) que consome a **mesma API**, com telas equivalentes às principais do web (produtos, movimentações, inventário, scanner, lotes, endereços, relatórios, IA analítica, usuários e configurações). Este documento descreve a aplicação web.")
+d.p("O repositório inclui também um aplicativo mobile (Expo / React Native, `expo-router`) que consome a **mesma API**, com telas equivalentes às principais do web (produtos com foto, movimentações, inventário com acompanhamento do ajuste de estoque, scanner, lotes, endereços, relatórios, IA por foto, IA analítica, usuários e configurações). Este documento descreve a aplicação web.")
 
 # 13
 d.section("12", "Execução e convenções", "Scripts, variáveis e padrões de código")

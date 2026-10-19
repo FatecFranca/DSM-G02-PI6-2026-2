@@ -12,7 +12,7 @@ d = Doc("Computação em Nuvem II — Documentação", "StockIQ · Computação 
 # ── 01 ───────────────────────────────────────────────────────────────────────
 d.section("01", "Visão geral e situação atual", "O que está pronto, o que falta")
 d.p("O StockIQ foi desenhado para rodar na AWS. Este documento descreve a parte de nuvem que **já está implementada no código** — o armazenamento de objetos (S3) e a mensageria assíncrona (SQS) —, sua configuração, segurança e as verificações realizadas.")
-d.kpis([("2", "serviços AWS no código"), ("1", "fila + DLQ"), (f"{tests['total']}", "testes passando"), ("22", "suítes de teste")])
+d.kpis([("2", "serviços AWS no código"), ("1", "fila + DLQ"), (f"{tests['total']}", "testes passando"), (str(len(T)), "suítes de teste")])
 d.table(["Componente", "Papel no sistema", "Situação"], [
     ["Amazon S3", "Fotos de produtos (upload pelo front-end, via API)", ("tag", "ok", "Implementado")],
     ["Amazon SQS", "Fila de processamento do ajuste de estoque do inventário", ("tag", "ok", "Implementado · worker e DLQ")],
