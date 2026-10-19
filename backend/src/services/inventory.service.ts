@@ -1,6 +1,7 @@
 import { InventoryCountStatus, Prisma } from '@prisma/client'
 import { prisma } from '../prisma/client'
 import { AppError } from '../middleware/error.middleware'
+import { dispatchInventoryJob, markJobFailed } from './inventory-processing.service'
 
 export interface CreateInventoryInput {
   name: string
@@ -95,12 +96,23 @@ export async function create(data: CreateInventoryInput) {
   })
 }
 
-export async function update(id: string, data: UpdateInventoryInput) {
-  return prisma.$transaction(async (tx) => {
+/** Depois de ficar "pending" no banco, o ajuste de estoque é publicado na fila e feito pelo worker. */
+async function queueProcessing(id: string, userId: string) {
+  try {
+    await dispatchInventoryJob(id, userId)
+  } catch (err) {
+    // A conclusão do inventário já foi gravada; só o envio à fila falhou. Fica "failed" e o usuário pode reprocessar.
+    await markJobFailed(id, `Falha ao enfileirar: ${err instanceof Error ? err.message : String(err)}`)
+  }
+  return prisma.inventoryCount.findUniqueOrThrow({ where: { id }, include: INCLUDE })
+}
+
+export async function update(id: string, data: UpdateInventoryInput, userId?: string) {
+  const result = await prisma.$transaction(async (tx) => {
     const count = await tx.inventoryCount.findUnique({ where: { id } })
     if (!count) throw new AppError('Inventory count not found', 404)
     if (!data.status || data.status === count.status) {
-      return tx.inventoryCount.findUniqueOrThrow({ where: { id }, include: INCLUDE })
+      return { record: await tx.inventoryCount.findUniqueOrThrow({ where: { id }, include: INCLUDE }), queueFor: null }
     }
 
     const allowedTransitions: Record<InventoryCountStatus, InventoryCountStatus[]> = {
@@ -124,16 +136,64 @@ export async function update(id: string, data: UpdateInventoryInput) {
       throw new AppError('Inventory must be reviewed before completion', 409)
     }
 
+    const completing = data.status === 'completed'
     const updated = await tx.inventoryCount.updateMany({
       where: { id, status: count.status },
       data: {
         status: data.status,
-        ...(data.status === 'completed' ? { endDate: new Date() } : {}),
+        ...(completing
+          ? {
+              endDate: new Date(),
+              // O ajuste de estoque vai para a fila: a conclusão responde já e o worker faz o trabalho pesado.
+              jobStatus: 'pending' as const,
+              jobQueuedAt: new Date(),
+              jobFinishedAt: null,
+              jobError: null,
+              adjustedItems: 0,
+              failedItems: 0,
+            }
+          : {}),
       },
     })
     if (updated.count !== 1) throw new AppError('Inventory status changed concurrently; reload and retry', 409)
-    return tx.inventoryCount.findUniqueOrThrow({ where: { id }, include: INCLUDE })
+    return {
+      record: await tx.inventoryCount.findUniqueOrThrow({ where: { id }, include: INCLUDE }),
+      queueFor: completing ? (userId ?? count.responsibleId) : null,
+    }
   })
+
+  // Publica na fila só depois do commit (se publicasse antes, o worker poderia ler o inventário ainda não concluído).
+  return result.queueFor ? queueProcessing(id, result.queueFor) : result.record
+}
+
+/** Tempo sem andamento a partir do qual um job "pending/processing" é considerado travado e pode ser reenviado. */
+const STUCK_JOB_MS = 15 * 60 * 1000
+
+export async function reprocess(id: string, userId: string) {
+  const count = await prisma.inventoryCount.findUnique({ where: { id } })
+  if (!count) throw new AppError('Inventory count not found', 404)
+  if (count.status !== 'completed' || !count.jobStatus) {
+    throw new AppError('Only inventories concluded with async processing can be reprocessed', 409)
+  }
+  const stuck = !!count.jobQueuedAt && Date.now() - count.jobQueuedAt.getTime() > STUCK_JOB_MS
+  const retryable = count.jobStatus === 'failed' || count.jobStatus === 'partial'
+    || ((count.jobStatus === 'pending' || count.jobStatus === 'processing') && stuck)
+  if (!retryable) throw new AppError(`Inventory is already ${count.jobStatus}; nothing to reprocess`, 409)
+
+  // Troca otimista: se outra requisição reenviou ao mesmo tempo, só uma vence.
+  const claimed = await prisma.inventoryCount.updateMany({
+    where: { id, jobStatus: count.jobStatus },
+    data: { jobStatus: 'pending', jobQueuedAt: new Date(), jobFinishedAt: null, jobError: null },
+  })
+  if (claimed.count !== 1) throw new AppError('Inventory processing changed concurrently; reload and retry', 409)
+
+  try {
+    await dispatchInventoryJob(id, userId)
+  } catch (err) {
+    await markJobFailed(id, `Falha ao enfileirar: ${err instanceof Error ? err.message : String(err)}`)
+    throw new AppError('Queue unavailable; try again shortly', 503)
+  }
+  return prisma.inventoryCount.findUniqueOrThrow({ where: { id }, include: INCLUDE })
 }
 
 export async function recordItemCount(

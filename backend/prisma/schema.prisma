@@ -70,6 +70,15 @@ enum InventoryCountStatus {
   completed
 }
 
+/// Andamento do ajuste de estoque feito de forma assíncrona (fila SQS) quando um inventário é concluído.
+enum InventoryJobStatus {
+  pending
+  processing
+  completed
+  partial
+  failed
+}
+
 enum SupplierStatus {
   active
   inactive
@@ -305,12 +314,21 @@ model InventoryCount {
   createdAt    DateTime             @default(now())
   updatedAt    DateTime             @updatedAt
 
+  /// Processamento assíncrono (ajuste de estoque). Nulo em inventários anteriores a este recurso.
+  jobStatus     InventoryJobStatus?
+  jobError      String?
+  jobQueuedAt   DateTime?
+  jobFinishedAt DateTime?
+  adjustedItems Int                 @default(0)
+  failedItems   Int                 @default(0)
+
   responsibleId String
   responsible   User   @relation(fields: [responsibleId], references: [id])
 
   items InventoryCountItem[]
 
   @@index([status, createdAt])
+  @@index([jobStatus])
   @@map("inventory_counts")
 }
 
@@ -320,6 +338,10 @@ model InventoryCountItem {
   countedQuantity  Int?
   discrepancy      Int       @default(0)
   countedAt        DateTime?
+  /// Preenchido quando o worker aplicou a divergência ao estoque (garante que cada item é ajustado uma única vez).
+  adjustedAt       DateTime?
+  /// Motivo de o ajuste automático não ter sido possível (ex.: produto em vários endereços/lotes).
+  adjustmentError  String?
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
 

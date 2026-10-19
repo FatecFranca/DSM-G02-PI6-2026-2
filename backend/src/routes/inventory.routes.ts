@@ -40,6 +40,7 @@ router.post('/:id/items/:itemId/count', authorize('admin', 'supervisor', 'operat
 router.get('/:id', ctrl.getById)
 router.post('/', authorize('admin', 'supervisor'), validate(createInventorySchema), audit('InventoryCount', 'CREATE'), ctrl.create)
 router.patch('/:id', authorize('admin', 'supervisor', 'operator'), validate(updateInventorySchema), audit('InventoryCount', 'UPDATE'), ctrl.update)
+router.post('/:id/reprocess', authorize('admin', 'supervisor'), audit('InventoryCount', 'UPDATE'), ctrl.reprocess)
 router.delete('/:id', authorize('admin'), audit('InventoryCount', 'DELETE'), ctrl.remove)
 
 export default router

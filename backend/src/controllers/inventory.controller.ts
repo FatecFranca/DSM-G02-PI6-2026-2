@@ -115,11 +115,13 @@ export async function create(req: Request, res: Response, next: NextFunction): P
  *               endDate: { type: string, format: date-time }
  *     responses:
  *       200:
- *         description: Updated
+ *         description: >
+ *           Updated. Ao concluir (`review` → `completed`) o ajuste de estoque é enfileirado (SQS) e executado por um worker:
+ *           acompanhe `jobStatus` (`pending`, `processing`, `completed`, `partial`, `failed`), `adjustedItems` e `failedItems`.
  */
 export async function update(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    res.json(await inventoryService.update(req.params.id as string, req.body))
+    res.json(await inventoryService.update(req.params.id as string, req.body, req.user!.sub))
   } catch (err) {
     next(err)
   }
@@ -179,6 +181,36 @@ export async function remove(req: Request, res: Response, next: NextFunction): P
   try {
     await inventoryService.remove(req.params.id as string)
     res.status(204).send()
+  } catch (err) {
+    next(err)
+  }
+}
+
+/**
+ * @swagger
+ * /api/inventory/{id}/reprocess:
+ *   post:
+ *     summary: Re-enqueue the stock adjustment of a concluded inventory
+ *     description: >
+ *       Reenvia à fila o ajuste de estoque de um inventário concluído cujo processamento falhou (`failed`), terminou com
+ *       pendências (`partial`) ou travou (`pending`/`processing` há mais de 15 minutos). Itens já ajustados não são ajustados de novo.
+ *     tags: [Inventory]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Inventory with jobStatus pending
+ *       409:
+ *         description: Nothing to reprocess (already processing or completed)
+ *       503:
+ *         description: Queue unavailable
+ */
+export async function reprocess(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    res.json(await inventoryService.reprocess(req.params.id as string, req.user!.sub))
   } catch (err) {
     next(err)
   }

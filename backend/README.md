@@ -151,6 +151,12 @@ Definidas em `.env` (veja `.env.example`):
 | `STORAGE_URL_TTL_SECONDS` | Validade das URLs assinadas devolvidas pela API (padrão `3600`) |
 | `STORAGE_MAX_IMAGE_MB` | Tamanho máximo de cada foto (padrão `5`) |
 | `STORAGE_ORPHAN_GRACE_DAYS` | Carência antes de `npm run storage:cleanup` apagar fotos sem produto (padrão `7`) |
+| `QUEUE_DRIVER` | `sqs` (Amazon SQS) ou `local` (fila em memória, só desenvolvimento/testes). Padrão: `local` |
+| `SQS_INVENTORY_QUEUE_URL` | URL da fila de inventário (impressa por `npm run queues:setup`) |
+| `SQS_REGION`, `SQS_ACCESS_KEY_ID`, `SQS_SECRET_ACCESS_KEY`, `SQS_SESSION_TOKEN`, `SQS_ENDPOINT` | Credenciais/região/endpoint do SQS. Por padrão reaproveitam as variáveis `S3_*`. O token é só para credenciais temporárias (AWS Academy) |
+| `QUEUE_VISIBILITY_TIMEOUT_SECONDS`, `QUEUE_MAX_RECEIVES` | Prazo de visibilidade (padrão `120`) e tentativas antes da DLQ (padrão `3`; igual ao `maxReceiveCount` da fila) |
+| `QUEUE_WORKER` | `embedded` (padrão: a API também consome a fila) ou `off` (use `npm run worker` em outro processo) |
+| `INVENTORY_BATCH_SIZE` | Itens por lote no ajuste de estoque (padrão `25`) |
 | `STORAGE_LOCAL_DIR`, `STORAGE_SIGNING_SECRET`, `API_PUBLIC_URL` | Driver `local`: pasta das fotos, segredo que assina as URLs de `/api/files` (obrigatório) e a URL pública da API |
 
 ## Upload de fotos de produto
@@ -163,9 +169,28 @@ Definidas em `.env` (veja `.env.example`):
 - **Órfãos:** `npm run storage:cleanup -- --dry-run` lista (e sem `--dry-run` apaga) objetos que nenhum produto referencia e que passaram da carência.
 - **Migration:** `20261019120000_add_product_image_key` adiciona a coluna `imageKey`; aplique com `npm run prisma:migrate` (dev) ou `npx prisma migrate deploy`.
 
+## Mensageria: ajuste de estoque do inventário (SQS)
+
+Concluir um inventário (`review → completed`) não ajusta mais o estoque dentro da requisição: a API grava `jobStatus = pending`, **publica uma mensagem na fila** e responde na hora. Um **worker** consome a fila e registra, para cada item com divergência, uma movimentação `inventory` (o estoque passa a ser a quantidade contada). Assim a operação pesada não disputa recursos com as requisições HTTP.
+
+```
+PATCH /api/inventory/:id {status: completed} ─► grava jobStatus=pending ─► SQS (stockiq-inventory) ─► worker ─► movimentações + estoque
+                                                                              └─ falhou N vezes ─► DLQ (stockiq-inventory-dlq)
+```
+
+- **Estados do job** (`jobStatus`): `pending` → `processing` → `completed`; `partial` (algum item precisa de ajuste manual, ex.: produto em vários endereços/lotes) ou `failed`. Progresso em `adjustedItems`/`failedItems`; o motivo por item fica em `adjustmentError`.
+- **Entrega pelo menos uma vez, processamento idempotente:** cada item só é ajustado se `adjustedAt` for nulo, e essa marca é gravada na mesma transação da movimentação — reentregas e reprocessamentos não duplicam ajustes.
+- **Falhas:** erro de regra de negócio num item não derruba o job (vira pendência manual). Erro inesperado (ex.: banco fora do ar) devolve a mensagem à fila; após `QUEUE_MAX_RECEIVES` tentativas o job vira `failed` e a fila move a mensagem para a DLQ. Mensagem malformada é descartada.
+- **Reprocessar:** `POST /api/inventory/:id/reprocess` (admin/supervisor) reenfileira jobs `failed`, `partial` ou travados há mais de 15 min.
+- **Onde roda o worker:** por padrão dentro da API (`QUEUE_WORKER=embedded`). Em produção, rode `npm run worker` (ou `npm run worker:start` após o build) em outro processo e use `QUEUE_WORKER=off` na API; é possível escalar vários workers (consumidores concorrentes).
+- **Criar as filas:** `npm run queues:setup` cria `<prefixo>-inventory` e `<prefixo>-inventory-dlq` (com redrive) e imprime as variáveis. O usuário IAM precisa de `sqs:CreateQueue`, `sqs:GetQueueUrl`, `sqs:GetQueueAttributes` e `sqs:SetQueueAttributes` para o setup, e de `sqs:SendMessage`, `sqs:ReceiveMessage`, `sqs:DeleteMessage` e `sqs:GetQueueAttributes` para a aplicação.
+- **Sem AWS:** `QUEUE_DRIVER=local` usa uma fila em memória (mensagens se perdem ao reiniciar). Para testar o driver SQS localmente: `docker run -d --rm -p 127.0.0.1:9324:9324 softwaremill/elasticmq-native` e `SQS_TEST_ENDPOINT=http://127.0.0.1:9324 npm test -- queue-sqs-integration`.
+- **Migration:** `20261019150000_inventory_async_processing` (status do job e marcas por item).
+- Inventários concluídos antes deste recurso têm `jobStatus = null` e **não** são reprocessados (seus ajustes nunca foram aplicados ao estoque).
+
 ## Banco de dados
 
-Modelado via **Prisma Schema** (`prisma/schema.prisma`) e versionado por migrations — **13 modelos** e **11 enumerações** de domínio. A aplicação de uma migration depende de um PostgreSQL configurado; não se presume aqui que o banco local ou de produção já esteja atualizado.
+Modelado via **Prisma Schema** (`prisma/schema.prisma`) e versionado por migrations — **14 modelos**, **12 enumerações** de domínio e **5 migrations**. As migrations aplicam do zero em um banco vazio (verificado em 19/10/2026); o banco de desenvolvimento/produção precisa rodar `npx prisma migrate deploy` — não se presume que já esteja atualizado.
 
 **Entidades principais:** `User`, `Category`, `Brand`, `Supplier`, `Customer`, `Product`, `WarehouseAddress`, `Movement`, `Lot`, `InventoryCount`, `Notification`, `AuditLog`.
 
@@ -248,7 +273,7 @@ Os módulos abaixo correspondem às rotas montadas pela aplicação. Consulte `/
 | Armazém | `/api/warehouse` | Endereços, estatísticas e CRUD |
 | Movimentações | `/api/movements` | Consulta paginada e registro de operações |
 | Lotes | `/api/lots` | Consulta, alertas de validade e manutenção |
-| Inventário | `/api/inventory` | Planejamento, itens, contagem e transições de estado |
+| Inventário | `/api/inventory` | Planejamento, itens, contagem, transições de estado e ajuste de estoque assíncrono (fila SQS) |
 | Dashboard | `/api/dashboard` | Indicadores, tendências, categorias e produtos |
 | Alertas | `/api/alerts` | Consulta de alertas e marcação de leitura |
 | Auditoria | `/api/audit` | Consulta paginada de registros |
@@ -263,13 +288,16 @@ Os módulos abaixo correspondem às rotas montadas pela aplicação. Consulte `/
 |---|---|
 | Estrutura da API, autenticação e rotas | Implementadas e em evolução |
 | Schema e migrations | Versionados; aplicação depende de banco PostgreSQL configurado |
-| Testes | Parcial; CI configura PostgreSQL e executa os testes existentes, mas a cobertura não é exaustiva |
+| Testes | Jest + Supertest com PostgreSQL real (CI e Docker); inclui testes dos fluxos de foto (S3) e de ajuste assíncrono do inventário. A cobertura não é exaustiva |
 | Validação e tratamento de erros | Implementados em várias rotas; consulte schemas e documentação OpenAPI |
-| AWS, SQS e exportação para data lake | Planejados, não implementados neste repositório |
+| Fotos de produto (S3) | Implementadas (driver `s3` e `local`); bucket configurado via `.env`. Upload real ao bucket ainda não exercitado nos testes automatizados |
+| Mensageria (SQS) | Implementada (fila, worker, DLQ, reprocessamento) e validada contra um servidor SQS compatível (ElasticMQ); a fila na conta AWS depende de um usuário IAM com permissões de SQS (`npm run queues:setup`) |
+| EC2/Load Balancer e exportação para data lake | Planejados, não implementados neste repositório |
 
 ## Próximos passos
 
 1. Aplicar e verificar as migrations em banco dedicado antes de atualizar qualquer ambiente compartilhado;
 2. Ampliar os testes de integração para fluxos sem cobertura e continuar executando o CI com PostgreSQL;
 3. Revisar e paginar relatórios que ainda retornam conjuntos completos à medida que os volumes reais forem conhecidos;
-4. Implementar SQS, exportação para data lake e infraestrutura AWS somente quando esses itens forem priorizados e provisionados.
+4. Criar a fila SQS na conta AWS do projeto (`npm run queues:setup`) e rodar o worker em processo separado (`QUEUE_WORKER=off` na API);
+5. Implementar exportação para data lake e o restante da infraestrutura AWS (EC2, Load Balancer) quando priorizados e provisionados.

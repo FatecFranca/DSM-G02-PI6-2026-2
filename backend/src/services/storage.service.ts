@@ -34,6 +34,8 @@ interface StorageConfig {
   region: string
   accessKeyId: string
   secretAccessKey: string
+  /** Só para credenciais temporárias (ex.: AWS Academy / STS). */
+  sessionToken?: string
   endpoint?: string
   forcePathStyle: boolean
   localDir: string
@@ -59,6 +61,7 @@ export function getStorageConfig(env: NodeJS.ProcessEnv = process.env): StorageC
     region: env.S3_REGION ?? '',
     accessKeyId: env.S3_ACCESS_KEY_ID ?? '',
     secretAccessKey: env.S3_SECRET_ACCESS_KEY ?? '',
+    sessionToken: env.S3_SESSION_TOKEN || undefined,
     endpoint: env.S3_ENDPOINT || undefined,
     forcePathStyle: env.S3_FORCE_PATH_STYLE === 'true',
     localDir: path.resolve(env.STORAGE_LOCAL_DIR || 'storage-data'),
@@ -139,7 +142,7 @@ function getS3(cfg: StorageConfig): S3Client {
   ].filter(Boolean)
   if (missing.length) throw new AppError(`Storage not configured: set ${missing.join(', ')}`, 503)
 
-  const signature = [cfg.region, cfg.accessKeyId, cfg.endpoint, cfg.forcePathStyle].join('|')
+  const signature = [cfg.region, cfg.accessKeyId, cfg.sessionToken, cfg.endpoint, cfg.forcePathStyle].join('|')
   if (s3Client?.signature !== signature) {
     s3Client = {
       signature,
@@ -147,7 +150,7 @@ function getS3(cfg: StorageConfig): S3Client {
         region: cfg.region,
         endpoint: cfg.endpoint,
         forcePathStyle: cfg.forcePathStyle,
-        credentials: { accessKeyId: cfg.accessKeyId, secretAccessKey: cfg.secretAccessKey },
+        credentials: { accessKeyId: cfg.accessKeyId, secretAccessKey: cfg.secretAccessKey, sessionToken: cfg.sessionToken },
       }),
     }
   }
