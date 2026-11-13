@@ -1,316 +1,394 @@
 'use client'
-import { useEffect, useMemo, useState } from 'react'
-import { FlaskConical, Loader2, ServerOff, Terminal } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import Link from 'next/link'
 import {
-  Bar, BarChart, CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis,
+  AlertTriangle, CalendarClock, CheckCircle2, Info, PackageCheck, ShoppingCart, TrendingUp, Zap,
+} from 'lucide-react'
+import {
+  Area, Bar, CartesianGrid, ComposedChart, Line, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from 'recharts'
 import { Breadcrumb } from '@/components/ui/Breadcrumb'
 import { Badge } from '@/components/ui/Badge'
+import { Button } from '@/components/ui/Button'
 import { Card, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { Alert } from '@/components/ui/Alert'
 import { PageLoading } from '@/components/ui/Loading'
-import { useDebounce } from '@/hooks/useDebounce'
 import { useFetch } from '@/hooks/useFetch'
-import { api, ApiError } from '@/lib/api'
 import { cn } from '@/lib/cn'
 import { formatNumber } from '@/lib/utils'
-import type { SimulationModelInfo, SimulationScenario, SimulationStatus } from '@/types/api'
+import type { ApiProductForecasts } from '@/types/api'
+
+type Item = ApiProductForecasts['products'][number]
 
 const HORIZONS = [7, 14, 28]
-/** Representa cada faixa de promoção do notebook (0 · 1–3 · 4–16 · >16 itens) por um valor típico. */
-const BAND_SAMPLES = [0, 2, 8, 20]
-const MODEL_COLORS: Record<string, string> = {
-  rfe_rf: '#2563eb', rf_full: '#7c3aed', kbest_rf: '#0891b2', rfe_linear: '#d97706', kbest_linear: '#64748b',
-}
-const bandOf = (items: number) => (items <= 0 ? 0 : items <= 3 ? 1 : items <= 16 ? 2 : 3)
+const SCENARIOS = [
+  { value: '0.8', label: 'Demanda 20% menor' },
+  { value: '1', label: 'Previsão do modelo' },
+  { value: '1.2', label: 'Demanda 20% maior' },
+  { value: '1.5', label: 'Demanda 50% maior' },
+]
+const COVERAGE_DAYS = 28
 
-function addDays(start: string, days: number): string {
-  const d = new Date(`${start}T12:00:00Z`)
-  d.setUTCDate(d.getUTCDate() + days)
-  return d.toISOString().slice(0, 10)
-}
-const dayLabel = (iso: string) => new Date(`${iso}T12:00:00Z`).toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit', timeZone: 'UTC' })
+// Uma cor de destaque (azul da marca) para o que importa; o resto fica em cinza neutro.
+const ACCENT = 'var(--brand)'
+const MUTED = 'var(--border-strong)'
+const GRID = 'var(--border)'
+const AXIS = { fill: 'var(--text-tertiary)', fontSize: 11 }
+const TOOLTIP_STYLE = { background: 'var(--bg-base)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12 }
+
 const shortDay = (iso: string) => `${iso.slice(8, 10)}/${iso.slice(5, 7)}`
-const familyLabel = (name: string) => name.split(' ').map(w => w[0] + w.slice(1).toLowerCase()).join(' ')
+const longDay = (iso: string) => new Date(`${iso}T12:00:00Z`).toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long', timeZone: 'UTC' })
+const weekday = (iso: string) => longDay(iso).split(',')[0]
+const fmt = (v: number, digits = 0) => new Intl.NumberFormat('pt-BR', { maximumFractionDigits: digits }).format(v)
+const sum = (xs: number[]) => xs.reduce((a, b) => a + b, 0)
 
-type Predictions = Record<string, number>[]
+/** Projeção do produto: quando o estoque acaba, quanto repor e até quando. Mesmas regras do backend (IA Analítica). */
+function project(p: Item, stock: number, factor: number, days: number, lead: number) {
+  const mean = p.daily.map(d => d.mean * factor)
+  const spread = p.daily.map(d => Math.max(0, d.high - d.mean) * factor)
+  const window = mean.slice(0, days)
 
-/** Simulação "e se…": modelos de regressão do notebook (Previsao_Vendas.ipynb) servidos pelo backend. */
-export default function SimulacaoPage() {
-  const [status, setStatus] = useState<SimulationStatus | null>(null)
-
-  // Enquanto o serviço de modelos não está pronto (fora do ar ou treinando), consulta de tempos em tempos.
-  useEffect(() => {
-    let active = true
-    let timer: ReturnType<typeof setTimeout> | undefined
-    const poll = async () => {
-      try {
-        const current = await api.get<SimulationStatus>('/simulation/status')
-        if (!active) return
-        setStatus(current)
-        if (!current.available) timer = setTimeout(poll, 4000)
-      } catch {
-        if (active) timer = setTimeout(poll, 6000)
-      }
+  let cum = 0
+  let runOutIndex: number | null = null
+  let coverDays: number | null = null
+  for (let i = 0; i < window.length; i++) {
+    if (cum + window[i] >= stock) {
+      runOutIndex = i
+      coverDays = stock === 0 ? 0 : i + (stock - cum) / Math.max(window[i], 1e-9)
+      break
     }
-    void poll()
-    return () => { active = false; if (timer) clearTimeout(timer) }
-  }, [])
-
-  const { data: info } = useFetch<SimulationModelInfo>(status?.available ? '/simulation/model' : null)
-
-  if (!status) return <PageLoading rows={4} />
-  if (!status.available || !info) return <Offline status={status} />
-  return <Simulator info={info} />
+    cum += window[i]
+  }
+  const total = sum(window)
+  const safety = Math.sqrt(sum(spread.slice(0, lead).map(s => s * s)))
+  const target = sum(mean.slice(0, COVERAGE_DAYS)) + safety
+  const reorder = Math.max(0, Math.ceil(target - stock))
+  const remaining = window.map((_, i) => Math.round(stock - sum(window.slice(0, i + 1))))
+  return { mean, window, total, runOutIndex, coverDays, safety, reorder, remaining }
 }
 
-function Offline({ status }: { status: SimulationStatus }) {
-  const training = status.status === 'training' || status.status === 'loading'
+type Situation = { label: string; variant: 'danger' | 'warning' | 'success' }
+function situation(stock: number, coverDays: number | null, lead: number): Situation {
+  if (stock === 0) return { label: 'Sem estoque', variant: 'danger' }
+  if (coverDays !== null && coverDays <= lead) return { label: 'Repor agora', variant: 'danger' }
+  if (coverDays !== null && coverDays <= lead + 7) return { label: 'Atenção', variant: 'warning' }
+  return { label: 'Coberto', variant: 'success' }
+}
+
+/** Previsão de demanda dos produtos do sistema, treinada com as saídas reais do estoque (Random Forest). */
+export default function PrevisaoPage() {
+  const { data, loading, error, reload } = useFetch<ApiProductForecasts>('/analytics/products-forecast', { horizon: 28 })
+  if (loading && !data) return <PageLoading rows={4} />
+  if (!data) return <div className="space-y-5"><Header /><Alert>{error || 'Não foi possível carregar a previsão'}</Alert></div>
+  return <Forecast data={data} onReload={reload} reloading={loading} />
+}
+
+function Header({ right }: { right?: React.ReactNode }) {
   return (
-    <div className="space-y-5">
-      <Breadcrumb items={[{ label: 'IA' }, { label: 'Simulação de Vendas' }]} />
-      <Card>
-        <div className="flex flex-col items-center gap-3 py-10 text-center">
-          <div className="w-12 h-12 rounded-full bg-[color:var(--bg-muted)] flex items-center justify-center">
-            {training ? <Loader2 className="w-6 h-6 animate-spin text-[color:var(--brand)]" /> : <ServerOff className="w-6 h-6 text-[color:var(--text-tertiary)]" />}
-          </div>
-          <h1 className="text-lg font-bold text-[color:var(--text-primary)]">{training ? 'Preparando os modelos…' : 'Serviço de simulação indisponível'}</h1>
-          <p className="max-w-md text-sm text-[color:var(--text-secondary)]">
-            {training ? 'Os modelos do notebook estão sendo carregados. Esta página atualiza sozinha.' : 'A simulação usa os modelos de regressão do notebook, servidos por um serviço Python que ainda não está no ar.'}
-          </p>
-          {!training && (
-            <div className="flex items-center gap-2 rounded-[var(--radius-md)] bg-[color:var(--bg-muted)] px-3 py-2 font-mono text-xs text-[color:var(--text-primary)]">
-              <Terminal className="w-3.5 h-3.5" /> cd backend && npm run ml:service
-            </div>
-          )}
-          <p className="text-xs text-[color:var(--text-tertiary)]">{status.message}</p>
+    <>
+      <Breadcrumb items={[{ label: 'Inteligência' }, { label: 'Previsão de Vendas' }]} />
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-xl font-bold text-[color:var(--text-primary)]">Previsão de Vendas</h1>
+          <p className="text-sm text-[color:var(--text-tertiary)] mt-0.5">Quanto cada produto deve sair nos próximos dias, calculado a partir das saídas reais do estoque.</p>
         </div>
-      </Card>
+        {right}
+      </div>
+    </>
+  )
+}
+
+function Segmented<T extends string | number>({ label, value, options, onChange }: {
+  label: string; value: T; options: { value: T; label: string }[]; onChange: (v: T) => void
+}) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <span className="text-sm font-medium text-[color:var(--text-primary)]">{label}</span>
+      <div role="group" aria-label={label} className="flex h-9 rounded-[var(--radius-md)] border border-[color:var(--border)] bg-[color:var(--bg-muted)] p-0.5">
+        {options.map(o => (
+          <button
+            key={String(o.value)} type="button" aria-pressed={o.value === value} onClick={() => onChange(o.value)}
+            className={cn('flex-1 rounded-[calc(var(--radius-md)-2px)] px-2 text-sm font-medium transition-colors',
+              o.value === value ? 'bg-[color:var(--bg-base)] text-[color:var(--text-primary)] shadow-[var(--shadow-sm)]' : 'text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)]')}
+          >{o.label}</button>
+        ))}
+      </div>
     </div>
   )
 }
 
-function Simulator({ info }: { info: SimulationModelInfo }) {
-  const [store, setStore] = useState(String(info.stores[0]?.id ?? 1))
-  const [family, setFamily] = useState(info.families.includes('GROCERY I') ? 'GROCERY I' : info.families[0])
-  const [promo, setPromo] = useState('0')
-  const [oil, setOil] = useState('')
-  const [start, setStart] = useState('2017-08-16')
-  const [horizon, setHorizon] = useState(14)
-  const [selected, setSelected] = useState<string[]>(['rfe_rf', 'rf_full'])
-  const [main, setMain] = useState('rfe_rf')
+function Kpi({ icon: Icon, label, value, sub, tone = 'default' }: {
+  icon: React.ElementType; label: string; value: string; sub: string; tone?: 'default' | 'success' | 'warning' | 'danger'
+}) {
+  const color = tone === 'success' ? 'text-[color:var(--success)]' : tone === 'warning' ? 'text-[color:var(--warning)]' : tone === 'danger' ? 'text-[color:var(--danger)]' : 'text-[color:var(--text-primary)]'
+  return (
+    <div className="rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-[color:var(--bg-base)] p-4 shadow-[var(--shadow-sm)]">
+      <div className="flex items-center gap-2 text-xs text-[color:var(--text-tertiary)]"><Icon className="w-3.5 h-3.5" />{label}</div>
+      <p className={cn('mt-1.5 text-2xl font-bold tabular-nums', color)}>{value}</p>
+      <p className="mt-0.5 text-xs text-[color:var(--text-tertiary)] truncate" title={sub}>{sub}</p>
+    </div>
+  )
+}
 
-  const inputs = useDebounce({ store, family, promo, oil, start, horizon }, 450)
-  const [predictions, setPredictions] = useState<{ key: string; data: Predictions } | null>(null)
-  const [error, setError] = useState('')
+function Forecast({ data, onReload, reloading }: { data: ApiProductForecasts; onReload: () => Promise<void>; reloading: boolean }) {
+  const lead = data.leadTimeDays
+  const { model } = data
+  const [selectedId, setSelectedId] = useState<string>('')
+  const [category, setCategory] = useState('')
+  const [days, setDays] = useState(14)
+  const [scenario, setScenario] = useState('1')
+  const [stockInput, setStockInput] = useState('')
+  const factor = Number(scenario)
 
-  // Um único pedido traz tudo: os dias do horizonte, as 4 faixas de promoção e as 5 lojas.
-  const { scenarios, key } = useMemo(() => {
-    const base = {
-      family: inputs.family,
-      onpromotion: Math.max(0, Math.round(Number(inputs.promo) || 0)),
-      ...(inputs.oil !== '' && Number(inputs.oil) >= 0 ? { oil: Number(inputs.oil) } : {}),
-    }
-    const list: SimulationScenario[] = [
-      ...Array.from({ length: inputs.horizon }, (_, i) => ({ ...base, store: Number(inputs.store), date: addDays(inputs.start, i) })),
-      ...BAND_SAMPLES.map(items => ({ ...base, onpromotion: items, store: Number(inputs.store), date: inputs.start })),
-      ...info.stores.map(s => ({ ...base, store: s.id, date: inputs.start })),
-    ]
-    return { scenarios: list, key: JSON.stringify(list) }
-  }, [inputs, info.stores])
+  const categories = useMemo(() => [...new Set(data.products.map(p => p.category))].sort(), [data.products])
+  const visible = data.products.filter(p => !category || p.category === category)
 
-  useEffect(() => {
-    let active = true
-    api.post<{ predictions: Predictions }>('/simulation/predict', { scenarios })
-      .then(res => { if (active) { setPredictions({ key, data: res.predictions }); setError('') } })
-      .catch((err: unknown) => { if (active) setError(err instanceof ApiError ? err.message : 'Falha ao simular') })
-    return () => { active = false }
-  }, [scenarios, key])
+  // Visão geral: todos os produtos com o estoque real, ordenados por urgência.
+  const overview = useMemo(() => data.products.map(p => {
+    const proj = project(p, p.currentStock, factor, COVERAGE_DAYS, lead)
+    return { p, proj, sit: situation(p.currentStock, proj.coverDays, lead) }
+  }).sort((a, b) => (a.proj.coverDays ?? 999) - (b.proj.coverDays ?? 999) || b.proj.total - a.proj.total), [data.products, factor, lead])
 
-  const ready = predictions?.key === key
-  const data = predictions?.data ?? []
-  const modelById = Object.fromEntries(info.models.map(m => [m.id, m]))
-  const mainModel = modelById[main]
-  const promoItems = Math.max(0, Math.round(Number(promo) || 0))
-  const currentBand = bandOf(promoItems)
-  const storeInfo = info.stores.find(s => s.id === Number(store))
+  const defaultId = overview[0]?.p.id ?? ''
+  const product = data.products.find(p => p.id === selectedId) ?? data.products.find(p => p.id === defaultId)
 
-  const daily = data.slice(0, inputs.horizon)
-  const bands = data.slice(inputs.horizon, inputs.horizon + BAND_SAMPLES.length)
-  const stores = data.slice(inputs.horizon + BAND_SAMPLES.length)
+  if (!product) {
+    return (
+      <div className="space-y-5">
+        <Header />
+        <Card><p className="py-10 text-center text-sm text-[color:var(--text-secondary)]">Ainda não há saídas registradas para prever a demanda. Registre movimentações de saída para que o modelo aprenda com o histórico.</p></Card>
+      </div>
+    )
+  }
 
-  const dailyChart = daily.map((row, i) => ({ label: shortDay(addDays(inputs.start, i)), full: dayLabel(addDays(inputs.start, i)), ...row }))
-  const BAND_SHORT = ['0', '1–3', '4–16', '>16']
-  const bandChart = bands.map((row, i) => ({ label: `${BAND_SHORT[i]} itens`, current: i === currentBand, ...row }))
-  const mainSeries = daily.map(row => row[main] ?? 0)
-  const mean = mainSeries.length ? mainSeries.reduce((a, b) => a + b, 0) / mainSeries.length : 0
-  const total = mainSeries.reduce((a, b) => a + b, 0)
-  const noPromo = bands[0]?.[main]
-  const withBand = bands[currentBand]?.[main]
-  const lift = noPromo && withBand !== undefined ? ((withBand - noPromo) / noPromo) * 100 : null
-  const anyFlat = selected.some(id => !modelById[id]?.usesDate)
+  const stock = stockInput !== '' ? Math.max(0, Math.round(Number(stockInput) || 0)) : product.currentStock
+  const proj = project(product, stock, factor, days, lead)
+  const recentTotal = sum(product.recent.map(r => r.quantity))
+  const recentMean = recentTotal / product.recent.length
+  const mean = proj.total / Math.max(days, 1)
+  const change = recentMean > 0 ? ((mean - recentMean) / recentMean) * 100 : null
+  const allRecent = sum(data.products.flatMap(p => p.recent.map(r => r.quantity)))
+  const runOutIso = proj.runOutIndex !== null ? product.daily[proj.runOutIndex].date : null
+  const sit = situation(stock, proj.coverDays, lead)
+  const orderByIso = runOutIso ? new Date(new Date(`${runOutIso}T12:00:00Z`).getTime() - lead * 86_400_000).toISOString().slice(0, 10) : null
+  const orderNow = stock === 0 || (orderByIso !== null && orderByIso <= data.asOf)
 
-  const toggle = (id: string) => setSelected(cur => cur.includes(id) ? (cur.length > 1 ? cur.filter(x => x !== id) : cur) : [...cur, id])
-  const modelLabel = (id: string) => `${modelById[id].name} · ${modelById[id].selection}`
+  const chart = [
+    ...product.recent.map(r => ({ date: r.date, label: shortDay(r.date), real: r.quantity } as Record<string, unknown>)),
+    ...product.daily.slice(0, days).map((d, i) => ({
+      date: d.date, label: shortDay(d.date), forecast: Math.round(proj.mean[i] * 100) / 100,
+      band: [Math.round(d.low * factor * 100) / 100, Math.round(d.high * factor * 100) / 100],
+    } as Record<string, unknown>)),
+  ]
+  const stockChart = proj.remaining.map((value, i) => ({ date: product.daily[i].date, label: shortDay(product.daily[i].date), value }))
+
+  const bt = model.backtest
+  const details = model.details
+  const rf = details?.compared.find(c => c.id === 'rf')?.score
+  const base = details?.compared.find(c => c.id === 'baseline')?.score
+  const importance = (details?.importance ?? []).slice(0, 5)
+  const maxWeight = Math.max(...importance.map(i => i.weight), 0.0001)
+  const beatsBaseline = rf && base ? rf.wape < base.wape : null
 
   return (
     <div className="space-y-5">
-      <Breadcrumb items={[{ label: 'IA' }, { label: 'Simulação de Vendas' }]} />
-
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <h1 className="text-xl font-bold text-[color:var(--text-primary)]">Simulação de Vendas</h1>
-            <Badge variant="brand" size="sm"><FlaskConical className="w-3 h-3 mr-1" />Modelos do notebook</Badge>
-          </div>
-          <p className="text-sm text-[color:var(--text-tertiary)]">Altere loja, família, promoção e data e veja a venda diária prevista por cada modelo de regressão</p>
+      <Header right={
+        <div className="flex items-center gap-2">
+          <Badge variant={model.source === 'ml' ? 'success' : 'warning'} size="sm" dot>{model.source === 'ml' ? 'Modelo de ML ativo' : 'Média móvel (ML inativo)'}</Badge>
+          <Button size="sm" variant="outline" leftIcon={<Zap className="w-3.5 h-3.5" />} onClick={() => void onReload()} loading={reloading}>Recalcular</Button>
         </div>
-        <Badge variant="success" size="sm" dot>Serviço de modelos no ar</Badge>
+      } />
+
+      {model.source !== 'ml' && (
+        <Alert>
+          O serviço de ML não respondeu ({model.reason ?? 'indisponível'}). A previsão abaixo usa a média dos últimos 28 dias. Para ativar o modelo, rode <code>cd backend && npm run ml:service</code> e defina <code>ML_SERVICE_URL=http://localhost:8100/wms</code>.
+        </Alert>
+      )}
+      {allRecent === 0 && (
+        <div className="flex items-start gap-3 rounded-[var(--radius-lg)] border border-[color:var(--warning-muted)] bg-[color:var(--warning-subtle)] p-4 text-sm text-[color:var(--text-primary)]">
+          <Info className="mt-0.5 w-4 h-4 flex-shrink-0 text-[color:var(--warning)]" />
+          <p>Não houve nenhuma saída nos últimos 28 dias (até {shortDay(data.asOf)}). O modelo parte desse histórico recente, então as previsões ficam baixas até que novas saídas sejam registradas.</p>
+        </div>
+      )}
+
+      {/* Cenário */}
+      <Card>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          <Select label="Categoria" value={category} onChange={e => { setCategory(e.target.value); setSelectedId(''); setStockInput('') }} placeholder="Todas" options={categories.map(c => ({ value: c, label: c }))} />
+          <div className="lg:col-span-2">
+            <Select
+              label="Produto" value={product.id}
+              onChange={e => { setSelectedId(e.target.value); setStockInput('') }}
+              options={(visible.some(p => p.id === product.id) ? visible : [product, ...visible]).map(p => ({ value: p.id, label: `${p.name} · ${p.code}` }))}
+            />
+          </div>
+          <Segmented label="Período" value={days} onChange={setDays} options={HORIZONS.map(h => ({ value: h, label: `${h} dias` }))} />
+          <Select label="Cenário" value={scenario} onChange={e => setScenario(e.target.value)} options={SCENARIOS} />
+        </div>
+        <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          <Input label="Estoque considerado" type="number" min={0} placeholder={String(product.currentStock)} value={stockInput} onChange={e => setStockInput(e.target.value)} hint={`Estoque atual: ${formatNumber(product.currentStock)} ${product.unit} · mínimo ${formatNumber(product.minStock)}`} />
+          <p className="lg:col-span-4 self-end text-xs text-[color:var(--text-tertiary)] pb-2">
+            Prazo de reposição: <strong className="text-[color:var(--text-secondary)]">{lead} dias</strong> (Configurações). Altere o estoque para simular uma compra ou perda e o cenário para ver o efeito de uma demanda diferente da prevista.
+          </p>
+        </div>
+      </Card>
+
+      {/* Indicadores */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <Kpi icon={TrendingUp} label={`Demanda em ${days} dias`} value={`${fmt(proj.total)} ${product.unit}`}
+          sub={`≈ ${fmt(mean, 1)}/dia${change !== null ? ` · ${change >= 0 ? '+' : ''}${fmt(change)}% vs. últimos 28 dias` : ''}`} />
+        <Kpi icon={PackageCheck} label="Cobertura do estoque"
+          value={stock === 0 ? 'Sem estoque' : proj.coverDays === null ? `> ${days} dias` : `${fmt(proj.coverDays)} dias`}
+          sub={runOutIso ? `Acaba em ${weekday(runOutIso)}, ${shortDay(runOutIso)}` : `${formatNumber(stock)} ${product.unit} cobrem o período`}
+          tone={sit.variant === 'danger' ? 'danger' : sit.variant === 'warning' ? 'warning' : 'success'} />
+        <Kpi icon={ShoppingCart} label="Reposição sugerida" value={proj.reorder > 0 ? `${fmt(proj.reorder)} ${product.unit}` : 'Não precisa'}
+          sub={proj.reorder > 0 ? `Cobre ${COVERAGE_DAYS} dias + segurança de ${fmt(proj.safety)}` : `Estoque cobre os próximos ${COVERAGE_DAYS} dias`} />
+        <Kpi icon={CalendarClock} label="Pedir até"
+          value={proj.reorder === 0 ? '—' : orderNow ? 'Agora' : orderByIso ? shortDay(orderByIso) : '—'}
+          sub={proj.reorder === 0 ? 'Sem ruptura prevista' : `Considera ${lead} dias de prazo`}
+          tone={proj.reorder > 0 && orderNow ? 'danger' : 'default'} />
       </div>
 
-      {error && <Alert>{error}</Alert>}
-
-      <div className="grid grid-cols-1 xl:grid-cols-4 gap-5">
-        {/* Controles */}
-        <Card className="xl:col-span-1">
-          <CardHeader><CardTitle description="Monte o cenário">Parâmetros</CardTitle></CardHeader>
-          <div className="space-y-3">
-            <Select label="Loja" value={store} onChange={e => setStore(e.target.value)} options={info.stores.map(s => ({ value: String(s.id), label: `Loja ${s.id} · ${s.city}` }))} />
-            <Select label="Família de produtos" value={family} onChange={e => setFamily(e.target.value)} options={info.families.map(f => ({ value: f, label: familyLabel(f) }))} />
-            <Input label="Itens em promoção" type="number" min={0} value={promo} onChange={e => setPromo(e.target.value)} hint={`Faixa: ${info.promoBands[currentBand]?.label}`} />
-            <Input label="Preço do petróleo (US$)" type="number" min={0} step="0.01" placeholder={String(info.oil.default)} value={oil} onChange={e => setOil(e.target.value)} hint={`Padrão ${info.oil.default} · base entre ${info.oil.min} e ${info.oil.max}`} />
-            <Input label="Data inicial" type="date" value={start} onChange={e => e.target.value && setStart(e.target.value)} />
-            <Select label="Horizonte" value={String(horizon)} onChange={e => setHorizon(Number(e.target.value))} options={HORIZONS.map(h => ({ value: String(h), label: `${h} dias` }))} />
-          </div>
-          <div className="mt-4">
-            <p className="text-sm font-medium text-[color:var(--text-primary)] mb-1.5">Modelos no gráfico</p>
-            <div className="space-y-1.5">
-              {info.models.map(m => (
-                <label key={m.id} className="flex items-start gap-2 text-xs cursor-pointer">
-                  <input type="checkbox" className="mt-0.5" checked={selected.includes(m.id)} onChange={() => toggle(m.id)} />
-                  <span className="min-w-0">
-                    <span className="inline-block w-2 h-2 rounded-full mr-1.5" style={{ background: MODEL_COLORS[m.id] }} />
-                    <span className="font-medium text-[color:var(--text-primary)]">{m.name} · {m.selection}</span>
-                    {m.origin === 'complementar' && <span className="ml-1 text-[color:var(--warning)]">(complementar)</span>}
-                  </span>
-                </label>
-              ))}
-            </div>
-            <div className="mt-4">
-              <Select label="Modelo principal" hint="Usado nos indicadores e nas comparações" value={main} onChange={e => setMain(e.target.value)} options={info.models.map(m => ({ value: m.id, label: `${m.name} · ${m.selection}` }))} />
-            </div>
+      {/* Gráficos */}
+      <div className="grid gap-5 xl:grid-cols-2">
+        <Card padding={false}>
+          <CardHeader className="p-5 pb-3">
+            <CardTitle description="Barras: saídas reais. Linha: previsão. Faixa: 80% dos dias">{product.name}</CardTitle>
+            <Badge variant="default" size="sm">{product.category}</Badge>
+          </CardHeader>
+          <div className="h-[250px] px-5 pb-3">
+            <ResponsiveContainer width="100%" height="100%">
+              <ComposedChart data={chart} margin={{ top: 8, right: 8, left: -14, bottom: 0 }}>
+                <CartesianGrid vertical={false} stroke={GRID} />
+                <XAxis dataKey="label" tick={AXIS} tickLine={false} axisLine={false} interval={Math.ceil(chart.length / 10) - 1} />
+                <YAxis tick={AXIS} tickLine={false} axisLine={false} width={44} />
+                <Tooltip contentStyle={TOOLTIP_STYLE} cursor={{ stroke: MUTED }}
+                  labelFormatter={(_, items) => { const d = items?.[0]?.payload?.date; return d ? longDay(String(d)) : '' }}
+                  formatter={(v, name) => name === 'band' && Array.isArray(v) ? [`${fmt(Number(v[0]), 1)} – ${fmt(Number(v[1]), 1)}`, 'Faixa (80%)'] : [`${fmt(Number(v), 1)} ${product.unit}`, name === 'real' ? 'Saída real' : 'Previsto']} />
+                <ReferenceLine x={shortDay(product.recent[product.recent.length - 1].date)} stroke="var(--text-tertiary)" strokeDasharray="4 4" label={{ value: 'hoje', position: 'insideTopRight', fill: 'var(--text-tertiary)', fontSize: 11 }} />
+                <Area type="monotone" dataKey="band" stroke="none" fill={ACCENT} fillOpacity={0.12} isAnimationActive={false} />
+                <Bar dataKey="real" fill={MUTED} radius={[3, 3, 0, 0]} maxBarSize={14} />
+                <Line type="monotone" dataKey="forecast" stroke={ACCENT} strokeWidth={2} dot={{ r: 2.5, fill: ACCENT, stroke: 'var(--bg-base)', strokeWidth: 1 }} activeDot={{ r: 5 }} connectNulls={false} />
+              </ComposedChart>
+            </ResponsiveContainer>
           </div>
         </Card>
 
-        {/* Resultados */}
-        <div className={cn('xl:col-span-3 space-y-5 transition-opacity', !ready && 'opacity-60')}>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            {[
-              { label: 'Venda média diária', value: `${formatNumber(Math.round(mean))} un`, sub: modelLabel(main) },
-              { label: `Total em ${inputs.horizon} dias`, value: `${formatNumber(Math.round(total))} un`, sub: `${storeInfo?.city ?? ''} · ${familyLabel(inputs.family)}` },
-              { label: 'Promoção', value: info.promoBands[currentBand]?.label ?? '—', sub: lift === null ? '—' : `${lift >= 0 ? '+' : ''}${lift.toFixed(0)}% vs. sem promoção` },
-              { label: 'R² do modelo (teste)', value: mainModel.metrics.r2.toFixed(4).replace('.', ','), sub: `MAE ${formatNumber(mainModel.metrics.mae)} un` },
-            ].map(k => (
-              <div key={k.label} className="rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-[color:var(--bg-base)] p-4">
-                <p className="text-xs text-[color:var(--text-tertiary)]">{k.label}</p>
-                <p className="text-lg font-bold text-[color:var(--text-primary)] mt-0.5">{k.value}</p>
-                <p className="text-[11px] text-[color:var(--text-tertiary)] truncate">{k.sub}</p>
-              </div>
-            ))}
+        <Card padding={false}>
+          <CardHeader className="p-5 pb-3">
+            <CardTitle description={`Partindo de ${formatNumber(stock)} ${product.unit}, sem nenhuma reposição`}>Estoque projetado</CardTitle>
+            <Badge variant={sit.variant} size="sm" dot>{sit.label}</Badge>
+          </CardHeader>
+          <div className="h-[250px] px-5 pb-3">
+            <ResponsiveContainer width="100%" height="100%">
+              <ComposedChart data={stockChart} margin={{ top: 8, right: 8, left: -14, bottom: 0 }}>
+                <CartesianGrid vertical={false} stroke={GRID} />
+                <XAxis dataKey="label" tick={AXIS} tickLine={false} axisLine={false} interval={days > 14 ? 1 : 0} />
+                <YAxis tick={AXIS} tickLine={false} axisLine={false} width={44} />
+                <Tooltip contentStyle={TOOLTIP_STYLE} cursor={{ stroke: MUTED }}
+                  labelFormatter={(_, items) => { const d = items?.[0]?.payload?.date; return d ? longDay(String(d)) : '' }}
+                  formatter={v => [`${fmt(Number(v))} ${product.unit}`, Number(v) < 0 ? 'Falta' : 'Restante']} />
+                <ReferenceLine y={0} stroke="var(--danger)" strokeDasharray="4 4" />
+                {product.minStock > 0 && <ReferenceLine y={product.minStock} stroke="var(--warning)" strokeDasharray="4 4" label={{ value: 'mínimo', position: 'insideTopRight', fill: 'var(--warning)', fontSize: 11 }} />}
+                <Area type="monotone" dataKey="value" stroke={ACCENT} strokeWidth={2} fill={ACCENT} fillOpacity={0.1} dot={false} activeDot={{ r: 5 }} />
+              </ComposedChart>
+            </ResponsiveContainer>
           </div>
-
-          <Card padding={false}>
-            <CardHeader className="p-5 pb-3">
-              <CardTitle description="Unidades vendidas por dia, previstas por modelo">Previsão diária</CardTitle>
-              {!ready && <Loader2 className="w-4 h-4 animate-spin text-[color:var(--text-tertiary)]" />}
-            </CardHeader>
-            <div className="h-[260px] px-5 pb-3">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={dailyChart} margin={{ top: 5, right: 10, left: -5, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                  <XAxis dataKey="label" tick={{ fill: 'var(--text-tertiary)', fontSize: 10 }} tickLine={false} axisLine={false} interval={inputs.horizon > 14 ? 1 : 0} />
-                  <YAxis tick={{ fill: 'var(--text-tertiary)', fontSize: 11 }} tickLine={false} axisLine={false} />
-                  <Tooltip contentStyle={{ background: 'var(--bg-base)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12 }} labelFormatter={(_, items) => String(items?.[0]?.payload?.full ?? '')} formatter={(v, n) => [`${formatNumber(Number(v))} un`, modelLabel(String(n))]} />
-                  <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 11 }} formatter={v => modelLabel(String(v))} />
-                  {selected.map(id => <Line key={id} type="monotone" dataKey={id} stroke={MODEL_COLORS[id]} strokeWidth={2} dot={{ r: 2 }} strokeDasharray={modelById[id].origin === 'complementar' ? '5 4' : undefined} />)}
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-            {anyFlat && (
-              <p className="px-5 pb-4 text-xs text-[color:var(--text-tertiary)]">
-                Os modelos do notebook com seleção de atributos não usam a data (só loja, família e faixa de promoção), por isso a linha é constante.
-                Só o modelo complementar (41 atributos) varia por dia da semana, mês e preço do petróleo.
-              </p>
-            )}
-          </Card>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-            <Card padding={false}>
-              <CardHeader className="p-5 pb-3"><CardTitle description={`Em ${dayLabel(inputs.start)}, loja ${inputs.store}`}>O que muda com a promoção</CardTitle></CardHeader>
-              <div className="h-[230px] px-5 pb-5">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={bandChart} margin={{ top: 5, right: 10, left: -5, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                    <XAxis dataKey="label" tick={{ fill: 'var(--text-tertiary)', fontSize: 10 }} tickLine={false} axisLine={false} interval={0} />
-                    <YAxis tick={{ fill: 'var(--text-tertiary)', fontSize: 11 }} tickLine={false} axisLine={false} />
-                    <Tooltip contentStyle={{ background: 'var(--bg-base)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12 }} formatter={(v, n) => [`${formatNumber(Number(v))} un`, modelLabel(String(n))]} />
-                    <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 11 }} formatter={v => modelLabel(String(v))} />
-                    {selected.map(id => <Bar key={id} dataKey={id} fill={MODEL_COLORS[id]} radius={[4, 4, 0, 0]} />)}
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </Card>
-
-            <Card>
-              <CardHeader><CardTitle description={`${familyLabel(inputs.family)} · ${modelLabel(main)}`}>Comparar lojas</CardTitle></CardHeader>
-              <table className="w-full text-sm">
-                <thead><tr className="border-b border-[color:var(--border)]">
-                  {['Loja', 'Cidade', 'Cluster', 'Venda/dia'].map(h => <th key={h} className="px-2 py-2 text-left text-[10px] font-bold uppercase text-[color:var(--text-tertiary)]">{h}</th>)}
-                </tr></thead>
-                <tbody>
-                  {info.stores.map((s, i) => (
-                    <tr key={s.id} className={cn('border-b border-[color:var(--border)] last:border-0', s.id === Number(inputs.store) && 'bg-[color:var(--brand-subtle)]')}>
-                      <td className="px-2 py-2 font-medium">Loja {s.id}</td>
-                      <td className="px-2 py-2 text-xs text-[color:var(--text-secondary)]">{s.city}</td>
-                      <td className="px-2 py-2 text-xs text-[color:var(--text-secondary)]">{s.cluster}</td>
-                      <td className="px-2 py-2 font-semibold">{stores[i] ? `${formatNumber(Math.round(stores[i][main] ?? 0))} un` : '—'}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </Card>
-          </div>
-
-          <Card>
-            <CardHeader><CardTitle description={`${formatNumber(info.dataset.rows)} registros · ${info.dataset.split}`}>Modelos e desempenho (conjunto de teste)</CardTitle></CardHeader>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead><tr className="border-b border-[color:var(--border)]">
-                  {['Modelo', 'Seleção', 'Origem', 'R²', 'MAE', 'RMSE', 'Mais influentes'].map(h => <th key={h} className="px-3 py-2 text-left text-[10px] font-bold uppercase text-[color:var(--text-tertiary)]">{h}</th>)}
-                </tr></thead>
-                <tbody>
-                  {info.models.map(m => (
-                    <tr key={m.id} className={cn('border-b border-[color:var(--border)] last:border-0', m.id === main && 'bg-[color:var(--bg-subtle)]')}>
-                      <td className="px-3 py-2 font-medium"><span className="inline-block w-2 h-2 rounded-full mr-1.5" style={{ background: MODEL_COLORS[m.id] }} />{m.name}</td>
-                      <td className="px-3 py-2 text-xs">{m.selection}</td>
-                      <td className="px-3 py-2"><Badge variant={m.origin === 'notebook' ? 'success' : 'warning'} size="sm">{m.origin === 'notebook' ? 'Notebook' : 'Complementar'}</Badge></td>
-                      <td className="px-3 py-2 font-semibold">{m.metrics.r2.toFixed(4).replace('.', ',')}</td>
-                      <td className="px-3 py-2 text-xs">{formatNumber(m.metrics.mae)}</td>
-                      <td className="px-3 py-2 text-xs">{formatNumber(m.metrics.rmse)}</td>
-                      <td className="px-3 py-2 text-[11px] text-[color:var(--text-secondary)]">{m.importance.slice(0, 3).map(i => `${i.feature.replace('family_', '')} (${Math.round(i.weight * 100)}%)`).join(' · ')}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <p className="mt-3 text-xs text-[color:var(--text-tertiary)]">
-              São os modelos de <code>machine-learning/Previsao_Vendas.ipynb</code>, reproduzidos sem alterações (mesmo recorte, divisão e parâmetros). O teste é uma divisão aleatória, então o R² é otimista para dias futuros. O modelo complementar (Random Forest com todos os atributos) não faz parte do notebook.
-            </p>
-          </Card>
-        </div>
+          <p className="px-5 pb-4 text-xs text-[color:var(--text-tertiary)]">
+            {runOutIso ? `Ruptura prevista em ${longDay(runOutIso)}; com ${lead} dias de prazo, o pedido precisa sair ${orderNow ? 'agora' : `até ${shortDay(orderByIso!)}`}.` : 'Sem ruptura prevista no período escolhido.'}
+          </p>
+        </Card>
       </div>
+
+      {/* Todos os produtos */}
+      <Card padding={false}>
+        <CardHeader className="p-5 pb-3">
+          <CardTitle description={`Estoque atual contra a demanda prevista dos próximos ${COVERAGE_DAYS} dias — mais urgentes primeiro`}>Todos os produtos</CardTitle>
+          <Badge variant="brand" size="sm">{overview.length} produtos</Badge>
+        </CardHeader>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead><tr className="border-y border-[color:var(--border)]">
+              {['Produto', 'Estoque', `Demanda ${COVERAGE_DAYS}d`, 'Cobertura', 'Repor', 'Situação'].map(h => <th key={h} className="px-4 py-2.5 text-left text-[10px] font-bold uppercase tracking-wide text-[color:var(--text-tertiary)]">{h}</th>)}
+            </tr></thead>
+            <tbody>
+              {overview.map(({ p, proj: pr, sit: s }) => (
+                <tr key={p.id} onClick={() => { setSelectedId(p.id); setStockInput(''); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
+                  className={cn('cursor-pointer border-b border-[color:var(--border)] last:border-0 hover:bg-[color:var(--bg-subtle)]', p.id === product.id && 'bg-[color:var(--brand-subtle)]')}>
+                  <td className="px-4 py-2.5"><span className="font-medium text-[color:var(--text-primary)]">{p.name}</span><span className="block text-xs text-[color:var(--text-tertiary)]">{p.category} · {p.code}</span></td>
+                  <td className="px-4 py-2.5 tabular-nums">{formatNumber(p.currentStock)} <span className="text-xs text-[color:var(--text-tertiary)]">{p.unit}</span></td>
+                  <td className="px-4 py-2.5 tabular-nums">{fmt(pr.total)}</td>
+                  <td className="px-4 py-2.5 tabular-nums text-xs text-[color:var(--text-secondary)]">{p.currentStock === 0 ? '0 dias' : pr.coverDays === null ? `> ${COVERAGE_DAYS} dias` : `${fmt(pr.coverDays)} dias`}</td>
+                  <td className="px-4 py-2.5 tabular-nums font-semibold">{pr.reorder > 0 ? fmt(pr.reorder) : '—'}</td>
+                  <td className="px-4 py-2.5"><Badge variant={s.variant} size="sm" dot>{s.label}</Badge></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div className="flex justify-end p-4 pt-3">
+          <Link href="/dashboard/ia-analitica"><Button size="sm" variant="outline" leftIcon={<ShoppingCart className="w-3.5 h-3.5" />}>Ver pedido sugerido (IA Analítica)</Button></Link>
+        </div>
+      </Card>
+
+      {/* Confiabilidade */}
+      <Card>
+        <CardHeader>
+          <CardTitle description={model.trainedOn ?? 'Modelo de previsão'}>Como o modelo foi avaliado</CardTitle>
+          {bt && <Badge variant="default" size="sm">{bt.testOrigins.length} testes de {bt.horizonDays} dias</Badge>}
+        </CardHeader>
+        {!bt || !details ? (
+          <p className="text-sm text-[color:var(--text-secondary)]">O modelo ainda não tem histórico suficiente para ser avaliado. {model.reason ?? ''}</p>
+        ) : (
+          <div className="space-y-5">
+            <div className={cn('flex items-start gap-3 rounded-[var(--radius-md)] p-3 text-sm', beatsBaseline ? 'bg-[color:var(--success-subtle)]' : 'bg-[color:var(--bg-subtle)]')}>
+              {beatsBaseline ? <CheckCircle2 className="mt-0.5 w-4 h-4 flex-shrink-0 text-[color:var(--success)]" /> : <AlertTriangle className="mt-0.5 w-4 h-4 flex-shrink-0 text-[color:var(--warning)]" />}
+              <p className="text-[color:var(--text-primary)]">
+                {beatsBaseline
+                  ? <>No teste, o modelo errou menos que a média simples (erro {fmt(rf!.wape * 100)}% contra {fmt(base!.wape * 100)}%).</>
+                  : <>Com o histórico atual, o modelo ainda <strong>não supera</strong> a média simples do mesmo dia da semana (erro {fmt(rf!.wape * 100)}% contra {fmt(base!.wape * 100)}%). Isso é esperado com cerca de um ano de saídas e poucos padrões semanais; a previsão tende a melhorar conforme o sistema acumula movimentações.</>}
+                {' '}A faixa de 80% acertou {fmt(bt.intervalCoverage * 100)}% dos dias.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="overflow-x-auto">
+                <p className="text-sm text-[color:var(--text-secondary)] mb-2">Métodos comparados (por produto e semana)</p>
+                <table className="w-full text-sm">
+                  <thead><tr className="border-b border-[color:var(--border)]">
+                    {['Método', 'R²', 'Erro médio', 'Erro (WAPE)'].map(h => <th key={h} className="px-2 py-2 text-left text-[10px] font-bold uppercase text-[color:var(--text-tertiary)]">{h}</th>)}
+                  </tr></thead>
+                  <tbody>
+                    {details.compared.map(c => (
+                      <tr key={c.id} className={cn('border-b border-[color:var(--border)] last:border-0', c.id === 'rf' && 'bg-[color:var(--bg-subtle)]')}>
+                        <td className="px-2 py-2 font-medium">{c.name}{c.id === 'rf' && <span className="ml-1.5 text-xs text-[color:var(--brand)]">(usado)</span>}</td>
+                        <td className="px-2 py-2 tabular-nums">{c.score.r2 == null ? '—' : fmt(c.score.r2, 2)}</td>
+                        <td className="px-2 py-2 tabular-nums text-xs">{c.score.mae == null ? '—' : `±${fmt(c.score.mae, 1)} un`}</td>
+                        <td className="px-2 py-2 tabular-nums text-xs">{fmt(c.score.wape * 100)}%</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                <p className="mt-2 text-xs text-[color:var(--text-tertiary)]">Regressão Linear com seleção de atributos e Random Forest, como no notebook, treinados com as saídas deste sistema e testados em semanas que o modelo não viu.</p>
+              </div>
+              <div>
+                <p className="text-sm text-[color:var(--text-secondary)] mb-2">O que mais pesa na previsão</p>
+                <ul className="space-y-2">
+                  {importance.map(i => (
+                    <li key={i.feature} className="flex items-center gap-3 text-xs">
+                      <span className="w-48 truncate text-[color:var(--text-secondary)]" title={i.label}>{i.label}</span>
+                      <div className="h-1.5 flex-1 rounded-full bg-[color:var(--bg-muted)] overflow-hidden"><div className="h-full rounded-full" style={{ width: `${(i.weight / maxWeight) * 100}%`, background: ACCENT }} /></div>
+                      <span className="w-9 text-right tabular-nums text-[color:var(--text-tertiary)]">{Math.round(i.weight * 100)}%</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+        )}
+      </Card>
     </div>
   )
 }
