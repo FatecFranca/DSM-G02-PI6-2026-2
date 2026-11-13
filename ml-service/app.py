@@ -11,6 +11,7 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
 import sales_model
+import wms_forecast
 
 HERE = Path(__file__).resolve().parent
 DATA_DIR = Path(os.environ.get("ML_DATA_DIR", HERE.parent / "machine-learning" / "store-sales-time-series-forecasting"))
@@ -87,3 +88,37 @@ def predict(body: PredictRequest):
             raise HTTPException(422, f"Modelos desconhecidos: {unknown}")
     scenarios = [sc.model_dump() | {"date": sc.date.isoformat()} for sc in body.scenarios]
     return {"predictions": bundle.predict(scenarios, body.models)}
+
+
+# ── Previsão de demanda dos produtos do sistema (contrato de ML_SERVICE_URL do backend) ───────────────────────────
+# O backend envia o histórico de saídas de cada produto; o serviço treina com ele e devolve a previsão diária.
+# Aponte ML_SERVICE_URL do backend para http://localhost:8100/wms.
+
+class HistoryPoint(BaseModel):
+    date: date
+    quantity: float = Field(..., ge=0)
+
+
+class SeriesIn(BaseModel):
+    id: str
+    history: list[HistoryPoint] = Field(..., max_length=1500)
+
+
+class ForecastRequest(BaseModel):
+    asOf: date = Field(..., description="Último dia completo do histórico")
+    horizon: int = Field(28, ge=1, le=90)
+    series: list[SeriesIn] = Field(..., min_length=1, max_length=2000)
+
+
+@app.post("/wms/forecast")
+def wms_forecast_endpoint(body: ForecastRequest):
+    series = [{"id": s.id, "history": [{"date": p.date.isoformat(), "quantity": p.quantity} for p in s.history]} for s in body.series]
+    return wms_forecast.forecast(series, body.asOf.isoformat(), body.horizon)
+
+
+@app.get("/wms/model")
+def wms_model_info():
+    info = wms_forecast.last_info()
+    if info is None:
+        raise HTTPException(status_code=503, detail="Nenhuma previsão foi calculada ainda (o modelo treina a cada novo histórico)")
+    return info

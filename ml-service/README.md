@@ -1,4 +1,4 @@
-# StockIQ — Serviço de simulação de vendas
+# StockIQ — Serviço de ML (previsão de demanda e modelos do notebook)
 
 Serviço Python (FastAPI) que **serve os modelos de regressão do notebook** [`machine-learning/Previsao_Vendas.ipynb`](../machine-learning/Previsao_Vendas.ipynb) para o backend e para a tela **Simulação de Vendas** do sistema.
 
@@ -9,7 +9,26 @@ Frontend (/dashboard/simulacao) ──► Backend  /api/simulation/*  ──► 
                                       JWT + validação (Zod)            FastAPI
 ```
 
-## Modelos
+## Previsão de demanda dos produtos do sistema (`/wms`)
+
+É o que alimenta a tela **Previsão de Vendas** e a **IA Analítica**. Diferente dos modelos do notebook (treinados no dataset do Kaggle: lojas e famílias do Equador), este módulo ([`wms_forecast.py`](wms_forecast.py)) aprende com **as saídas reais do estoque deste sistema**: o backend envia o histórico diário de cada produto e o serviço treina e devolve a previsão.
+
+```
+Frontend (/dashboard/simulacao, /dashboard/ia-analitica) ──► Backend /api/analytics/* ──► ml-service /wms/forecast
+                                                              (lê movimentações no PostgreSQL)   Random Forest + backtest
+```
+
+- **Método**: o mesmo do notebook — regressão supervisionada com Regressão Linear (SelectKBest) e Random Forest, avaliada por R², MAE e RMSE — sobre uma tabela produto × dia (média dos últimos 7/28/56 dias, frequência de saídas, média do mesmo dia da semana, dia da semana, distância à origem). Nenhuma linha usa dado posterior à origem.
+- **Avaliação (backtest)**: reserva as 4 últimas janelas de 14 dias, treina só com o que veio antes, prevê e compara com o que saiu — contra a **média do mesmo dia da semana (8 semanas)**. Métricas por produto e semana (R², MAE, RMSE, RMSLE, WAPE, viés) e cobertura da faixa de 80%.
+- **Produtos novos** (menos de 56 dias de histórico ou 5 dias com saída) usam a média dos últimos 28 dias (`method: "mean"`).
+- **Cache**: o treino leva ~5–10 s; a mesma entrada devolve o resultado em memória.
+- **Configuração no backend**: `ML_SERVICE_URL=http://localhost:8100/wms` e `ML_TIMEOUT_MS=60000`. Sem o serviço, o analytics cai para média móvel e a tela avisa.
+- Testes: `cd ml-service && PYTHONPATH=.pylibs python3 -m unittest -v tests.test_wms_forecast` (séries sintéticas com padrão conhecido).
+
+**Limitações**: com cerca de um ano de saídas e sem padrão semanal marcante, o modelo empata com a média simples — a tela mostra isso em vez de esconder. Mês e dia do mês ficam fora dos atributos por parcimônia (com ~1 ano cada mês aparece uma vez); na ablação do notebook as duas versões empataram, então vale reavaliar com 2 anos de histórico. Não há preço, promoção ou sazonalidade externa; a faixa de incerteza usa o desvio diário de cada produto.
+
+
+## Modelos do notebook (dataset do Kaggle)
 
 | id | Modelo | Seleção | R² (teste) | Origem |
 |---|---|---|---|---|
