@@ -8,7 +8,7 @@ import { deleteUsers } from './helpers'
 
 /**
  * Fluxo completo com banco real: concluir o inventário → mensagem na fila → worker ajusta o estoque.
- * (Fila local em memória; o driver SQS é coberto por queue-sqs-integration.test.ts.)
+ * (Fila local em memória; o driver Azure é coberto por queue-azure-integration.test.ts.)
  */
 const EMAIL = 'test-admin-inventory-async@example.com'
 const SKU = 'JEST-INVQ'

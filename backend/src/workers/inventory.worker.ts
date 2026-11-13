@@ -2,13 +2,13 @@ import { deleteMessage, getQueueConfig, QueueMessage, receiveMessages } from '..
 import { inventoryMessageSchema, markJobFailed, processInventoryJob } from '../services/inventory-processing.service'
 
 /**
- * Consumidor da fila de inventário (long polling).
+ * Consumidor da fila de inventário (polling com espera).
  *
  * Regras de entrega:
  *  - a mensagem só é apagada DEPOIS de processar com sucesso;
  *  - se der erro, ela não é apagada: reaparece após o prazo de visibilidade e é tentada de novo (o processamento é idempotente);
- *  - ao esgotar as tentativas (QUEUE_MAX_RECEIVES), o job é marcado como `failed` para o usuário ver, e a fila
- *    move a mensagem para a DLQ (redrive configurado na própria fila SQS);
+ *  - ao esgotar as tentativas (QUEUE_MAX_RECEIVES), o job é marcado como `failed` para o usuário ver, e a mensagem
+ *    é movida para a "poison queue" (`<fila>-poison`) na próxima leitura;
  *  - mensagem com formato inválido ("veneno") é descartada para não travar a fila.
  */
 
@@ -43,7 +43,7 @@ export async function handleMessage(message: QueueMessage, maxReceives = getQueu
 
 export function startInventoryWorker(): { stop: () => Promise<void> } {
   const cfg = getQueueConfig()
-  const waitSeconds = cfg.driver === 'sqs' ? 10 : 1
+  const waitSeconds = cfg.driver === 'azure' ? 10 : 1
   let running = true
 
   const loop = (async () => {

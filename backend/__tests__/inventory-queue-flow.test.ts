@@ -57,9 +57,9 @@ describe('concluir inventário enfileira o ajuste', () => {
 
   it('se a fila estiver fora do ar a conclusão fica salva e o job vira failed (reprocessável)', async () => {
     mockReviewTx()
-    dispatchInventoryJob.mockRejectedValue(new Error('SQS indisponível'))
+    dispatchInventoryJob.mockRejectedValue(new Error('Fila indisponível'))
     await expect(update('inv-1', { status: 'completed' }, 'user-7')).resolves.toBeDefined()
-    expect(markJobFailed).toHaveBeenCalledWith('inv-1', expect.stringContaining('SQS indisponível'))
+    expect(markJobFailed).toHaveBeenCalledWith('inv-1', expect.stringContaining('Fila indisponível'))
   })
 
   it('outras transições não enfileiram nada', async () => {

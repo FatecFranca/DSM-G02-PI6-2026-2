@@ -410,7 +410,7 @@ const schemas: Record<string, Json> = {
       ...enumOf(['pending', 'processing', 'completed', 'partial', 'failed'], 'completed'),
       nullable: true,
       description:
-        'Ajuste de estoque assíncrono (fila SQS) após concluir o inventário. null em inventários anteriores ao recurso. partial = algum item precisa de ajuste manual.',
+        'Ajuste de estoque assíncrono (fila Azure Queue Storage) após concluir o inventário. null em inventários anteriores ao recurso. partial = algum item precisa de ajuste manual.',
     },
     jobError: { type: 'string', nullable: true },
     jobQueuedAt: nullableDate,
@@ -981,7 +981,7 @@ const TAGS = [
   ['Warehouse', 'Endereçamento físico do armazém'],
   ['Movements', 'Movimentações de estoque (entrada, saída, transferência, perda, ajuste, inventário)'],
   ['Lots', 'Lotes e validade'],
-  ['Inventory', 'Contagens de inventário e ajuste de estoque assíncrono (fila SQS)'],
+  ['Inventory', 'Contagens de inventário e ajuste de estoque assíncrono (fila Azure Queue Storage)'],
   ['Dashboard', 'Indicadores e gráficos do painel'],
   ['Alerts', 'Alertas de estoque e validade, com controle de leitura por usuário'],
   ['Audit', 'Trilha de auditoria (admin e supervisor)'],

@@ -317,13 +317,13 @@ SC = {"auth.test.ts": "Registro, login, perfil e senha", "user.test.ts": "CRUD d
       "critical-security.test.ts": "Segurança: acesso, tokens, validações críticas", "inventory-service.test.ts": "Transições e contagem do inventário", "report-service.test.ts": "Relatórios",
       "ml-service.test.ts": "Cliente do serviço de previsão e fallback", "ml-analytics.test.ts": "Analytics, ABC×XYZ e sugestões", "storage-service.test.ts": "Storage S3/local, URLs assinadas, tipos de imagem",
       "product-image-service.test.ts": "Foto de produto: ordem, falhas, limites, URL assinada", "audit-sanitize.test.ts": "Remoção de segredos no log de auditoria",
-      "queue-service.test.ts": "Fila SQS/local: envio, visibilidade, DLQ", "vision-service.test.ts": "IA por foto: prompt, casamento com o catálogo, erros do provedor", "simulation-service.test.ts": "Ponte com o serviço de simulação e validação de cenários", "lot-status-job.test.ts": "Job do status dos lotes: intervalo, falhas, sem sobreposição", "alerts-inventory.test.ts": "Alertas de inventário no sino (falhou/pendências/lido)", "queue-sqs-integration.test.ts": "Driver SQS contra servidor SQS real (opcional)",
+      "queue-service.test.ts": "Fila SQS/local: envio, visibilidade, DLQ", "vision-service.test.ts": "IA por foto: prompt, casamento com o catálogo, erros do provedor", "simulation-service.test.ts": "Ponte com o serviço de simulação e validação de cenários", "lot-status-job.test.ts": "Job do status dos lotes: intervalo, falhas, sem sobreposição", "alerts-inventory.test.ts": "Alertas de inventário no sino (falhou/pendências/lido)", "queue-azure-integration.test.ts": "Driver SQS contra servidor SQS real (opcional)",
       "inventory-processing.test.ts": "Ajuste de estoque: idempotência, lotes, pendências", "inventory-worker.test.ts": "Worker: retry, falha final, mensagem inválida",
       "inventory-queue-flow.test.ts": "Concluir inventário enfileira; reprocessamento", "inventory-async-e2e.test.ts": "Inventário assíncrono ponta a ponta (banco real)"}
 d.table(["Arquivo", "Escopo", "Casos"], [[f"`{s['file']}`", SC.get(s["file"], ""), s["tests"]] for s in tests["suites"]] + [["**Total**", "", f"**{tests['total']}**"]], ["", "", "c"])
 d.code('''npm test                # suíte completa (--runInBand)
 npm run test:coverage   # relatório em coverage/
-SQS_TEST_ENDPOINT=http://127.0.0.1:9324 npm test -- queue-sqs-integration   # teste opcional do driver SQS''')
+SQS_TEST_ENDPOINT=http://127.0.0.1:9324 npm test -- queue-azure-integration   # teste opcional do driver SQS''')
 
 # 12 ─────────────────────────────────────────────────────────────────────────
 d.section("12", "Operação e execução", "Variáveis, scripts, Swagger")

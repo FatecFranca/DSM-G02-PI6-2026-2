@@ -1,24 +1,20 @@
 import crypto from 'crypto'
-import {
-  DeleteMessageCommand,
-  ReceiveMessageCommand,
-  SendMessageCommand,
-  SQSClient,
-} from '@aws-sdk/client-sqs'
+import { QueueClient, QueueServiceClient } from '@azure/storage-queue'
 import { AppError } from '../middleware/error.middleware'
 
 /**
  * Mensageria (fila de processamento assíncrono).
  *
  * Dois drivers, escolhidos por QUEUE_DRIVER:
- *  - `sqs`   → Amazon SQS (fila padrão + DLQ configurada na própria fila, ver scripts/setup-queues.ts).
+ *  - `azure` → Azure Queue Storage (fila + "poison queue" `<fila>-poison` para as mensagens que esgotaram as tentativas,
+ *              ver scripts/setup-queues.ts). O Azure não tem DLQ nativa nem long polling: ambos são feitos aqui.
  *  - `local` → fila em memória do processo, com visibilidade/reentrega/DLQ simuladas. Só desenvolvimento e testes:
  *              as mensagens se perdem se o processo reiniciar.
  *
  * A entrega é *pelo menos uma vez*: o consumidor precisa ser idempotente e só apagar a mensagem depois de processar.
  */
 
-export type QueueDriverName = 'sqs' | 'local'
+export type QueueDriverName = 'azure' | 'local'
 
 export interface QueueMessage {
   id: string
@@ -31,13 +27,11 @@ export interface QueueMessage {
 
 export interface QueueConfig {
   driver: QueueDriverName
-  queueUrl: string
-  region: string
-  accessKeyId: string
-  secretAccessKey: string
-  /** Só para credenciais temporárias (ex.: AWS Academy / STS). */
-  sessionToken?: string
-  endpoint?: string
+  /** Cadeia de conexão da conta de armazenamento do Azure (AZURE_STORAGE_CONNECTION_STRING). */
+  connectionString: string
+  queueName: string
+  /** Fila para onde vão as mensagens que estouraram `maxReceives`. */
+  poisonQueueName: string
   visibilityTimeoutSeconds: number
   maxReceives: number
   worker: 'embedded' | 'off'
@@ -49,44 +43,65 @@ const num = (value: string | undefined, fallback: number): number => {
 }
 
 export function getQueueConfig(env: NodeJS.ProcessEnv = process.env): QueueConfig {
+  const queueName = env.AZURE_QUEUE_NAME || 'stockiq-inventory'
   return {
-    driver: env.QUEUE_DRIVER === 'sqs' ? 'sqs' : 'local',
-    queueUrl: env.SQS_INVENTORY_QUEUE_URL ?? '',
-    // Mesmas credenciais/região do S3 por padrão (um único usuário IAM), com opção de separar.
-    region: env.SQS_REGION || env.S3_REGION || '',
-    accessKeyId: env.SQS_ACCESS_KEY_ID || env.S3_ACCESS_KEY_ID || '',
-    secretAccessKey: env.SQS_SECRET_ACCESS_KEY || env.S3_SECRET_ACCESS_KEY || '',
-    sessionToken: env.SQS_SESSION_TOKEN || env.S3_SESSION_TOKEN || undefined,
-    endpoint: env.SQS_ENDPOINT || undefined,
+    driver: env.QUEUE_DRIVER === 'azure' ? 'azure' : 'local',
+    connectionString: env.AZURE_STORAGE_CONNECTION_STRING ?? '',
+    queueName,
+    poisonQueueName: env.AZURE_POISON_QUEUE_NAME || `${queueName}-poison`,
     visibilityTimeoutSeconds: num(env.QUEUE_VISIBILITY_TIMEOUT_SECONDS, 120),
     maxReceives: num(env.QUEUE_MAX_RECEIVES, 3),
     worker: env.QUEUE_WORKER === 'off' ? 'off' : 'embedded',
   }
 }
 
-// ── Driver SQS ──────────────────────────────────────────────────────────────
+// ── Driver Azure Queue Storage ──────────────────────────────────────────────
 
-let sqsClient: { signature: string; client: SQSClient } | undefined
-
-export function createSqsClient(cfg: Pick<QueueConfig, 'region' | 'accessKeyId' | 'secretAccessKey' | 'sessionToken' | 'endpoint'>): SQSClient {
-  const missing = [
-    !cfg.region && 'SQS_REGION (ou S3_REGION)',
-    !cfg.accessKeyId && 'SQS_ACCESS_KEY_ID (ou S3_ACCESS_KEY_ID)',
-    !cfg.secretAccessKey && 'SQS_SECRET_ACCESS_KEY (ou S3_SECRET_ACCESS_KEY)',
-  ].filter(Boolean)
-  if (missing.length) throw new AppError(`Queue not configured: set ${missing.join(', ')}`, 503)
-  return new SQSClient({
-    region: cfg.region,
-    endpoint: cfg.endpoint,
-    credentials: { accessKeyId: cfg.accessKeyId, secretAccessKey: cfg.secretAccessKey, sessionToken: cfg.sessionToken },
-  })
+interface AzureQueues {
+  signature: string
+  main: QueueClient
+  poison: QueueClient
+  ready: Promise<void>
 }
 
-function getSqs(cfg: QueueConfig): SQSClient {
-  if (!cfg.queueUrl) throw new AppError('Queue not configured: set SQS_INVENTORY_QUEUE_URL', 503)
-  const signature = [cfg.region, cfg.accessKeyId, cfg.sessionToken, cfg.endpoint].join('|')
-  if (sqsClient?.signature !== signature) sqsClient = { signature, client: createSqsClient(cfg) }
-  return sqsClient.client
+let azure: AzureQueues | undefined
+
+export function createAzureQueues(cfg: Pick<QueueConfig, 'connectionString' | 'queueName' | 'poisonQueueName'>): { main: QueueClient; poison: QueueClient } {
+  if (!cfg.connectionString) throw new AppError('Queue not configured: set AZURE_STORAGE_CONNECTION_STRING', 503)
+  let service: QueueServiceClient
+  try {
+    service = QueueServiceClient.fromConnectionString(cfg.connectionString)
+  } catch {
+    throw new AppError('Queue not configured: AZURE_STORAGE_CONNECTION_STRING is invalid', 503)
+  }
+  return { main: service.getQueueClient(cfg.queueName), poison: service.getQueueClient(cfg.poisonQueueName) }
+}
+
+/** Cria as filas na primeira utilização (idempotente), para a aplicação funcionar sem passo manual de setup. */
+export async function ensureAzureQueues(queues: { main: QueueClient; poison: QueueClient }): Promise<void> {
+  await Promise.all([queues.main.createIfNotExists(), queues.poison.createIfNotExists()])
+}
+
+async function getAzure(cfg: QueueConfig): Promise<AzureQueues> {
+  const signature = [cfg.connectionString, cfg.queueName, cfg.poisonQueueName].join('|')
+  if (azure?.signature !== signature) {
+    const queues = createAzureQueues(cfg)
+    const ready = ensureAzureQueues(queues)
+    // Se a criação falhar (rede/credencial), a próxima chamada tenta de novo em vez de ficar com a falha em cache.
+    ready.catch(() => { if (azure?.ready === ready) azure = undefined })
+    azure = { signature, ...queues, ready }
+  }
+  const current = azure
+  await current.ready
+  return current
+}
+
+/** O recibo do Azure é o par (messageId, popReceipt); o `messageId` é um GUID, então o primeiro ":" separa os dois. */
+const toReceipt = (messageId: string, popReceipt: string) => `${messageId}:${popReceipt}`
+function fromReceipt(receiptHandle: string): { messageId: string; popReceipt: string } {
+  const index = receiptHandle.indexOf(':')
+  if (index <= 0) throw new AppError('Invalid queue receipt', 400)
+  return { messageId: receiptHandle.slice(0, index), popReceipt: receiptHandle.slice(index + 1) }
 }
 
 // ── Driver local (em memória) ───────────────────────────────────────────────
@@ -125,9 +140,10 @@ const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 export async function sendMessage(body: object): Promise<string> {
   const cfg = getQueueConfig()
   const payload = JSON.stringify(body)
-  if (cfg.driver === 'sqs') {
-    const result = await getSqs(cfg).send(new SendMessageCommand({ QueueUrl: cfg.queueUrl, MessageBody: payload }))
-    return result.MessageId ?? ''
+  if (cfg.driver === 'azure') {
+    const { main } = await getAzure(cfg)
+    const result = await main.sendMessage(payload)
+    return result.messageId
   }
   const entry: LocalEntry = { id: crypto.randomUUID(), body: payload, receiveCount: 0, invisibleUntil: 0 }
   local.messages.push(entry)
@@ -136,23 +152,28 @@ export async function sendMessage(body: object): Promise<string> {
 
 export async function receiveMessages(options: { max?: number; waitSeconds?: number } = {}): Promise<QueueMessage[]> {
   const cfg = getQueueConfig()
-  const max = Math.min(Math.max(options.max ?? 1, 1), 10)
+  const max = Math.min(Math.max(options.max ?? 1, 1), 32)
   const waitSeconds = Math.min(Math.max(options.waitSeconds ?? 0, 0), 20)
 
-  if (cfg.driver === 'sqs') {
-    const result = await getSqs(cfg).send(new ReceiveMessageCommand({
-      QueueUrl: cfg.queueUrl,
-      MaxNumberOfMessages: max,
-      WaitTimeSeconds: waitSeconds,
-      VisibilityTimeout: cfg.visibilityTimeoutSeconds,
-      MessageSystemAttributeNames: ['ApproximateReceiveCount'],
-    }))
-    return (result.Messages ?? []).map((m) => ({
-      id: m.MessageId ?? '',
-      body: m.Body ?? '',
-      receiptHandle: m.ReceiptHandle ?? '',
-      receiveCount: Number(m.Attributes?.ApproximateReceiveCount ?? 1),
-    }))
+  if (cfg.driver === 'azure') {
+    const { main, poison } = await getAzure(cfg)
+    // Azure Queue Storage não tem long polling: consulta a cada segundo até chegar mensagem ou acabar a espera.
+    const deadline = Date.now() + waitSeconds * 1000
+    for (;;) {
+      const result = await main.receiveMessages({ numberOfMessages: max, visibilityTimeout: cfg.visibilityTimeoutSeconds })
+      const ready: QueueMessage[] = []
+      for (const m of result.receivedMessageItems) {
+        if (m.dequeueCount > cfg.maxReceives) {
+          // Já foi entregue `maxReceives` vezes sem sucesso: vai para a "poison queue" (equivalente à DLQ).
+          await poison.sendMessage(m.messageText)
+          await main.deleteMessage(m.messageId, m.popReceipt)
+          continue
+        }
+        ready.push({ id: m.messageId, body: m.messageText, receiptHandle: toReceipt(m.messageId, m.popReceipt), receiveCount: m.dequeueCount })
+      }
+      if (ready.length > 0 || Date.now() >= deadline) return ready
+      await sleep(Math.min(1000, Math.max(deadline - Date.now(), 0)))
+    }
   }
 
   const deadline = Date.now() + waitSeconds * 1000
@@ -173,8 +194,9 @@ export async function receiveMessages(options: { max?: number; waitSeconds?: num
 
 export async function deleteMessage(receiptHandle: string): Promise<void> {
   const cfg = getQueueConfig()
-  if (cfg.driver === 'sqs') {
-    await getSqs(cfg).send(new DeleteMessageCommand({ QueueUrl: cfg.queueUrl, ReceiptHandle: receiptHandle }))
+  if (cfg.driver === 'azure') {
+    const { messageId, popReceipt } = fromReceipt(receiptHandle)
+    await (await getAzure(cfg)).main.deleteMessage(messageId, popReceipt)
     return
   }
   const index = local.messages.findIndex((entry) => entry.receipt === receiptHandle)
@@ -190,9 +212,9 @@ export function localQueueState(): { waiting: number; inFlight: number; dead: nu
   }
 }
 
-/** Só para testes: zera o driver local e descarta o cliente SQS em cache. */
+/** Só para testes: zera o driver local e descarta o cliente Azure em cache. */
 export function resetQueueForTests(): void {
   local.messages = []
   local.dead = []
-  sqsClient = undefined
+  azure = undefined
 }

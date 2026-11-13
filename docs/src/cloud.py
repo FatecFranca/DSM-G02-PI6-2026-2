@@ -186,7 +186,7 @@ d.table(["Verificação", "Como foi feita", "Resultado"], [
     ["Migrations do zero", "`prisma migrate deploy` em banco vazio (5 migrations)", ("tag", "ok", "Aplicadas")],
     ["Driver S3", f"Comandos `PutObject`/`DeleteObject`/listagem simulados; URL pré-assinada gerada localmente ({T['storage-service.test.ts']} testes)", ("tag", "ok", "Passou")],
     ["Fluxo de upload de foto", f"Ordem upload → banco → remoção da antiga, falha de banco, limites e tipos ({T['product-image-service.test.ts']} testes)", ("tag", "ok", "Passou")],
-    ["Driver SQS", f"Contra ElasticMQ: envio, long polling, reentrega por visibilidade e DLQ ({T['queue-sqs-integration.test.ts']} testes)", ("tag", "ok", "Passou")],
+    ["Driver SQS", f"Contra ElasticMQ: envio, long polling, reentrega por visibilidade e DLQ ({T['queue-azure-integration.test.ts']} testes)", ("tag", "ok", "Passou")],
     ["Fila local", f"Visibilidade, reentrega e DLQ simuladas ({T['queue-service.test.ts']} testes)", ("tag", "ok", "Passou")],
     ["Processamento e worker", f"Idempotência, lotes, pendência manual, retry ({T['inventory-processing.test.ts'] + T['inventory-worker.test.ts'] + T['inventory-queue-flow.test.ts']} testes)", ("tag", "ok", "Passou")],
     ["Inventário ponta a ponta", f"Concluir → fila → worker → estoque, com banco real; reprocessamento ({T['inventory-async-e2e.test.ts']} testes)", ("tag", "ok", "Passou")],

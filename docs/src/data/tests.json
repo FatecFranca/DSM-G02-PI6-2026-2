@@ -80,7 +80,7 @@
    "tests": 10
   },
   {
-   "file": "queue-sqs-integration.test.ts",
+   "file": "queue-azure-integration.test.ts",
    "tests": 2
   },
   {

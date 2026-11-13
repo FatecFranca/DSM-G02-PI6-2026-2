@@ -1,4 +1,4 @@
-import { SQSClient } from '@aws-sdk/client-sqs'
+import { QueueClient } from '@azure/storage-queue'
 import { AppError } from '../src/middleware/error.middleware'
 import * as queue from '../src/services/queue.service'
 
@@ -8,14 +8,27 @@ function useLocal() {
   process.env.QUEUE_MAX_RECEIVES = '3'
 }
 
-function useSqs() {
-  process.env.QUEUE_DRIVER = 'sqs'
-  process.env.SQS_INVENTORY_QUEUE_URL = 'https://sqs.us-east-2.amazonaws.com/123456789012/stockiq-inventory'
-  process.env.S3_REGION = 'us-east-2'
-  process.env.S3_ACCESS_KEY_ID = 'AKIATESTE'
-  process.env.S3_SECRET_ACCESS_KEY = 'segredo'
-  delete process.env.SQS_REGION
-  delete process.env.SQS_ENDPOINT
+// Cadeia de conexão fictícia (chave em base64 válida): nenhuma chamada de rede é feita, o QueueClient é mockado.
+const CONNECTION_STRING =
+  'DefaultEndpointsProtocol=https;AccountName=contateste;AccountKey=c2VncmVkbw==;EndpointSuffix=core.windows.net'
+
+function useAzure() {
+  process.env.QUEUE_DRIVER = 'azure'
+  process.env.AZURE_STORAGE_CONNECTION_STRING = CONNECTION_STRING
+  process.env.AZURE_QUEUE_NAME = 'fila-teste'
+  delete process.env.AZURE_POISON_QUEUE_NAME
+}
+
+function mockAzure(overrides: Partial<Record<'send' | 'receive' | 'delete', jest.Mock>> = {}) {
+  const create = jest.spyOn(QueueClient.prototype, 'createIfNotExists').mockResolvedValue({ succeeded: true } as never)
+  const send = overrides.send ?? jest.fn().mockResolvedValue({ messageId: 'm-1' })
+  const receive = overrides.receive ?? jest.fn().mockResolvedValue({ receivedMessageItems: [] })
+  const del = overrides.delete ?? jest.fn().mockResolvedValue({})
+  // Registra também em qual fila (pelo nome) cada chamada caiu.
+  jest.spyOn(QueueClient.prototype, 'sendMessage').mockImplementation(function (this: QueueClient, text: string) { return send(this.name, text) } as never)
+  jest.spyOn(QueueClient.prototype, 'receiveMessages').mockImplementation(function (this: QueueClient, options: unknown) { return receive(this.name, options) } as never)
+  jest.spyOn(QueueClient.prototype, 'deleteMessage').mockImplementation(function (this: QueueClient, id: string, pop: string) { return del(this.name, id, pop) } as never)
+  return { create, send, receive, delete: del }
 }
 
 beforeEach(() => {
@@ -74,55 +87,88 @@ describe('driver local', () => {
   })
 })
 
-describe('driver SQS', () => {
-  it('envia o corpo em JSON para a fila configurada', async () => {
-    useSqs()
-    const send = jest.spyOn(SQSClient.prototype, 'send').mockResolvedValue({ MessageId: 'm-1' } as never)
+describe('driver Azure Queue Storage', () => {
+  beforeEach(useAzure)
+
+  it('cria a fila e a poison queue no primeiro uso e envia o corpo em JSON', async () => {
+    const mocks = mockAzure()
     expect(await queue.sendMessage({ inventoryId: 'i1' })).toBe('m-1')
-    const input = (send.mock.calls[0][0] as unknown as { input: Record<string, unknown> }).input
-    expect(input).toEqual({
-      QueueUrl: 'https://sqs.us-east-2.amazonaws.com/123456789012/stockiq-inventory',
-      MessageBody: '{"inventoryId":"i1"}',
+    expect(await queue.sendMessage({ inventoryId: 'i2' })).toBe('m-1')
+    expect(mocks.create).toHaveBeenCalledTimes(2) // principal + poison, só uma vez
+    expect(mocks.send).toHaveBeenNthCalledWith(1, 'fila-teste', '{"inventoryId":"i1"}')
+  })
+
+  it('recebe com visibilidade configurada e devolve a contagem de entregas', async () => {
+    const mocks = mockAzure({
+      receive: jest.fn().mockResolvedValue({
+        receivedMessageItems: [{ messageId: 'm-1', popReceipt: 'pop/+=', messageText: '{"x":1}', dequeueCount: 2 }],
+      }),
     })
+    const messages = await queue.receiveMessages({ max: 50, waitSeconds: 0 })
+    expect(messages).toEqual([{ id: 'm-1', body: '{"x":1}', receiptHandle: 'm-1:pop/+=', receiveCount: 2 }])
+    expect(mocks.receive).toHaveBeenCalledWith('fila-teste', { numberOfMessages: 32, visibilityTimeout: 120 })
   })
 
-  it('recebe com long polling, visibilidade e contagem de entregas', async () => {
-    useSqs()
-    const send = jest.spyOn(SQSClient.prototype, 'send').mockResolvedValue({
-      Messages: [{ MessageId: 'm-1', Body: '{"x":1}', ReceiptHandle: 'rh-1', Attributes: { ApproximateReceiveCount: '2' } }],
-    } as never)
-    const messages = await queue.receiveMessages({ max: 50, waitSeconds: 30 })
-    expect(messages).toEqual([{ id: 'm-1', body: '{"x":1}', receiptHandle: 'rh-1', receiveCount: 2 }])
-    const input = (send.mock.calls[0][0] as unknown as { input: Record<string, unknown> }).input
-    expect(input).toMatchObject({ MaxNumberOfMessages: 10, WaitTimeSeconds: 20, VisibilityTimeout: 120 })
+  it('espera (polling) até a mensagem chegar ou o tempo acabar', async () => {
+    const receive = jest.fn()
+      .mockResolvedValueOnce({ receivedMessageItems: [] })
+      .mockResolvedValueOnce({ receivedMessageItems: [{ messageId: 'm-2', popReceipt: 'p', messageText: '{}', dequeueCount: 1 }] })
+    mockAzure({ receive })
+    const messages = await queue.receiveMessages({ waitSeconds: 5 })
+    expect(messages.map((m) => m.id)).toEqual(['m-2'])
+    expect(receive).toHaveBeenCalledTimes(2)
+
+    mockAzure({ receive: jest.fn().mockResolvedValue({ receivedMessageItems: [] }) })
+    expect(await queue.receiveMessages({ waitSeconds: 0 })).toEqual([])
   })
 
-  it('apaga pelo receipt handle', async () => {
-    useSqs()
-    const send = jest.spyOn(SQSClient.prototype, 'send').mockResolvedValue({} as never)
-    await queue.deleteMessage('rh-9')
-    expect((send.mock.calls[0][0] as unknown as { input: Record<string, unknown> }).input).toMatchObject({ ReceiptHandle: 'rh-9' })
+  it('move para a poison queue a mensagem que passou de QUEUE_MAX_RECEIVES', async () => {
+    const mocks = mockAzure({
+      receive: jest.fn().mockResolvedValue({
+        receivedMessageItems: [
+          { messageId: 'velha', popReceipt: 'p1', messageText: '{"old":1}', dequeueCount: 4 },
+          { messageId: 'nova', popReceipt: 'p2', messageText: '{"new":1}', dequeueCount: 3 },
+        ],
+      }),
+    })
+    const messages = await queue.receiveMessages({ max: 5 })
+    expect(messages.map((m) => m.id)).toEqual(['nova']) // 3 de 3 ainda é entregue
+    expect(mocks.send).toHaveBeenCalledWith('fila-teste-poison', '{"old":1}')
+    expect(mocks.delete).toHaveBeenCalledWith('fila-teste', 'velha', 'p1')
   })
 
-  it('503 quando faltam a URL da fila ou as credenciais', async () => {
-    useSqs()
-    process.env.SQS_INVENTORY_QUEUE_URL = ''
-    await expect(queue.sendMessage({})).rejects.toMatchObject({ statusCode: 503 })
+  it('apaga pelo recibo (messageId + popReceipt)', async () => {
+    const mocks = mockAzure()
+    await queue.deleteMessage('m-9:pop/com:dois-pontos==')
+    expect(mocks.delete).toHaveBeenCalledWith('fila-teste', 'm-9', 'pop/com:dois-pontos==')
+    await expect(queue.deleteMessage('sem-separador')).rejects.toMatchObject({ statusCode: 400 })
+  })
 
-    useSqs()
-    queue.resetQueueForTests()
-    process.env.S3_ACCESS_KEY_ID = ''
+  it('503 quando faltam a cadeia de conexão ou ela é inválida', async () => {
+    process.env.AZURE_STORAGE_CONNECTION_STRING = ''
     const err = await queue.sendMessage({}).catch((e) => e)
     expect(err).toBeInstanceOf(AppError)
-    expect(err.message).toContain('SQS_ACCESS_KEY_ID')
+    expect(err.statusCode).toBe(503)
+    expect(err.message).toContain('AZURE_STORAGE_CONNECTION_STRING')
+
+    queue.resetQueueForTests()
+    process.env.AZURE_STORAGE_CONNECTION_STRING = 'isso-nao-e-uma-cadeia'
+    await expect(queue.sendMessage({})).rejects.toMatchObject({ statusCode: 503 })
   })
 
-  it('usa as credenciais do S3 como padrão e aceita SQS_* para separar', () => {
-    useSqs()
-    expect(queue.getQueueConfig()).toMatchObject({ region: 'us-east-2', accessKeyId: 'AKIATESTE' })
-    process.env.SQS_REGION = 'sa-east-1'
-    process.env.SQS_ACCESS_KEY_ID = 'OUTRA'
-    expect(queue.getQueueConfig()).toMatchObject({ region: 'sa-east-1', accessKeyId: 'OUTRA' })
-    delete process.env.SQS_ACCESS_KEY_ID
+  it('tenta criar as filas de novo depois de uma falha', async () => {
+    const create = jest.spyOn(QueueClient.prototype, 'createIfNotExists')
+      .mockRejectedValueOnce(new Error('rede fora'))
+      .mockResolvedValue({ succeeded: true } as never)
+    jest.spyOn(QueueClient.prototype, 'sendMessage').mockResolvedValue({ messageId: 'm-3' } as never)
+    await expect(queue.sendMessage({})).rejects.toThrow('rede fora')
+    expect(await queue.sendMessage({})).toBe('m-3')
+    expect(create.mock.calls.length).toBeGreaterThanOrEqual(3)
+  })
+
+  it('usa <fila>-poison por padrão e aceita um nome próprio', () => {
+    expect(queue.getQueueConfig()).toMatchObject({ driver: 'azure', queueName: 'fila-teste', poisonQueueName: 'fila-teste-poison' })
+    process.env.AZURE_POISON_QUEUE_NAME = 'mortas'
+    expect(queue.getQueueConfig().poisonQueueName).toBe('mortas')
   })
 })

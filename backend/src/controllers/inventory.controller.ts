@@ -116,7 +116,7 @@ export async function create(req: Request, res: Response, next: NextFunction): P
  *     responses:
  *       200:
  *         description: >
- *           Updated. Ao concluir (`review` → `completed`) o ajuste de estoque é enfileirado (SQS) e executado por um worker:
+ *           Updated. Ao concluir (`review` → `completed`) o ajuste de estoque é enfileirado (Azure Queue Storage) e executado por um worker:
  *           acompanhe `jobStatus` (`pending`, `processing`, `completed`, `partial`, `failed`), `adjustedItems` e `failedItems`.
  */
 export async function update(req: Request, res: Response, next: NextFunction): Promise<void> {

@@ -151,10 +151,10 @@ Definidas em `.env` (veja `.env.example`):
 | `STORAGE_URL_TTL_SECONDS` | Validade das URLs assinadas devolvidas pela API (padrão `3600`) |
 | `STORAGE_MAX_IMAGE_MB` | Tamanho máximo de cada foto (padrão `5`) |
 | `STORAGE_ORPHAN_GRACE_DAYS` | Carência antes de `npm run storage:cleanup` apagar fotos sem produto (padrão `7`) |
-| `QUEUE_DRIVER` | `sqs` (Amazon SQS) ou `local` (fila em memória, só desenvolvimento/testes). Padrão: `local` |
-| `SQS_INVENTORY_QUEUE_URL` | URL da fila de inventário (impressa por `npm run queues:setup`) |
-| `SQS_REGION`, `SQS_ACCESS_KEY_ID`, `SQS_SECRET_ACCESS_KEY`, `SQS_SESSION_TOKEN`, `SQS_ENDPOINT` | Credenciais/região/endpoint do SQS. Por padrão reaproveitam as variáveis `S3_*`. O token é só para credenciais temporárias (AWS Academy) |
-| `QUEUE_VISIBILITY_TIMEOUT_SECONDS`, `QUEUE_MAX_RECEIVES` | Prazo de visibilidade (padrão `120`) e tentativas antes da DLQ (padrão `3`; igual ao `maxReceiveCount` da fila) |
+| `QUEUE_DRIVER` | `azure` (Azure Queue Storage) ou `local` (fila em memória, só desenvolvimento/testes). Padrão: `local` |
+| `AZURE_STORAGE_CONNECTION_STRING` | Cadeia de conexão da conta de armazenamento (Portal Azure → Chaves de acesso). Segredo: só no `.env`, nunca no repositório |
+| `AZURE_QUEUE_NAME`, `AZURE_POISON_QUEUE_NAME` | Nome da fila de inventário (padrão `stockiq-inventory`) e da *poison queue* (padrão `<fila>-poison`) |
+| `QUEUE_VISIBILITY_TIMEOUT_SECONDS`, `QUEUE_MAX_RECEIVES` | Prazo de visibilidade (padrão `120`) e tentativas antes da poison queue (padrão `3`) |
 | `QUEUE_WORKER` | `embedded` (padrão: a API também consome a fila) ou `off` (use `npm run worker` em outro processo) |
 | `INVENTORY_BATCH_SIZE` | Itens por lote no ajuste de estoque (padrão `25`) |
 | `OPENAI_API_KEY` | Chave da OpenAI para identificar produtos por foto (só no servidor). Sem ela, `POST /api/ai/identify-product` responde 503 |
@@ -173,22 +173,24 @@ Definidas em `.env` (veja `.env.example`):
 - **Órfãos:** `npm run storage:cleanup -- --dry-run` lista (e sem `--dry-run` apaga) objetos que nenhum produto referencia e que passaram da carência.
 - **Migration:** `20261019120000_add_product_image_key` adiciona a coluna `imageKey`; aplique com `npm run prisma:migrate` (dev) ou `npx prisma migrate deploy`.
 
-## Mensageria: ajuste de estoque do inventário (SQS)
+## Mensageria: ajuste de estoque do inventário (Azure Queue Storage)
 
 Concluir um inventário (`review → completed`) não ajusta mais o estoque dentro da requisição: a API grava `jobStatus = pending`, **publica uma mensagem na fila** e responde na hora. Um **worker** consome a fila e registra, para cada item com divergência, uma movimentação `inventory` (o estoque passa a ser a quantidade contada). Assim a operação pesada não disputa recursos com as requisições HTTP.
 
 ```
-PATCH /api/inventory/:id {status: completed} ─► grava jobStatus=pending ─► SQS (stockiq-inventory) ─► worker ─► movimentações + estoque
-                                                                              └─ falhou N vezes ─► DLQ (stockiq-inventory-dlq)
+PATCH /api/inventory/:id {status: completed} ─► grava jobStatus=pending ─► Azure Queue (fila-pi) ─► worker ─► movimentações + estoque
+                                                                              └─ falhou N vezes ─► poison queue (fila-pi-poison)
 ```
 
 - **Estados do job** (`jobStatus`): `pending` → `processing` → `completed`; `partial` (algum item precisa de ajuste manual, ex.: produto em vários endereços/lotes) ou `failed`. Progresso em `adjustedItems`/`failedItems`; o motivo por item fica em `adjustmentError`.
 - **Entrega pelo menos uma vez, processamento idempotente:** cada item só é ajustado se `adjustedAt` for nulo, e essa marca é gravada na mesma transação da movimentação — reentregas e reprocessamentos não duplicam ajustes.
-- **Falhas:** erro de regra de negócio num item não derruba o job (vira pendência manual). Erro inesperado (ex.: banco fora do ar) devolve a mensagem à fila; após `QUEUE_MAX_RECEIVES` tentativas o job vira `failed` e a fila move a mensagem para a DLQ. Mensagem malformada é descartada.
+- **Falhas:** erro de regra de negócio num item não derruba o job (vira pendência manual). Erro inesperado (ex.: banco fora do ar) devolve a mensagem à fila; após `QUEUE_MAX_RECEIVES` tentativas o job vira `failed` e o driver move a mensagem para a poison queue na leitura seguinte. Mensagem malformada é descartada.
 - **Reprocessar:** `POST /api/inventory/:id/reprocess` (admin/supervisor) reenfileira jobs `failed`, `partial` ou travados há mais de 15 min.
 - **Onde roda o worker:** por padrão dentro da API (`QUEUE_WORKER=embedded`). Em produção, rode `npm run worker` (ou `npm run worker:start` após o build) em outro processo e use `QUEUE_WORKER=off` na API; é possível escalar vários workers (consumidores concorrentes).
-- **Criar as filas:** `npm run queues:setup` cria `<prefixo>-inventory` e `<prefixo>-inventory-dlq` (com redrive) e imprime as variáveis. O usuário IAM precisa de `sqs:CreateQueue`, `sqs:GetQueueUrl`, `sqs:GetQueueAttributes` e `sqs:SetQueueAttributes` para o setup, e de `sqs:SendMessage`, `sqs:ReceiveMessage`, `sqs:DeleteMessage` e `sqs:GetQueueAttributes` para a aplicação.
-- **Sem AWS:** `QUEUE_DRIVER=local` usa uma fila em memória (mensagens se perdem ao reiniciar). Para testar o driver SQS localmente: `docker run -d --rm -p 127.0.0.1:9324:9324 softwaremill/elasticmq-native` e `SQS_TEST_ENDPOINT=http://127.0.0.1:9324 npm test -- queue-sqs-integration`.
+- **Azure não tem DLQ nem long polling nativos:** o driver implementa os dois — a mensagem entregue mais de `QUEUE_MAX_RECEIVES` vezes é copiada para `<fila>-poison` e apagada da principal; a espera (`waitSeconds`) é um polling de 1 s. O recibo de exclusão é o par `messageId:popReceipt`.
+- **Criar as filas:** a aplicação cria a fila e a poison queue no primeiro uso (`createIfNotExists`); `npm run queues:setup` faz o mesmo antecipadamente e mostra quantas mensagens há em cada uma. A chave da conta de armazenamento cobre todas as operações.
+- **Sem Azure:** `QUEUE_DRIVER=local` usa uma fila em memória (mensagens se perdem ao reiniciar). Para testar o driver localmente com o emulador Azurite: `docker run -d --rm -p 127.0.0.1:10001:10001 mcr.microsoft.com/azure-storage/azurite azurite-queue --queueHost 0.0.0.0 --skipApiVersionCheck` e `AZURE_TEST_CONNECTION_STRING="<cadeia do Azurite>" npm test -- queue-azure-integration` (a cadeia padrão do Azurite está no cabeçalho do teste).
+- **Dependência:** `package.json` fixa `https-proxy-agent`/`http-proxy-agent` na v7 (`overrides`) porque a v9, puxada pelo SDK do Azure, é só ESM e quebra o Jest.
 - **Migration:** `20261019150000_inventory_async_processing` (status do job e marcas por item).
 - Inventários concluídos antes deste recurso têm `jobStatus = null` e **não** são reprocessados (seus ajustes nunca foram aplicados ao estoque).
 
@@ -298,7 +300,7 @@ Os módulos abaixo correspondem às rotas montadas pela aplicação. Consulte `/
 | Armazém | `/api/warehouse` | Endereços, estatísticas e CRUD |
 | Movimentações | `/api/movements` | Consulta paginada e registro de operações |
 | Lotes | `/api/lots` | Consulta, alertas de validade e manutenção |
-| Inventário | `/api/inventory` | Planejamento, itens, contagem, transições de estado e ajuste de estoque assíncrono (fila SQS) |
+| Inventário | `/api/inventory` | Planejamento, itens, contagem, transições de estado e ajuste de estoque assíncrono (fila Azure) |
 | Dashboard | `/api/dashboard` | Indicadores, tendências, categorias e produtos |
 | Alertas | `/api/alerts` | Consulta de alertas e marcação de leitura |
 | Auditoria | `/api/audit` | Consulta paginada de registros |
@@ -319,7 +321,7 @@ Os módulos abaixo correspondem às rotas montadas pela aplicação. Consulte `/
 | IA por foto (OpenAI) | Implementada e testada com respostas simuladas do provedor; requer `OPENAI_API_KEY` no servidor para uso real |
 | Simulação de vendas | Implementada; requer o serviço `ml-service` no ar (`npm run ml:service`) |
 | Status dos lotes | Atualizado por job periódico (e a cada leitura) |
-| Mensageria (SQS) | Implementada (fila, worker, DLQ, reprocessamento) e validada contra um servidor SQS compatível (ElasticMQ); a fila na conta AWS depende de um usuário IAM com permissões de SQS (`npm run queues:setup`) |
+| Mensageria (Azure Queue Storage) | Implementada (fila, worker, poison queue, reprocessamento); driver validado contra o emulador Azurite e conexão com a fila `fila-pi` da conta `armazenamentopi` conferida (leitura). Fluxo de inventário ponta a ponta na fila real ainda não exercitado |
 | EC2/Load Balancer e exportação para data lake | Planejados, não implementados neste repositório |
 
 ## Próximos passos
@@ -327,5 +329,5 @@ Os módulos abaixo correspondem às rotas montadas pela aplicação. Consulte `/
 1. Aplicar e verificar as migrations em banco dedicado antes de atualizar qualquer ambiente compartilhado;
 2. Ampliar os testes de integração para fluxos sem cobertura e continuar executando o CI com PostgreSQL;
 3. Revisar e paginar relatórios que ainda retornam conjuntos completos à medida que os volumes reais forem conhecidos;
-4. Criar a fila SQS na conta AWS do projeto (`npm run queues:setup`) e rodar o worker em processo separado (`QUEUE_WORKER=off` na API);
+4. Exercitar a conclusão de inventário ponta a ponta na fila Azure real e rodar o worker em processo separado (`QUEUE_WORKER=off` na API);
 5. Implementar exportação para data lake e o restante da infraestrutura AWS (EC2, Load Balancer) quando priorizados e provisionados.
