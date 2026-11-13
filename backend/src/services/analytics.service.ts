@@ -146,6 +146,70 @@ export async function getAnalytics(historyMonths = 6) {
   }
 }
 
+/** Days of exits fed to the model that backs the per-product forecast (longer history = more reliable weekday pattern). */
+const PRODUCT_FORECAST_HISTORY_DAYS = 365
+const RECENT_DAYS = 28
+
+/**
+ * Per-product daily demand forecast for the "Previsão de Vendas" screen: the real exits of the last 28 days, the
+ * forecast for the next `horizon` days (mean + 80% band) and the product's current stock, so the UI can project
+ * coverage and reorder dates for the actual catalogue.
+ */
+export async function getProductForecasts(horizon = 28) {
+  const todayStart = new Date()
+  todayStart.setHours(0, 0, 0, 0)
+  const asOf = ymd(new Date(todayStart.getTime() - 86_400_000))
+
+  const [products, exits, prefs] = await Promise.all([
+    prisma.product.findMany({
+      where: { status: 'active' },
+      select: {
+        id: true, name: true, internalCode: true, unit: true, currentStock: true, minStock: true, maxStock: true,
+        salePrice: true, purchasePrice: true, category: { select: { name: true } },
+      },
+      orderBy: { name: 'asc' },
+    }),
+    loadDailyExits(PRODUCT_FORECAST_HISTORY_DAYS, todayStart),
+    getPreferences(),
+  ])
+
+  const byProduct = new Map<string, DailyExit[]>()
+  for (const e of exits) byProduct.set(e.productId, [...(byProduct.get(e.productId) ?? []), e])
+
+  const series: SeriesInput[] = products
+    .filter((p) => byProduct.has(p.id))
+    .map((p) => ({ id: p.id, history: byProduct.get(p.id)!.map((e) => ({ date: e.day, quantity: e.quantity })) }))
+  const { model, forecasts } = await forecastDemand(series, asOf, horizon)
+
+  const recentFrom = addDays(asOf, -(RECENT_DAYS - 1))
+  const items = products
+    .filter((p) => forecasts.has(p.id))
+    .map((p) => {
+      const f = forecasts.get(p.id)!
+      const sold = new Map(byProduct.get(p.id)!.map((e) => [e.day, e.quantity]))
+      return {
+        id: p.id,
+        name: p.name,
+        code: p.internalCode,
+        category: p.category.name,
+        unit: p.unit,
+        currentStock: p.currentStock,
+        minStock: p.minStock,
+        maxStock: p.maxStock,
+        salePrice: Number(p.salePrice),
+        purchasePrice: Number(p.purchasePrice),
+        method: f.method,
+        recent: Array.from({ length: RECENT_DAYS }, (_, i) => {
+          const date = addDays(recentFrom, i)
+          return { date, quantity: sold.get(date) ?? 0 }
+        }),
+        daily: f.daily,
+      }
+    })
+
+  return { asOf, horizon, leadTimeDays: prefs.leadTimeDays, model, products: items }
+}
+
 function buildWeeklyDemand(exits: DailyExit[], forecasts: Map<string, SeriesForecast>, asOf: string) {
   const totalsByDay = new Map<string, number>()
   for (const e of exits) totalsByDay.set(e.day, (totalsByDay.get(e.day) ?? 0) + e.quantity)

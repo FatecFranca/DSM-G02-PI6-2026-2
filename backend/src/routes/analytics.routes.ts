@@ -63,6 +63,39 @@ router.get('/model', async (_req, res, next) => {
   }
 })
 
+/**
+ * @swagger
+ * /api/analytics/products-forecast:
+ *   get:
+ *     summary: Per-product daily demand forecast with current stock (feeds the sales forecast screen)
+ *     description: >
+ *       For every active product with exit history: the real exits of the last 28 days, the forecast for the
+ *       next `horizon` days (mean and 80% band) and the stock on hand. Trained on this system's own movements.
+ *     tags: [Analytics]
+ *     parameters:
+ *       - in: query
+ *         name: horizon
+ *         schema: { type: integer, minimum: 7, maximum: 60, default: 28 }
+ *     responses:
+ *       200:
+ *         description: Forecast per product
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ProductForecasts'
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ */
+router.get('/products-forecast', async (req, res, next) => {
+  try {
+    const n = Number(req.query.horizon)
+    const horizon = Number.isFinite(n) && n > 0 ? Math.min(60, Math.max(7, Math.round(n))) : 28
+    res.json(await analyticsService.getProductForecasts(horizon))
+  } catch (err) {
+    next(err)
+  }
+})
+
 router.get('/', async (req, res, next) => {
   try {
     const clamp = (v: unknown, min: number, max: number, fallback: number) => {

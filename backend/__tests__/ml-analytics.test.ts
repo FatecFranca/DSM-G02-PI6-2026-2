@@ -68,6 +68,70 @@ beforeEach(() => {
   receivedSeries = []
 })
 
+describe('per-product forecast (Previsão de Vendas screen)', () => {
+  function mockWms(dailyMean: number) {
+    process.env.ML_SERVICE_URL = 'http://ml.test/wms'
+    global.fetch = jest.fn(async (url: string | URL | Request, init?: RequestInit) => {
+      if (String(url).endsWith('/model')) {
+        return new Response(JSON.stringify({
+          package_version: 'wms-rf-1', trained_on: '1 de 1 produtos', algorithm: 'Random Forest',
+          importance: [{ feature: 'mean_all', label: 'Média de todo o histórico', weight: 0.5 }],
+          backtest: {
+            horizonte_dias: 14, origens_teste: ['2026-01-01'], nivel: 'produto × semana', cobertura_intervalo: 0.85,
+            modelo_rf: { rmsle: 1.1, wape: 0.6, vies_pct: -2, r2: 0.3, mae: 4 },
+            regressao_linear: { rmsle: 1.2, wape: 0.7, vies_pct: -3, r2: 0.2, mae: 5 },
+            media_mesmo_dia_8sem: { rmsle: 1.3, wape: 0.8, vies_pct: -4, r2: 0.1, mae: 6 },
+          },
+        }))
+      }
+      const body = JSON.parse(String(init?.body))
+      return new Response(JSON.stringify({
+        forecasts: body.series.map((s: { id: string }) => ({
+          id: s.id, method: 'rf', historyDays: 20,
+          daily: Array.from({ length: body.horizon }, (_, i) => ({ date: `2030-01-${String(i + 1).padStart(2, '0')}`, mean: dailyMean, low: 0, high: dailyMean * 2 })),
+        })),
+      }))
+    }) as typeof fetch
+  }
+
+  it('returns recent exits, the daily forecast, stock and the model comparison per product', async () => {
+    mockWms(3)
+    const res = await request(app).get('/api/analytics/products-forecast?horizon=14').set({ Authorization: `Bearer ${token}` })
+    expect(res.status).toBe(200)
+    expect(res.body.horizon).toBe(14)
+    expect(res.body.leadTimeDays).toBeGreaterThan(0)
+    expect(res.body.model.source).toBe('ml')
+    expect(res.body.model.details.compared.map((c: { id: string }) => c.id)).toEqual(['rf', 'linear', 'baseline'])
+    expect(res.body.model.backtest.model.wape).toBe(0.6)
+
+    const item = res.body.products.find((p: { id: string }) => p.id === productId)
+    expect(item).toBeDefined()
+    expect(item.method).toBe('rf')
+    expect(item.currentStock).toBe(12)
+    expect(item.salePrice).toBe(20)
+    expect(item.daily).toHaveLength(14)
+    expect(item.recent).toHaveLength(28)
+    expect(item.recent.reduce((a: number, r: { quantity: number }) => a + r.quantity, 0)).toBe(40) // 20 days × 2 units
+  })
+
+  it('clamps the horizon and falls back to the moving average when the service is down', async () => {
+    process.env.ML_SERVICE_URL = 'http://ml.test/wms'
+    global.fetch = jest.fn(async () => { throw new Error('connect ECONNREFUSED') }) as typeof fetch
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined)
+    const res = await request(app).get('/api/analytics/products-forecast?horizon=500').set({ Authorization: `Bearer ${token}` })
+    expect(res.status).toBe(200)
+    expect(res.body.horizon).toBe(60)
+    expect(res.body.model.source).toBe('baseline')
+    expect(res.body.products.find((p: { id: string }) => p.id === productId).method).toBe('baseline')
+    warn.mockRestore()
+  })
+
+  it('requires authentication', async () => {
+    const res = await request(app).get('/api/analytics/products-forecast')
+    expect(res.status).toBe(401)
+  })
+})
+
 describe('analytics with the ML service', () => {
   it('sends daily exit history per product and reports the model', async () => {
     mockMl(3)

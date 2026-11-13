@@ -719,6 +719,30 @@ const schemas: Record<string, Json> = {
       intervalCoverage: { ...num(0.8), description: 'Share of actuals inside the low–high band (target ≈ 0.8).' },
     }),
   }),
+  ProductForecasts: obj({
+    asOf: { ...str('2026-10-04'), description: 'Last full day used as forecast origin.' },
+    horizon: int(28),
+    leadTimeDays: int(7),
+    model: ref('ForecastModel'),
+    products: {
+      type: 'array',
+      items: obj({
+        id,
+        name: str('Caixa de Papelão 40×30×30'),
+        code: str('EM-0055'),
+        category: str('Embalagens'),
+        unit: str('UN'),
+        currentStock: int(120),
+        minStock: int(20),
+        maxStock: int(400),
+        salePrice: num(6.5),
+        purchasePrice: num(3.2),
+        method: enumOf(['rf', 'gbm', 'mean', 'baseline']),
+        recent: { type: 'array', description: 'Real exits of the last 28 days.', items: obj({ date: str('2026-10-04'), quantity: int(8) }) },
+        daily: { type: 'array', description: 'Forecast for the next days (mean and 80% band).', items: obj({ date: str('2026-10-05'), mean: num(7.4), low: num(0), high: num(15.2) }) },
+      }),
+    },
+  }),
   AnalyticsOverview: obj({
     window: obj({
       historyWeeks: int(12),
@@ -889,6 +913,7 @@ const OPS: Record<string, OpDoc & { partial?: boolean }> = {
   'GET /api/reports/suppliers': { res: 'SupplierReport' },
   'GET /api/analytics': { res: 'AnalyticsOverview' },
   'GET /api/analytics/model': { res: 'ForecastModel' },
+  'GET /api/analytics/products-forecast': { res: 'ProductForecasts' },
   'GET /api/settings': { res: 'Settings' },
   'PUT /api/settings': { res: 'Settings', body: 'UpdateSettingsRequest', roles: ADMIN },
   'POST /api/ai/identify-product': { res: 'ProductIdentification', roles: WRITERS, status: 200 },

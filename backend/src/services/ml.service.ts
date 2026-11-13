@@ -1,5 +1,5 @@
 /**
- * Client for the demand-forecasting service in /machine-learning (FastAPI).
+ * Client for the demand-forecasting service (ml-service, routes under /wms: set ML_SERVICE_URL=http://localhost:8100/wms).
  *
  * The ML service is optional: when `ML_SERVICE_URL` is unset, unreachable or returns an
  * error, forecasts fall back to a moving average computed here, so the rest of the API
@@ -25,8 +25,8 @@ export interface DayForecast {
 
 export interface SeriesForecast {
   id: string
-  /** gbm = trained model · mean = short history · baseline = ML service unavailable */
-  method: 'gbm' | 'mean' | 'baseline'
+  /** rf/gbm = trained model · mean = short history · baseline = ML service unavailable */
+  method: 'rf' | 'gbm' | 'mean' | 'baseline'
   historyDays: number
   daily: DayForecast[]
 }
@@ -36,6 +36,19 @@ export interface BacktestScore {
   wape: number
   vies_pct: number
   wape_categoria?: number
+  r2?: number | null
+  mae?: number
+  rmse?: number
+}
+
+/** Extra metadata of the WMS model (ml-service /wms): features that matter and the compared methods. */
+export interface ModelDetails {
+  algorithm?: string
+  level?: string
+  productsModelled?: number
+  productsTotal?: number
+  importance: { feature: string; label: string; weight: number }[]
+  compared: { id: string; name: string; score: BacktestScore }[]
 }
 
 export interface ModelInfo {
@@ -46,6 +59,7 @@ export interface ModelInfo {
   trainedOn?: string
   savedAt?: string
   dataRange?: [string, string]
+  details?: ModelDetails
   backtest?: {
     horizonDays: number
     testOrigins: string[]
@@ -91,7 +105,14 @@ interface RawModelInfo {
   trained_on?: string
   saved_at?: string
   data_range?: [string, string]
+  algorithm?: string
+  products_modelled?: number
+  products_total?: number
+  importance?: { feature: string; label: string; weight: number }[]
   backtest?: {
+    nivel?: string
+    regressao_linear?: BacktestScore
+    modelo_rf?: BacktestScore
     modelo_gbm?: BacktestScore
     [key: string]: unknown
     cobertura_intervalo?: number
@@ -103,18 +124,33 @@ interface RawModelInfo {
 function summarizeModel(raw: RawModelInfo): ModelInfo {
   const bt = raw.backtest
   const baseline = bt?.[BASELINE_NAME] as BacktestScore | undefined
+  const scored = bt?.modelo_rf ?? bt?.modelo_gbm
   return {
     source: 'ml',
     version: raw.package_version,
     trainedOn: raw.trained_on,
     savedAt: raw.saved_at,
     dataRange: raw.data_range,
+    details: scored && baseline
+      ? {
+          algorithm: raw.algorithm,
+          level: bt?.nivel,
+          productsModelled: raw.products_modelled,
+          productsTotal: raw.products_total,
+          importance: raw.importance ?? [],
+          compared: [
+            { id: 'rf', name: 'Random Forest', score: scored },
+            ...(bt?.regressao_linear ? [{ id: 'linear', name: 'Regressão Linear', score: bt.regressao_linear }] : []),
+            { id: 'baseline', name: 'Média do mesmo dia da semana', score: baseline },
+          ],
+        }
+      : undefined,
     backtest:
-      bt?.modelo_gbm && baseline
+      bt && scored && baseline
         ? {
             horizonDays: bt.horizonte_dias ?? 14,
             testOrigins: bt.origens_teste ?? [],
-            model: bt.modelo_gbm,
+            model: scored,
             baseline,
             baselineName: BASELINE_NAME,
             intervalCoverage: bt.cobertura_intervalo ?? 0,
