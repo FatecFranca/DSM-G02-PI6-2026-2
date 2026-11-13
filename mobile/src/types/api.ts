@@ -282,7 +282,7 @@ export interface ApiAnalytics {
     quantity: number
     urgency: 'Urgente' | 'Alta' | 'Média'
     reason: string
-    method: 'gbm' | 'mean' | 'baseline'
+    method: 'rf' | 'gbm' | 'mean' | 'baseline'
     estimatedCost: number
   }[]
   insights: { type: 'warning' | 'success' | 'info'; title: string; desc: string; action: string; href: string }[]
