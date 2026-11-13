@@ -68,8 +68,28 @@ function buildEndpointGroups() {
 
 const app = express()
 
-app.use(helmet({ contentSecurityPolicy: false }))
-app.use(cors())
+// API JSON: CSP restritiva. A página inicial e o Swagger UI precisam de scripts e estilos inline.
+const apiHelmet = helmet()
+const docsHelmet = helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", 'data:'],
+    },
+  },
+})
+app.use((req, res, next) =>
+  req.path === '/' || req.path.startsWith('/docs') ? docsHelmet(req, res, next) : apiHelmet(req, res, next),
+)
+
+// CORS restrito às origens em CORS_ORIGINS (separadas por vírgula); sem a variável, libera todas (desenvolvimento).
+const allowedOrigins = (process.env.CORS_ORIGINS ?? '')
+  .split(',')
+  .map((o) => o.trim())
+  .filter(Boolean)
+app.use(cors(allowedOrigins.length > 0 ? { origin: allowedOrigins } : undefined))
 app.use(express.json())
 app.use(morgan(process.env.NODE_ENV === 'test' ? 'silent' : 'dev'))
 app.use(globalLimiter)
