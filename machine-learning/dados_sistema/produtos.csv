@@ -1,0 +1,27 @@
+codigo,produto,categoria,unidade,preco_venda,preco_compra,estoque_minimo,estoque_atual,situacao
+EL-0034,"Cabo PP 2×2,5mm² (rolo 100m)",Material Elétrico,RL,459.00,280.00,2,0,active
+EL-0042,Cabo HDMI 2.0 2m,Eletrônicos,UN,54.90,22.50,29,0,active
+EL-0077,Fita Isolante 19mm × 20m,Material Elétrico,RL,8.90,3.50,10,0,active
+EL-0098,Bateria Li-Ion 18650 3.7V,Eletrônicos,UN,62.00,28.00,39,0,active
+EL-0112,Lâmpada LED 9W E27,Material Elétrico,UN,22.90,9.50,4,0,active
+EL-0121,Carregador USB-C 20W,Eletrônicos,UN,79.90,31.00,21,0,active
+EL-0133,Mouse Óptico USB,Eletrônicos,UN,39.90,14.00,1,0,active
+EL-0150,Disjuntor Bipolar 32A,Material Elétrico,UN,58.00,24.00,10,0,active
+EL-0999,Calculadora de Bolso (descontinuada),Eletrônicos,UN,19.90,8.00,1,4,discontinued
+EM-0055,Caixa de Papelão 40×30×30,Embalagens,UN,6.50,2.90,69,0,active
+EM-0062,Fita Adesiva Transparente 48mm,Embalagens,RL,7.90,3.20,41,0,active
+EM-0071,Filme Stretch 500mm,Embalagens,RL,49.90,24.00,51,0,active
+EM-0080,"Plástico Bolha 1,20m × 100m",Embalagens,RL,119.00,58.00,1,0,active
+EP-0018,Luva de Segurança CA 12345,EPI,PAR,24.90,8.90,159,0,active
+EP-0031,Capacete Amarelo CA 31469,EPI,UN,119.00,52.00,12,0,active
+EP-0052,Óculos de Proteção Incolor CA 40112,EPI,UN,18.90,6.80,6,0,active
+EP-0066,Protetor Auricular Plug,EPI,PAR,5.50,1.80,350,0,active
+EP-0090,Máscara PFF2 sem Válvula,EPI,UN,6.90,2.40,13,0,active
+FE-0203,Parafuso Sextavado M8×50 ZB,Ferramentas,CX,39.90,18.00,5,0,active
+FE-0215,"Chave de Fenda Phillips 1/4""",Ferramentas,UN,27.90,11.00,10,0,active
+FE-0230,Furadeira de Impacto 650W,Ferramentas,UN,349.00,189.00,7,0,active
+FE-0244,"Alicate Universal 8""",Ferramentas,UN,44.90,19.00,29,10,active
+QM-0091,Álcool 70% INPM 1L,Químicos,UN,28.50,12.00,140,0,active
+QM-0104,Detergente Industrial 5L,Limpeza,GL,46.00,21.00,6,0,active
+QM-0118,Desinfetante Hospitalar 5L,Limpeza,GL,72.00,34.00,10,0,active
+SE-0012,Extintor PQS 4kg ABC,EPI,UN,229.00,118.00,30,0,active

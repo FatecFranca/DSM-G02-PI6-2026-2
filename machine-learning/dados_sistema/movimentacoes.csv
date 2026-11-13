@@ -1,0 +1,1308 @@
+data_hora,tipo,codigo,produto,categoria,unidade,quantidade,custo_unitario,valor_total,motivo_saida
+2025-10-09 13:35:00,entry,EL-0034,"Cabo PP 2×2,5mm² (rolo 100m)",Material Elétrico,RL,18,278.78,5018.04,
+2025-10-09 17:24:00,entry,EL-0999,Calculadora de Bolso (descontinuada),Eletrônicos,UN,7,8.00,56.00,
+2025-10-10 11:30:00,entry,QM-0118,Desinfetante Hospitalar 5L,Limpeza,GL,50,35.46,1773.00,
+2025-10-10 17:46:00,entry,EL-0098,Bateria Li-Ion 18650 3.7V,Eletrônicos,UN,120,27.14,3256.80,
+2025-10-10 19:24:00,entry,EL-0133,Mouse Óptico USB,Eletrônicos,UN,28,14.19,397.32,
+2025-10-11 13:14:00,entry,EP-0031,Capacete Amarelo CA 31469,EPI,UN,67,50.79,3402.93,
+2025-10-11 19:00:00,entry,EP-0052,Óculos de Proteção Incolor CA 40112,EPI,UN,97,6.69,648.93,
+2025-10-11 19:59:00,entry,EL-0121,Carregador USB-C 20W,Eletrônicos,UN,56,31.19,1746.64,
+2025-10-12 19:20:00,entry,EP-0090,Máscara PFF2 sem Válvula,EPI,UN,572,2.51,1435.72,
+2025-10-12 20:19:00,entry,FE-0215,"Chave de Fenda Phillips 1/4""",Ferramentas,UN,25,11.25,281.25,
+2025-10-13 14:27:00,entry,QM-0104,Detergente Industrial 5L,Limpeza,GL,52,21.45,1115.40,
+2025-10-13 17:29:00,entry,EM-0071,Filme Stretch 500mm,Embalagens,RL,46,23.00,1058.00,
+2025-10-13 18:26:00,entry,EM-0080,"Plástico Bolha 1,20m × 100m",Embalagens,RL,10,58.68,586.80,
+2025-10-14 17:14:00,entry,EL-0150,Disjuntor Bipolar 32A,Material Elétrico,UN,47,22.88,1075.36,
+2025-10-15 14:12:00,entry,EL-0042,Cabo HDMI 2.0 2m,Eletrônicos,UN,117,22.00,2574.00,
+2025-10-15 14:16:00,entry,FE-0230,Furadeira de Impacto 650W,Ferramentas,UN,7,187.69,1313.83,
+2025-10-16 12:21:00,entry,EM-0062,Fita Adesiva Transparente 48mm,Embalagens,RL,233,3.16,736.28,
+2025-10-16 13:03:00,entry,EP-0066,Protetor Auricular Plug,EPI,PAR,287,1.85,530.95,
+2025-10-17 13:27:00,entry,EM-0055,Caixa de Papelão 40×30×30,Embalagens,UN,389,2.87,1116.43,
+2025-10-17 13:42:00,entry,EP-0018,Luva de Segurança CA 12345,EPI,PAR,225,8.80,1980.00,
+2025-10-18 11:54:00,entry,FE-0244,"Alicate Universal 8""",Ferramentas,UN,31,18.58,575.98,
+2025-10-18 13:13:00,entry,EL-0077,Fita Isolante 19mm × 20m,Material Elétrico,RL,154,3.33,512.82,
+2025-10-18 18:30:00,entry,FE-0203,Parafuso Sextavado M8×50 ZB,Ferramentas,CX,94,17.61,1655.34,
+2025-10-20 11:41:00,entry,QM-0091,Álcool 70% INPM 1L,Químicos,UN,210,12.53,2631.30,
+2025-10-20 14:07:00,entry,EL-0112,Lâmpada LED 9W E27,Material Elétrico,UN,76,9.34,709.84,
+2025-10-21 19:52:00,entry,SE-0012,Extintor PQS 4kg ABC,EPI,UN,15,118.37,1775.55,
+2025-10-30 12:42:00,exit,EL-0034,"Cabo PP 2×2,5mm² (rolo 100m)",Material Elétrico,RL,2,459.00,918.00,sale
+2025-10-30 14:35:00,exit,EM-0071,Filme Stretch 500mm,Embalagens,RL,7,49.90,349.30,sale
+2025-10-30 17:04:00,exit,QM-0091,Álcool 70% INPM 1L,Químicos,UN,33,28.50,940.50,sale
+2025-10-31 13:58:00,exit,EL-0150,Disjuntor Bipolar 32A,Material Elétrico,UN,3,58.00,174.00,sale
+2025-10-31 18:51:00,exit,FE-0203,Parafuso Sextavado M8×50 ZB,Ferramentas,CX,12,39.90,478.80,break
+2025-10-31 20:05:00,exit,FE-0244,"Alicate Universal 8""",Ferramentas,UN,5,44.90,224.50,internal
+2025-10-31 20:08:00,exit,EP-0066,Protetor Auricular Plug,EPI,PAR,41,5.50,225.50,sale
+2025-11-01 13:31:00,exit,EM-0080,"Plástico Bolha 1,20m × 100m",Embalagens,RL,3,119.00,357.00,break
+2025-11-01 14:02:00,exit,EP-0031,Capacete Amarelo CA 31469,EPI,UN,4,119.00,476.00,break
+2025-11-01 17:42:00,loss,EL-0034,"Cabo PP 2×2,5mm² (rolo 100m)",Material Elétrico,RL,1,280.00,280.00,loss
+2025-11-01 17:59:00,exit,EL-0034,"Cabo PP 2×2,5mm² (rolo 100m)",Material Elétrico,RL,1,459.00,459.00,sale
+2025-11-01 18:28:00,exit,EL-0042,Cabo HDMI 2.0 2m,Eletrônicos,UN,11,54.90,603.90,sale
+2025-11-01 19:49:00,exit,EP-0066,Protetor Auricular Plug,EPI,PAR,27,5.50,148.50,internal
+2025-11-01 20:39:00,exit,FE-0203,Parafuso Sextavado M8×50 ZB,Ferramentas,CX,18,39.90,718.20,sale
+2025-11-02 11:17:00,exit,QM-0091,Álcool 70% INPM 1L,Químicos,UN,55,28.50,1567.50,sale
+2025-11-02 12:56:00,exit,EM-0071,Filme Stretch 500mm,Embalagens,RL,5,49.90,249.50,break
+2025-11-02 14:06:00,exit,EM-0062,Fita Adesiva Transparente 48mm,Embalagens,RL,16,7.90,126.40,sale
+2025-11-03 14:40:00,exit,QM-0104,Detergente Industrial 5L,Limpeza,GL,4,46.00,184.00,internal
+2025-11-03 17:25:00,exit,EL-0098,Bateria Li-Ion 18650 3.7V,Eletrônicos,UN,20,62.00,1240.00,sale
+2025-11-03 19:36:00,exit,EP-0018,Luva de Segurança CA 12345,EPI,PAR,2,24.90,49.80,sale
+2025-11-04 13:36:00,exit,EP-0090,Máscara PFF2 sem Válvula,EPI,UN,30,6.90,207.00,break
+2025-11-04 16:21:00,exit,EL-0034,"Cabo PP 2×2,5mm² (rolo 100m)",Material Elétrico,RL,1,459.00,459.00,internal
+2025-11-04 18:33:00,exit,QM-0104,Detergente Industrial 5L,Limpeza,GL,11,46.00,506.00,sale
+2025-11-04 19:28:00,exit,EM-0071,Filme Stretch 500mm,Embalagens,RL,7,49.90,349.30,sale
+2025-11-04 20:00:00,exit,FE-0215,"Chave de Fenda Phillips 1/4""",Ferramentas,UN,6,27.90,167.40,sale
+2025-11-04 20:35:00,exit,EL-0042,Cabo HDMI 2.0 2m,Eletrônicos,UN,2,54.90,109.80,internal
+2025-11-05 16:01:00,exit,FE-0230,Furadeira de Impacto 650W,Ferramentas,UN,1,349.00,349.00,sale
+2025-11-05 16:21:00,exit,EM-0055,Caixa de Papelão 40×30×30,Embalagens,UN,40,6.50,260.00,sale
+2025-11-05 18:30:00,exit,EL-0098,Bateria Li-Ion 18650 3.7V,Eletrônicos,UN,17,62.00,1054.00,sale
+2025-11-05 20:57:00,exit,EM-0071,Filme Stretch 500mm,Embalagens,RL,13,49.90,648.70,internal
+2025-11-06 18:36:00,loss,EL-0121,Carregador USB-C 20W,Eletrônicos,UN,8,31.00,248.00,loss
+2025-11-07 12:59:00,exit,FE-0244,"Alicate Universal 8""",Ferramentas,UN,7,44.90,314.30,sale
+2025-11-07 14:05:00,exit,FE-0244,"Alicate Universal 8""",Ferramentas,UN,3,44.90,134.70,sale
+2025-11-07 17:12:00,exit,SE-0012,Extintor PQS 4kg ABC,EPI,UN,1,229.00,229.00,sale
+2025-11-07 17:26:00,exit,EL-0042,Cabo HDMI 2.0 2m,Eletrônicos,UN,20,54.90,1098.00,sale
+2025-11-07 17:36:00,exit,EL-0133,Mouse Óptico USB,Eletrônicos,UN,3,39.90,119.70,break
+2025-11-07 19:02:00,exit,EM-0062,Fita Adesiva Transparente 48mm,Embalagens,RL,31,7.90,244.90,sale
+2025-11-08 13:43:00,exit,QM-0118,Desinfetante Hospitalar 5L,Limpeza,GL,3,72.00,216.00,sale
+2025-11-08 14:29:00,exit,FE-0215,"Chave de Fenda Phillips 1/4""",Ferramentas,UN,1,27.90,27.90,sale
+2025-11-08 18:33:00,exit,FE-0230,Furadeira de Impacto 650W,Ferramentas,UN,1,349.00,349.00,sale
+2025-11-10 12:13:00,exit,EP-0031,Capacete Amarelo CA 31469,EPI,UN,7,119.00,833.00,sale
+2025-11-10 20:59:00,exit,EL-0150,Disjuntor Bipolar 32A,Material Elétrico,UN,8,58.00,464.00,sale
+2025-11-11 11:36:00,exit,EP-0066,Protetor Auricular Plug,EPI,PAR,3,5.50,16.50,sale
+2025-11-11 18:38:00,loss,EP-0066,Protetor Auricular Plug,EPI,PAR,53,1.80,95.40,loss
+2025-11-12 12:23:00,exit,EL-0034,"Cabo PP 2×2,5mm² (rolo 100m)",Material Elétrico,RL,2,459.00,918.00,sale
+2025-11-12 13:46:00,loss,FE-0230,Furadeira de Impacto 650W,Ferramentas,UN,2,189.00,378.00,loss
+2025-11-12 14:07:00,exit,EM-0055,Caixa de Papelão 40×30×30,Embalagens,UN,92,6.50,598.00,sale
+2025-11-12 20:03:00,exit,EL-0042,Cabo HDMI 2.0 2m,Eletrônicos,UN,13,54.90,713.70,sale
+2025-11-13 12:12:00,exit,EM-0062,Fita Adesiva Transparente 48mm,Embalagens,RL,31,7.90,244.90,sale
+2025-11-13 13:58:00,exit,EP-0018,Luva de Segurança CA 12345,EPI,PAR,19,24.90,473.10,sale
+2025-11-13 14:09:00,exit,EP-0066,Protetor Auricular Plug,EPI,PAR,28,5.50,154.00,sale
+2025-11-13 19:31:00,exit,EL-0121,Carregador USB-C 20W,Eletrônicos,UN,6,79.90,479.40,break
+2025-11-13 19:47:00,exit,EL-0098,Bateria Li-Ion 18650 3.7V,Eletrônicos,UN,9,62.00,558.00,sale
+2025-11-13 20:46:00,exit,EL-0034,"Cabo PP 2×2,5mm² (rolo 100m)",Material Elétrico,RL,2,459.00,918.00,sale
+2025-11-14 12:44:00,exit,EL-0112,Lâmpada LED 9W E27,Material Elétrico,UN,11,22.90,251.90,sale
+2025-11-14 13:16:00,exit,EL-0034,"Cabo PP 2×2,5mm² (rolo 100m)",Material Elétrico,RL,2,459.00,918.00,internal
+2025-11-15 16:41:00,exit,EL-0133,Mouse Óptico USB,Eletrônicos,UN,5,39.90,199.50,sale
+2025-11-15 16:44:00,exit,EM-0062,Fita Adesiva Transparente 48mm,Embalagens,RL,24,7.90,189.60,sale
+2025-11-15 20:04:00,exit,EL-0098,Bateria Li-Ion 18650 3.7V,Eletrônicos,UN,11,62.00,682.00,sale
+2025-11-16 13:49:00,exit,EM-0080,"Plástico Bolha 1,20m × 100m",Embalagens,RL,3,119.00,357.00,sale
+2025-11-16 19:35:00,exit,EL-0042,Cabo HDMI 2.0 2m,Eletrônicos,UN,24,54.90,1317.60,break
+2025-11-17 12:57:00,exit,FE-0203,Parafuso Sextavado M8×50 ZB,Ferramentas,CX,18,39.90,718.20,sale
+2025-11-17 16:41:00,exit,EP-0052,Óculos de Proteção Incolor CA 40112,EPI,UN,11,18.90,207.90,sale
+2025-11-17 17:18:00,loss,FE-0230,Furadeira de Impacto 650W,Ferramentas,UN,1,189.00,189.00,loss
+2025-11-18 12:52:00,exit,EP-0031,Capacete Amarelo CA 31469,EPI,UN,7,119.00,833.00,internal
+2025-11-18 14:02:00,exit,EM-0071,Filme Stretch 500mm,Embalagens,RL,5,49.90,249.50,sale
+2025-11-18 16:38:00,exit,QM-0104,Detergente Industrial 5L,Limpeza,GL,15,46.00,690.00,sale
+2025-11-19 17:58:00,exit,FE-0203,Parafuso Sextavado M8×50 ZB,Ferramentas,CX,16,39.90,638.40,break
+2025-11-20 11:06:00,entry,FE-0215,"Chave de Fenda Phillips 1/4""",Ferramentas,UN,25,10.80,270.00,
+2025-11-20 12:00:00,entry,EL-0133,Mouse Óptico USB,Eletrônicos,UN,31,14.28,442.68,
+2025-11-20 17:08:00,exit,QM-0091,Álcool 70% INPM 1L,Químicos,UN,69,28.50,1966.50,internal
+2025-11-21 12:01:00,exit,FE-0244,"Alicate Universal 8""",Ferramentas,UN,3,44.90,134.70,sale
+2025-11-21 14:29:00,exit,EP-0018,Luva de Segurança CA 12345,EPI,PAR,17,24.90,423.30,sale
+2025-11-21 17:23:00,exit,EL-0077,Fita Isolante 19mm × 20m,Material Elétrico,RL,28,8.90,249.20,break
+2025-11-21 17:36:00,exit,EP-0090,Máscara PFF2 sem Válvula,EPI,UN,29,6.90,200.10,internal
+2025-11-21 17:39:00,exit,EM-0055,Caixa de Papelão 40×30×30,Embalagens,UN,37,6.50,240.50,sale
+2025-11-22 12:49:00,exit,FE-0244,"Alicate Universal 8""",Ferramentas,UN,3,44.90,134.70,break
+2025-11-22 12:56:00,entry,FE-0230,Furadeira de Impacto 650W,Ferramentas,UN,7,197.01,1379.07,
+2025-11-22 18:27:00,exit,EL-0133,Mouse Óptico USB,Eletrônicos,UN,7,39.90,279.30,internal
+2025-11-23 17:23:00,loss,EL-0112,Lâmpada LED 9W E27,Material Elétrico,UN,28,9.50,266.00,loss
+2025-11-24 11:23:00,exit,EP-0066,Protetor Auricular Plug,EPI,PAR,20,5.50,110.00,internal
+2025-11-24 13:18:00,exit,EM-0055,Caixa de Papelão 40×30×30,Embalagens,UN,95,6.50,617.50,sale
+2025-11-24 16:43:00,exit,EL-0121,Carregador USB-C 20W,Eletrônicos,UN,1,79.90,79.90,internal
+2025-11-24 19:49:00,entry,EM-0062,Fita Adesiva Transparente 48mm,Embalagens,RL,252,3.35,844.20,
+2025-11-25 11:09:00,exit,EM-0071,Filme Stretch 500mm,Embalagens,RL,8,49.90,399.20,sale
+2025-11-25 12:38:00,entry,EM-0071,Filme Stretch 500mm,Embalagens,RL,45,25.04,1126.80,
+2025-11-25 14:59:00,exit,EL-0042,Cabo HDMI 2.0 2m,Eletrônicos,UN,12,54.90,658.80,sale
+2025-11-25 18:40:00,entry,EM-0080,"Plástico Bolha 1,20m × 100m",Embalagens,RL,11,59.36,652.96,
+2025-11-26 17:33:00,entry,EL-0077,Fita Isolante 19mm × 20m,Material Elétrico,RL,192,3.50,672.00,
+2025-11-26 18:20:00,exit,EL-0098,Bateria Li-Ion 18650 3.7V,Eletrônicos,UN,17,62.00,1054.00,sale
+2025-11-26 18:44:00,exit,EL-0042,Cabo HDMI 2.0 2m,Eletrônicos,UN,26,54.90,1427.40,sale
+2025-11-27 11:09:00,exit,EL-0098,Bateria Li-Ion 18650 3.7V,Eletrônicos,UN,11,62.00,682.00,sale
+2025-11-28 11:15:00,exit,EP-0031,Capacete Amarelo CA 31469,EPI,UN,9,119.00,1071.00,break
+2025-11-28 19:09:00,exit,EM-0062,Fita Adesiva Transparente 48mm,Embalagens,RL,42,7.90,331.80,sale
+2025-11-28 19:28:00,exit,EM-0055,Caixa de Papelão 40×30×30,Embalagens,UN,89,6.50,578.50,break
+2025-11-29 12:45:00,exit,QM-0091,Álcool 70% INPM 1L,Químicos,UN,41,28.50,1168.50,sale
+2025-11-29 18:37:00,entry,EL-0112,Lâmpada LED 9W E27,Material Elétrico,UN,79,9.66,763.14,
+2025-11-30 17:21:00,exit,FE-0203,Parafuso Sextavado M8×50 ZB,Ferramentas,CX,10,39.90,399.00,sale
+2025-11-30 19:38:00,entry,EL-0098,Bateria Li-Ion 18650 3.7V,Eletrônicos,UN,112,27.26,3053.12,
+2025-12-01 12:34:00,exit,EL-0121,Carregador USB-C 20W,Eletrônicos,UN,7,79.90,559.30,internal
+2025-12-01 12:55:00,loss,EM-0062,Fita Adesiva Transparente 48mm,Embalagens,RL,48,3.20,153.60,loss
+2025-12-01 13:53:00,exit,EL-0112,Lâmpada LED 9W E27,Material Elétrico,UN,14,22.90,320.60,sale
+2025-12-01 16:09:00,exit,EP-0090,Máscara PFF2 sem Válvula,EPI,UN,55,6.90,379.50,break
+2025-12-01 18:13:00,exit,EP-0090,Máscara PFF2 sem Válvula,EPI,UN,46,6.90,317.40,sale
+2025-12-01 20:16:00,exit,QM-0104,Detergente Industrial 5L,Limpeza,GL,5,46.00,230.00,internal
+2025-12-01 20:47:00,entry,QM-0104,Detergente Industrial 5L,Limpeza,GL,56,20.88,1169.28,
+2025-12-03 20:52:00,loss,FE-0215,"Chave de Fenda Phillips 1/4""",Ferramentas,UN,2,11.00,22.00,loss
+2025-12-04 17:43:00,exit,EL-0999,Calculadora de Bolso (descontinuada),Eletrônicos,UN,5,19.90,99.50,sale
+2025-12-05 12:34:00,exit,EP-0090,Máscara PFF2 sem Válvula,EPI,UN,34,6.90,234.60,sale
+2025-12-05 13:31:00,entry,EP-0018,Luva de Segurança CA 12345,EPI,PAR,208,8.49,1765.92,
+2025-12-05 16:43:00,exit,EM-0071,Filme Stretch 500mm,Embalagens,RL,5,49.90,249.50,sale
+2025-12-05 20:58:00,exit,FE-0230,Furadeira de Impacto 650W,Ferramentas,UN,2,349.00,698.00,sale
+2025-12-06 12:35:00,entry,EP-0052,Óculos de Proteção Incolor CA 40112,EPI,UN,102,6.92,705.84,
+2025-12-07 11:55:00,exit,QM-0118,Desinfetante Hospitalar 5L,Limpeza,GL,6,72.00,432.00,sale
+2025-12-08 16:15:00,entry,EL-0121,Carregador USB-C 20W,Eletrônicos,UN,78,31.90,2488.20,
+2025-12-08 17:26:00,exit,FE-0230,Furadeira de Impacto 650W,Ferramentas,UN,1,349.00,349.00,sale
+2025-12-09 12:38:00,exit,EL-0133,Mouse Óptico USB,Eletrônicos,UN,4,39.90,159.60,sale
+2025-12-10 12:21:00,exit,FE-0230,Furadeira de Impacto 650W,Ferramentas,UN,2,349.00,698.00,internal
+2025-12-10 19:56:00,exit,SE-0012,Extintor PQS 4kg ABC,EPI,UN,3,229.00,687.00,sale
+2025-12-11 14:38:00,entry,EL-0042,Cabo HDMI 2.0 2m,Eletrônicos,UN,161,23.42,3770.62,
+2025-12-11 18:00:00,entry,QM-0091,Álcool 70% INPM 1L,Químicos,UN,233,11.93,2779.69,
+2025-12-11 20:57:00,exit,EP-0018,Luva de Segurança CA 12345,EPI,PAR,21,24.90,522.90,sale
+2025-12-12 13:21:00,exit,EL-0034,"Cabo PP 2×2,5mm² (rolo 100m)",Material Elétrico,RL,1,459.00,459.00,sale
+2025-12-12 14:35:00,exit,EL-0034,"Cabo PP 2×2,5mm² (rolo 100m)",Material Elétrico,RL,2,459.00,918.00,break
+2025-12-12 14:55:00,exit,EP-0090,Máscara PFF2 sem Válvula,EPI,UN,68,6.90,469.20,sale
+2025-12-12 16:21:00,exit,FE-0244,"Alicate Universal 8""",Ferramentas,UN,5,44.90,224.50,internal
+2025-12-12 17:33:00,exit,FE-0230,Furadeira de Impacto 650W,Ferramentas,UN,2,349.00,698.00,sale
+2025-12-12 19:05:00,exit,FE-0203,Parafuso Sextavado M8×50 ZB,Ferramentas,CX,7,39.90,279.30,break
+2025-12-12 19:50:00,exit,EL-0121,Carregador USB-C 20W,Eletrônicos,UN,11,79.90,878.90,break
+2025-12-12 20:27:00,entry,FE-0203,Parafuso Sextavado M8×50 ZB,Ferramentas,CX,103,17.12,1763.36,
+2025-12-13 11:43:00,exit,FE-0230,Furadeira de Impacto 650W,Ferramentas,UN,2,349.00,698.00,sale
+2025-12-13 11:45:00,exit,EL-0098,Bateria Li-Ion 18650 3.7V,Eletrônicos,UN,8,62.00,496.00,internal
+2025-12-13 14:54:00,exit,EP-0090,Máscara PFF2 sem Válvula,EPI,UN,56,6.90,386.40,sale
+2025-12-13 19:06:00,entry,EM-0055,Caixa de Papelão 40×30×30,Embalagens,UN,462,2.87,1325.94,
+2025-12-14 11:30:00,entry,EP-0066,Protetor Auricular Plug,EPI,PAR,358,1.88,673.04,
+2025-12-14 16:39:00,entry,SE-0012,Extintor PQS 4kg ABC,EPI,UN,11,117.52,1292.72,
+2025-12-14 19:18:00,exit,QM-0118,Desinfetante Hospitalar 5L,Limpeza,GL,4,72.00,288.00,internal
+2025-12-15 12:33:00,entry,FE-0244,"Alicate Universal 8""",Ferramentas,UN,18,19.45,350.10,
+2025-12-15 17:33:00,exit,FE-0215,"Chave de Fenda Phillips 1/4""",Ferramentas,UN,1,27.90,27.90,internal
+2025-12-15 18:17:00,entry,EL-0034,"Cabo PP 2×2,5mm² (rolo 100m)",Material Elétrico,RL,19,270.89,5146.91,
+2025-12-15 20:09:00,entry,EP-0090,Máscara PFF2 sem Válvula,EPI,UN,524,2.32,1215.68,
+2025-12-15 20:44:00,exit,EL-0034,"Cabo PP 2×2,5mm² (rolo 100m)",Material Elétrico,RL,2,459.00,918.00,break
+2025-12-16 20:26:00,exit,EL-0098,Bateria Li-Ion 18650 3.7V,Eletrônicos,UN,12,62.00,744.00,internal
+2025-12-17 20:52:00,exit,EL-0133,Mouse Óptico USB,Eletrônicos,UN,7,39.90,279.30,internal
+2025-12-18 11:45:00,exit,EL-0077,Fita Isolante 19mm × 20m,Material Elétrico,RL,31,8.90,275.90,sale
+2025-12-18 17:46:00,exit,EM-0071,Filme Stretch 500mm,Embalagens,RL,2,49.90,99.80,sale
+2025-12-18 19:51:00,exit,EM-0071,Filme Stretch 500mm,Embalagens,RL,10,49.90,499.00,sale
+2025-12-19 12:04:00,loss,QM-0104,Detergente Industrial 5L,Limpeza,GL,15,21.00,315.00,loss
+2025-12-19 16:49:00,exit,FE-0244,"Alicate Universal 8""",Ferramentas,UN,6,44.90,269.40,internal
+2025-12-19 19:38:00,exit,QM-0118,Desinfetante Hospitalar 5L,Limpeza,GL,2,72.00,144.00,internal
+2025-12-19 19:53:00,exit,EL-0112,Lâmpada LED 9W E27,Material Elétrico,UN,22,22.90,503.80,sale
+2025-12-20 11:04:00,exit,EL-0098,Bateria Li-Ion 18650 3.7V,Eletrônicos,UN,17,62.00,1054.00,sale
+2025-12-20 11:44:00,exit,EL-0042,Cabo HDMI 2.0 2m,Eletrônicos,UN,8,54.90,439.20,sale
+2025-12-20 12:09:00,exit,EM-0062,Fita Adesiva Transparente 48mm,Embalagens,RL,25,7.90,197.50,sale
+2025-12-20 16:00:00,loss,FE-0244,"Alicate Universal 8""",Ferramentas,UN,5,19.00,95.00,loss
+2025-12-20 19:01:00,exit,QM-0091,Álcool 70% INPM 1L,Químicos,UN,66,28.50,1881.00,sale
+2025-12-21 11:29:00,loss,EL-0077,Fita Isolante 19mm × 20m,Material Elétrico,RL,42,3.50,147.00,loss
+2025-12-21 17:35:00,entry,EP-0031,Capacete Amarelo CA 31469,EPI,UN,52,52.31,2720.12,
+2025-12-23 14:50:00,loss,FE-0244,"Alicate Universal 8""",Ferramentas,UN,3,19.00,57.00,loss
+2025-12-23 16:10:00,entry,EL-0150,Disjuntor Bipolar 32A,Material Elétrico,UN,38,23.04,875.52,
+2025-12-24 12:27:00,exit,EP-0066,Protetor Auricular Plug,EPI,PAR,21,5.50,115.50,sale
+2025-12-25 17:34:00,loss,EM-0080,"Plástico Bolha 1,20m × 100m",Embalagens,RL,1,58.00,58.00,loss
+2025-12-26 14:32:00,entry,FE-0230,Furadeira de Impacto 650W,Ferramentas,UN,6,197.96,1187.76,
+2025-12-26 16:53:00,exit,EM-0055,Caixa de Papelão 40×30×30,Embalagens,UN,78,6.50,507.00,sale
+2025-12-26 18:27:00,entry,QM-0118,Desinfetante Hospitalar 5L,Limpeza,GL,35,32.31,1130.85,
+2025-12-26 19:53:00,exit,EM-0071,Filme Stretch 500mm,Embalagens,RL,8,49.90,399.20,sale
+2025-12-27 14:57:00,exit,EL-0042,Cabo HDMI 2.0 2m,Eletrônicos,UN,14,54.90,768.60,sale
+2025-12-28 16:17:00,loss,EP-0018,Luva de Segurança CA 12345,EPI,PAR,26,8.90,231.40,loss
+2025-12-28 16:32:00,exit,EL-0150,Disjuntor Bipolar 32A,Material Elétrico,UN,3,58.00,174.00,sale
+2025-12-28 17:40:00,exit,EL-0098,Bateria Li-Ion 18650 3.7V,Eletrônicos,UN,13,62.00,806.00,internal
+2025-12-29 12:18:00,exit,QM-0118,Desinfetante Hospitalar 5L,Limpeza,GL,6,72.00,432.00,break
+2025-12-29 13:36:00,exit,EL-0034,"Cabo PP 2×2,5mm² (rolo 100m)",Material Elétrico,RL,2,459.00,918.00,break
+2025-12-29 16:10:00,exit,EP-0052,Óculos de Proteção Incolor CA 40112,EPI,UN,24,18.90,453.60,internal
+2025-12-29 16:44:00,exit,EL-0098,Bateria Li-Ion 18650 3.7V,Eletrônicos,UN,21,62.00,1302.00,sale
+2025-12-29 16:45:00,exit,FE-0215,"Chave de Fenda Phillips 1/4""",Ferramentas,UN,3,27.90,83.70,sale
+2025-12-29 18:10:00,exit,QM-0118,Desinfetante Hospitalar 5L,Limpeza,GL,3,72.00,216.00,internal
+2025-12-29 19:54:00,exit,EL-0077,Fita Isolante 19mm × 20m,Material Elétrico,RL,47,8.90,418.30,sale
+2025-12-30 13:32:00,exit,EL-0034,"Cabo PP 2×2,5mm² (rolo 100m)",Material Elétrico,RL,1,459.00,459.00,sale
+2025-12-30 14:10:00,exit,EL-0121,Carregador USB-C 20W,Eletrônicos,UN,4,79.90,319.60,sale
+2025-12-30 16:34:00,exit,FE-0203,Parafuso Sextavado M8×50 ZB,Ferramentas,CX,11,39.90,438.90,sale
+2025-12-30 17:18:00,exit,EL-0133,Mouse Óptico USB,Eletrônicos,UN,4,39.90,159.60,sale
+2025-12-30 18:26:00,exit,FE-0203,Parafuso Sextavado M8×50 ZB,Ferramentas,CX,13,39.90,518.70,sale
+2025-12-31 16:22:00,entry,EL-0133,Mouse Óptico USB,Eletrônicos,UN,26,14.53,377.78,
+2025-12-31 18:18:00,entry,EM-0080,"Plástico Bolha 1,20m × 100m",Embalagens,RL,10,59.19,591.90,
+2026-01-01 11:20:00,entry,FE-0215,"Chave de Fenda Phillips 1/4""",Ferramentas,UN,19,11.16,212.04,
+2026-01-01 11:23:00,exit,FE-0215,"Chave de Fenda Phillips 1/4""",Ferramentas,UN,1,27.90,27.90,internal
+2026-01-01 16:29:00,exit,EL-0133,Mouse Óptico USB,Eletrônicos,UN,3,39.90,119.70,sale
+2026-01-01 16:54:00,exit,EM-0055,Caixa de Papelão 40×30×30,Embalagens,UN,47,6.50,305.50,internal
+2026-01-01 17:37:00,exit,EP-0052,Óculos de Proteção Incolor CA 40112,EPI,UN,10,18.90,189.00,internal
+2026-01-02 17:21:00,entry,EL-0077,Fita Isolante 19mm × 20m,Material Elétrico,RL,224,3.67,822.08,
+2026-01-04 12:43:00,exit,FE-0230,Furadeira de Impacto 650W,Ferramentas,UN,2,349.00,698.00,sale
+2026-01-04 14:03:00,exit,EP-0052,Óculos de Proteção Incolor CA 40112,EPI,UN,19,18.90,359.10,internal
+2026-01-04 18:02:00,exit,EP-0018,Luva de Segurança CA 12345,EPI,PAR,27,24.90,672.30,break
+2026-01-04 19:28:00,exit,EL-0077,Fita Isolante 19mm × 20m,Material Elétrico,RL,39,8.90,347.10,sale
+2026-01-05 11:10:00,exit,EM-0071,Filme Stretch 500mm,Embalagens,RL,8,49.90,399.20,sale
+2026-01-05 11:36:00,exit,QM-0118,Desinfetante Hospitalar 5L,Limpeza,GL,5,72.00,360.00,sale
+2026-01-05 13:08:00,exit,EL-0098,Bateria Li-Ion 18650 3.7V,Eletrônicos,UN,9,62.00,558.00,sale
+2026-01-05 16:06:00,exit,EL-0077,Fita Isolante 19mm × 20m,Material Elétrico,RL,58,8.90,516.20,sale
+2026-01-05 20:28:00,loss,FE-0203,Parafuso Sextavado M8×50 ZB,Ferramentas,CX,9,18.00,162.00,loss
+2026-01-05 20:31:00,exit,EP-0090,Máscara PFF2 sem Válvula,EPI,UN,61,6.90,420.90,break
+2026-01-05 20:51:00,exit,EP-0066,Protetor Auricular Plug,EPI,PAR,49,5.50,269.50,sale
+2026-01-06 12:48:00,exit,EL-0034,"Cabo PP 2×2,5mm² (rolo 100m)",Material Elétrico,RL,1,459.00,459.00,break
+2026-01-07 12:01:00,exit,QM-0118,Desinfetante Hospitalar 5L,Limpeza,GL,3,72.00,216.00,break
+2026-01-07 14:31:00,exit,FE-0244,"Alicate Universal 8""",Ferramentas,UN,1,44.90,44.90,sale
+2026-01-08 13:05:00,exit,EP-0066,Protetor Auricular Plug,EPI,PAR,31,5.50,170.50,sale
+2026-01-08 17:04:00,exit,FE-0215,"Chave de Fenda Phillips 1/4""",Ferramentas,UN,4,27.90,111.60,internal
+2026-01-08 18:14:00,entry,EL-0112,Lâmpada LED 9W E27,Material Elétrico,UN,129,9.04,1166.16,
+2026-01-09 13:53:00,loss,EL-0150,Disjuntor Bipolar 32A,Material Elétrico,UN,9,24.00,216.00,loss
+2026-01-09 14:23:00,exit,FE-0215,"Chave de Fenda Phillips 1/4""",Ferramentas,UN,2,27.90,55.80,break
+2026-01-09 16:59:00,exit,QM-0118,Desinfetante Hospitalar 5L,Limpeza,GL,1,72.00,72.00,sale
+2026-01-09 16:59:00,exit,QM-0118,Desinfetante Hospitalar 5L,Limpeza,GL,3,72.00,216.00,internal
+2026-01-10 13:06:00,exit,EL-0150,Disjuntor Bipolar 32A,Material Elétrico,UN,5,58.00,290.00,break
+2026-01-10 16:13:00,exit,EL-0098,Bateria Li-Ion 18650 3.7V,Eletrônicos,UN,21,62.00,1302.00,internal
+2026-01-10 16:30:00,exit,EP-0018,Luva de Segurança CA 12345,EPI,PAR,21,24.90,522.90,internal
+2026-01-10 18:55:00,exit,EL-0098,Bateria Li-Ion 18650 3.7V,Eletrônicos,UN,18,62.00,1116.00,internal
+2026-01-10 20:11:00,entry,QM-0104,Detergente Industrial 5L,Limpeza,GL,55,21.74,1195.70,
+2026-01-11 14:17:00,exit,EL-0077,Fita Isolante 19mm × 20m,Material Elétrico,RL,16,8.90,142.40,sale
+2026-01-11 18:31:00,exit,FE-0215,"Chave de Fenda Phillips 1/4""",Ferramentas,UN,5,27.90,139.50,sale
+2026-01-11 18:44:00,exit,EL-0034,"Cabo PP 2×2,5mm² (rolo 100m)",Material Elétrico,RL,2,459.00,918.00,internal
+2026-01-11 20:13:00,entry,EM-0062,Fita Adesiva Transparente 48mm,Embalagens,RL,201,3.12,627.12,
+2026-01-12 12:12:00,exit,EL-0112,Lâmpada LED 9W E27,Material Elétrico,UN,33,22.90,755.70,sale
+2026-01-12 14:42:00,exit,EL-0034,"Cabo PP 2×2,5mm² (rolo 100m)",Material Elétrico,RL,2,459.00,918.00,break
+2026-01-13 16:22:00,exit,EP-0066,Protetor Auricular Plug,EPI,PAR,49,5.50,269.50,break
+2026-01-14 11:11:00,exit,EL-0077,Fita Isolante 19mm × 20m,Material Elétrico,RL,21,8.90,186.90,sale
+2026-01-14 13:13:00,exit,QM-0104,Detergente Industrial 5L,Limpeza,GL,12,46.00,552.00,sale
+2026-01-14 19:06:00,entry,EP-0052,Óculos de Proteção Incolor CA 40112,EPI,UN,88,7.07,622.16,
+2026-01-15 16:35:00,entry,EM-0071,Filme Stretch 500mm,Embalagens,RL,59,24.85,1466.15,
+2026-01-15 19:21:00,exit,QM-0118,Desinfetante Hospitalar 5L,Limpeza,GL,7,72.00,504.00,sale
+2026-01-16 16:36:00,exit,FE-0203,Parafuso Sextavado M8×50 ZB,Ferramentas,CX,13,39.90,518.70,sale
+2026-01-16 16:38:00,exit,EM-0071,Filme Stretch 500mm,Embalagens,RL,9,49.90,449.10,internal
+2026-01-16 19:05:00,exit,EM-0080,"Plástico Bolha 1,20m × 100m",Embalagens,RL,2,119.00,238.00,sale
+2026-01-16 19:56:00,exit,EM-0062,Fita Adesiva Transparente 48mm,Embalagens,RL,43,7.90,339.70,internal
+2026-01-17 13:36:00,exit,EM-0062,Fita Adesiva Transparente 48mm,Embalagens,RL,53,7.90,418.70,sale
+2026-01-17 17:24:00,exit,QM-0104,Detergente Industrial 5L,Limpeza,GL,13,46.00,598.00,sale
+2026-01-17 19:41:00,exit,QM-0118,Desinfetante Hospitalar 5L,Limpeza,GL,8,72.00,576.00,break
+2026-01-18 11:22:00,exit,FE-0230,Furadeira de Impacto 650W,Ferramentas,UN,2,349.00,698.00,sale
+2026-01-18 13:31:00,exit,EP-0066,Protetor Auricular Plug,EPI,PAR,36,5.50,198.00,sale
+2026-01-18 16:31:00,exit,EP-0090,Máscara PFF2 sem Válvula,EPI,UN,54,6.90,372.60,break
+2026-01-18 20:06:00,exit,EL-0112,Lâmpada LED 9W E27,Material Elétrico,UN,3,22.90,68.70,sale
+2026-01-20 19:19:00,exit,QM-0104,Detergente Industrial 5L,Limpeza,GL,10,46.00,460.00,sale
+2026-01-21 16:11:00,exit,QM-0104,Detergente Industrial 5L,Limpeza,GL,9,46.00,414.00,sale
+2026-01-21 18:44:00,exit,EP-0052,Óculos de Proteção Incolor CA 40112,EPI,UN,20,18.90,378.00,sale
+2026-01-21 19:12:00,exit,EP-0066,Protetor Auricular Plug,EPI,PAR,60,5.50,330.00,sale
+2026-01-22 12:49:00,exit,EP-0066,Protetor Auricular Plug,EPI,PAR,17,5.50,93.50,sale
+2026-01-22 17:26:00,entry,EL-0098,Bateria Li-Ion 18650 3.7V,Eletrônicos,UN,120,27.04,3244.80,
+2026-01-24 11:54:00,exit,EP-0066,Protetor Auricular Plug,EPI,PAR,26,5.50,143.00,sale
+2026-01-24 13:25:00,exit,EP-0018,Luva de Segurança CA 12345,EPI,PAR,31,24.90,771.90,sale
+2026-01-25 20:01:00,exit,FE-0203,Parafuso Sextavado M8×50 ZB,Ferramentas,CX,14,39.90,558.60,sale
+2026-01-26 13:45:00,exit,EL-0112,Lâmpada LED 9W E27,Material Elétrico,UN,35,22.90,801.50,break
+2026-01-26 14:31:00,exit,EM-0080,"Plástico Bolha 1,20m × 100m",Embalagens,RL,2,119.00,238.00,break
+2026-01-26 16:47:00,exit,EM-0080,"Plástico Bolha 1,20m × 100m",Embalagens,RL,3,119.00,357.00,internal
+2026-01-26 20:07:00,exit,EL-0034,"Cabo PP 2×2,5mm² (rolo 100m)",Material Elétrico,RL,1,459.00,459.00,sale
+2026-01-27 11:56:00,exit,EL-0034,"Cabo PP 2×2,5mm² (rolo 100m)",Material Elétrico,RL,1,459.00,459.00,break
+2026-01-27 12:38:00,entry,EL-0042,Cabo HDMI 2.0 2m,Eletrônicos,UN,150,21.80,3270.00,
+2026-01-27 16:08:00,loss,EM-0080,"Plástico Bolha 1,20m × 100m",Embalagens,RL,1,58.00,58.00,loss
+2026-01-27 20:11:00,exit,EP-0066,Protetor Auricular Plug,EPI,PAR,30,5.50,165.00,sale
+2026-01-28 11:43:00,exit,FE-0215,"Chave de Fenda Phillips 1/4""",Ferramentas,UN,3,27.90,83.70,sale
+2026-01-28 13:15:00,exit,EL-0034,"Cabo PP 2×2,5mm² (rolo 100m)",Material Elétrico,RL,2,459.00,918.00,sale
+2026-01-28 13:34:00,exit,QM-0091,Álcool 70% INPM 1L,Químicos,UN,25,28.50,712.50,sale
+2026-01-28 14:54:00,entry,SE-0012,Extintor PQS 4kg ABC,EPI,UN,15,112.46,1686.90,
+2026-01-28 16:34:00,exit,EL-0133,Mouse Óptico USB,Eletrônicos,UN,5,39.90,199.50,sale
+2026-01-28 17:25:00,exit,EM-0080,"Plástico Bolha 1,20m × 100m",Embalagens,RL,2,119.00,238.00,sale
+2026-01-29 12:37:00,entry,FE-0215,"Chave de Fenda Phillips 1/4""",Ferramentas,UN,30,11.03,330.90,
+2026-01-29 12:52:00,exit,EP-0052,Óculos de Proteção Incolor CA 40112,EPI,UN,18,18.90,340.20,sale
+2026-01-29 16:54:00,loss,EM-0071,Filme Stretch 500mm,Embalagens,RL,7,24.00,168.00,loss
+2026-01-29 17:27:00,entry,QM-0091,Álcool 70% INPM 1L,Químicos,UN,185,11.50,2127.50,
+2026-01-29 20:00:00,exit,EM-0055,Caixa de Papelão 40×30×30,Embalagens,UN,31,6.50,201.50,break
+2026-01-30 17:04:00,entry,EL-0121,Carregador USB-C 20W,Eletrônicos,UN,60,31.01,1860.60,
+2026-01-30 17:55:00,exit,FE-0244,"Alicate Universal 8""",Ferramentas,UN,3,44.90,134.70,break
+2026-01-30 19:34:00,exit,QM-0118,Desinfetante Hospitalar 5L,Limpeza,GL,2,72.00,144.00,sale
+2026-01-31 14:05:00,entry,EL-0133,Mouse Óptico USB,Eletrônicos,UN,42,13.59,570.78,
+2026-01-31 17:17:00,exit,EL-0098,Bateria Li-Ion 18650 3.7V,Eletrônicos,UN,13,62.00,806.00,break
+2026-01-31 18:31:00,exit,EP-0066,Protetor Auricular Plug,EPI,PAR,33,5.50,181.50,break
+2026-02-01 12:14:00,exit,EP-0066,Protetor Auricular Plug,EPI,PAR,52,5.50,286.00,sale
+2026-02-01 14:47:00,exit,EL-0098,Bateria Li-Ion 18650 3.7V,Eletrônicos,UN,16,62.00,992.00,break
+2026-02-01 16:47:00,exit,FE-0215,"Chave de Fenda Phillips 1/4""",Ferramentas,UN,4,27.90,111.60,break
+2026-02-01 19:13:00,exit,EL-0121,Carregador USB-C 20W,Eletrônicos,UN,9,79.90,719.10,sale
+2026-02-01 20:30:00,entry,FE-0230,Furadeira de Impacto 650W,Ferramentas,UN,6,182.50,1095.00,
+2026-02-02 16:08:00,entry,EP-0018,Luva de Segurança CA 12345,EPI,PAR,193,8.71,1681.03,
+2026-02-03 12:18:00,exit,QM-0118,Desinfetante Hospitalar 5L,Limpeza,GL,7,72.00,504.00,internal
+2026-02-03 16:48:00,exit,EL-0042,Cabo HDMI 2.0 2m,Eletrônicos,UN,9,54.90,494.10,sale
+2026-02-04 13:54:00,entry,FE-0244,"Alicate Universal 8""",Ferramentas,UN,30,18.17,545.10,
+2026-02-04 17:17:00,exit,EP-0090,Máscara PFF2 sem Válvula,EPI,UN,25,6.90,172.50,break
+2026-02-04 18:57:00,exit,EP-0090,Máscara PFF2 sem Válvula,EPI,UN,65,6.90,448.50,break
+2026-02-04 19:00:00,exit,EP-0018,Luva de Segurança CA 12345,EPI,PAR,9,24.90,224.10,sale
+2026-02-05 16:43:00,exit,EL-0121,Carregador USB-C 20W,Eletrônicos,UN,10,79.90,799.00,internal
+2026-02-05 17:32:00,entry,EM-0055,Caixa de Papelão 40×30×30,Embalagens,UN,600,3.00,1800.00,
+2026-02-05 19:55:00,exit,FE-0215,"Chave de Fenda Phillips 1/4""",Ferramentas,UN,6,27.90,167.40,sale
+2026-02-06 13:15:00,exit,EP-0090,Máscara PFF2 sem Válvula,EPI,UN,72,6.90,496.80,break
+2026-02-06 14:26:00,exit,EL-0112,Lâmpada LED 9W E27,Material Elétrico,UN,27,22.90,618.30,sale
+2026-02-06 14:28:00,exit,EM-0071,Filme Stretch 500mm,Embalagens,RL,15,49.90,748.50,sale
+2026-02-06 16:03:00,loss,EL-0133,Mouse Óptico USB,Eletrônicos,UN,5,14.00,70.00,loss
+2026-02-06 17:33:00,exit,EP-0052,Óculos de Proteção Incolor CA 40112,EPI,UN,16,18.90,302.40,sale
+2026-02-06 19:45:00,exit,QM-0104,Detergente Industrial 5L,Limpeza,GL,11,46.00,506.00,sale
+2026-02-07 11:15:00,exit,EP-0018,Luva de Segurança CA 12345,EPI,PAR,27,24.90,672.30,sale
+2026-02-07 11:44:00,exit,EL-0042,Cabo HDMI 2.0 2m,Eletrônicos,UN,16,54.90,878.40,sale
+2026-02-07 16:18:00,exit,EM-0080,"Plástico Bolha 1,20m × 100m",Embalagens,RL,2,119.00,238.00,internal
+2026-02-07 16:44:00,entry,FE-0203,Parafuso Sextavado M8×50 ZB,Ferramentas,CX,86,18.19,1564.34,
+2026-02-08 12:17:00,exit,FE-0230,Furadeira de Impacto 650W,Ferramentas,UN,1,349.00,349.00,internal
+2026-02-08 12:20:00,exit,EM-0055,Caixa de Papelão 40×30×30,Embalagens,UN,44,6.50,286.00,sale
+2026-02-08 12:40:00,entry,EM-0080,"Plástico Bolha 1,20m × 100m",Embalagens,RL,10,58.97,589.70,
+2026-02-08 18:23:00,exit,EM-0062,Fita Adesiva Transparente 48mm,Embalagens,RL,41,7.90,323.90,sale
+2026-02-08 20:12:00,exit,QM-0091,Álcool 70% INPM 1L,Químicos,UN,33,28.50,940.50,sale
+2026-02-09 11:46:00,exit,EL-0077,Fita Isolante 19mm × 20m,Material Elétrico,RL,36,8.90,320.40,internal
+2026-02-09 13:54:00,exit,EL-0098,Bateria Li-Ion 18650 3.7V,Eletrônicos,UN,9,62.00,558.00,break
+2026-02-09 16:28:00,exit,EL-0121,Carregador USB-C 20W,Eletrônicos,UN,11,79.90,878.90,sale
+2026-02-09 17:25:00,exit,QM-0104,Detergente Industrial 5L,Limpeza,GL,10,46.00,460.00,internal
+2026-02-09 17:50:00,exit,EP-0090,Máscara PFF2 sem Válvula,EPI,UN,70,6.90,483.00,sale
+2026-02-10 13:19:00,exit,FE-0230,Furadeira de Impacto 650W,Ferramentas,UN,2,349.00,698.00,sale
+2026-02-10 18:04:00,loss,EP-0052,Óculos de Proteção Incolor CA 40112,EPI,UN,16,6.80,108.80,loss
+2026-02-10 18:27:00,exit,EL-0150,Disjuntor Bipolar 32A,Material Elétrico,UN,5,58.00,290.00,internal
+2026-02-11 12:27:00,exit,EP-0090,Máscara PFF2 sem Válvula,EPI,UN,43,6.90,296.70,sale
+2026-02-11 13:03:00,exit,EP-0066,Protetor Auricular Plug,EPI,PAR,42,5.50,231.00,sale
+2026-02-11 13:36:00,exit,QM-0104,Detergente Industrial 5L,Limpeza,GL,8,46.00,368.00,internal
+2026-02-11 16:25:00,entry,QM-0104,Detergente Industrial 5L,Limpeza,GL,41,20.54,842.14,
+2026-02-11 18:29:00,entry,EM-0062,Fita Adesiva Transparente 48mm,Embalagens,RL,252,3.22,811.44,
+2026-02-11 18:48:00,exit,EM-0055,Caixa de Papelão 40×30×30,Embalagens,UN,87,6.50,565.50,sale
+2026-02-12 19:07:00,exit,FE-0203,Parafuso Sextavado M8×50 ZB,Ferramentas,CX,5,39.90,199.50,sale
+2026-02-13 18:42:00,loss,EL-0042,Cabo HDMI 2.0 2m,Eletrônicos,UN,13,22.50,292.50,loss
+2026-02-13 19:05:00,loss,FE-0215,"Chave de Fenda Phillips 1/4""",Ferramentas,UN,3,11.00,33.00,loss
+2026-02-13 20:58:00,exit,EL-0150,Disjuntor Bipolar 32A,Material Elétrico,UN,5,58.00,290.00,internal
+2026-02-14 13:10:00,exit,EM-0062,Fita Adesiva Transparente 48mm,Embalagens,RL,20,7.90,158.00,internal
+2026-02-14 13:44:00,exit,EM-0080,"Plástico Bolha 1,20m × 100m",Embalagens,RL,2,119.00,238.00,break
+2026-02-14 17:25:00,exit,EL-0077,Fita Isolante 19mm × 20m,Material Elétrico,RL,48,8.90,427.20,sale
+2026-02-14 20:29:00,exit,EL-0112,Lâmpada LED 9W E27,Material Elétrico,UN,34,22.90,778.60,break
+2026-02-14 20:50:00,exit,EP-0018,Luva de Segurança CA 12345,EPI,PAR,14,24.90,348.60,internal
+2026-02-15 16:49:00,exit,EL-0150,Disjuntor Bipolar 32A,Material Elétrico,UN,9,58.00,522.00,sale
+2026-02-15 18:44:00,exit,EM-0062,Fita Adesiva Transparente 48mm,Embalagens,RL,36,7.90,284.40,break
+2026-02-16 12:17:00,exit,FE-0230,Furadeira de Impacto 650W,Ferramentas,UN,2,349.00,698.00,sale
+2026-02-16 13:18:00,exit,EL-0133,Mouse Óptico USB,Eletrônicos,UN,5,39.90,199.50,sale
+2026-02-16 20:50:00,exit,EM-0071,Filme Stretch 500mm,Embalagens,RL,10,49.90,499.00,sale
+2026-02-17 11:01:00,exit,QM-0118,Desinfetante Hospitalar 5L,Limpeza,GL,2,72.00,144.00,sale
+2026-02-17 11:24:00,exit,EL-0034,"Cabo PP 2×2,5mm² (rolo 100m)",Material Elétrico,RL,1,459.00,459.00,sale
+2026-02-17 11:57:00,exit,SE-0012,Extintor PQS 4kg ABC,EPI,UN,2,229.00,458.00,internal
+2026-02-17 12:46:00,exit,EL-0121,Carregador USB-C 20W,Eletrônicos,UN,3,79.90,239.70,sale
+2026-02-17 13:24:00,exit,SE-0012,Extintor PQS 4kg ABC,EPI,UN,3,229.00,687.00,break
+2026-02-17 17:55:00,exit,QM-0118,Desinfetante Hospitalar 5L,Limpeza,GL,5,72.00,360.00,sale
+2026-02-17 20:22:00,exit,SE-0012,Extintor PQS 4kg ABC,EPI,UN,1,229.00,229.00,sale
+2026-02-17 20:26:00,exit,EP-0066,Protetor Auricular Plug,EPI,PAR,27,5.50,148.50,sale
+2026-02-18 11:41:00,exit,QM-0091,Álcool 70% INPM 1L,Químicos,UN,20,28.50,570.00,break
+2026-02-18 12:40:00,exit,SE-0012,Extintor PQS 4kg ABC,EPI,UN,2,229.00,458.00,break
+2026-02-18 16:46:00,exit,EM-0062,Fita Adesiva Transparente 48mm,Embalagens,RL,15,7.90,118.50,internal
+2026-02-19 13:02:00,entry,EL-0150,Disjuntor Bipolar 32A,Material Elétrico,UN,47,24.10,1132.70,
+2026-02-19 13:04:00,entry,EL-0077,Fita Isolante 19mm × 20m,Material Elétrico,RL,137,3.45,472.65,
+2026-02-19 18:11:00,exit,FE-0215,"Chave de Fenda Phillips 1/4""",Ferramentas,UN,3,27.90,83.70,sale
+2026-02-19 18:55:00,exit,FE-0215,"Chave de Fenda Phillips 1/4""",Ferramentas,UN,5,27.90,139.50,sale
+2026-02-19 20:26:00,exit,QM-0091,Álcool 70% INPM 1L,Químicos,UN,69,28.50,1966.50,sale
+2026-02-19 20:45:00,entry,EL-0112,Lâmpada LED 9W E27,Material Elétrico,UN,92,9.84,905.28,
+2026-02-20 11:24:00,exit,EP-0090,Máscara PFF2 sem Válvula,EPI,UN,74,6.90,510.60,internal
+2026-02-20 13:04:00,exit,SE-0012,Extintor PQS 4kg ABC,EPI,UN,1,229.00,229.00,break
+2026-02-20 17:57:00,exit,EL-0121,Carregador USB-C 20W,Eletrônicos,UN,1,79.90,79.90,internal
+2026-02-20 20:28:00,entry,EL-0034,"Cabo PP 2×2,5mm² (rolo 100m)",Material Elétrico,RL,17,279.71,4755.07,
+2026-02-21 14:45:00,exit,EM-0055,Caixa de Papelão 40×30×30,Embalagens,UN,93,6.50,604.50,sale
+2026-02-21 16:48:00,exit,SE-0012,Extintor PQS 4kg ABC,EPI,UN,3,229.00,687.00,internal
+2026-02-21 17:13:00,exit,QM-0118,Desinfetante Hospitalar 5L,Limpeza,GL,6,72.00,432.00,sale
+2026-02-21 19:24:00,loss,EL-0098,Bateria Li-Ion 18650 3.7V,Eletrônicos,UN,11,28.00,308.00,loss
+2026-02-21 19:58:00,entry,EP-0090,Máscara PFF2 sem Válvula,EPI,UN,517,2.34,1209.78,
+2026-02-22 14:28:00,exit,EL-0077,Fita Isolante 19mm × 20m,Material Elétrico,RL,27,8.90,240.30,sale
+2026-02-22 16:29:00,exit,EL-0098,Bateria Li-Ion 18650 3.7V,Eletrônicos,UN,7,62.00,434.00,sale
+2026-02-23 14:19:00,loss,SE-0012,Extintor PQS 4kg ABC,EPI,UN,1,118.00,118.00,loss
+2026-02-23 18:02:00,exit,EP-0018,Luva de Segurança CA 12345,EPI,PAR,28,24.90,697.20,sale
+2026-02-24 11:19:00,entry,EP-0031,Capacete Amarelo CA 31469,EPI,UN,53,51.96,2753.88,
+2026-02-24 13:21:00,exit,QM-0118,Desinfetante Hospitalar 5L,Limpeza,GL,5,72.00,360.00,sale
+2026-02-24 14:19:00,exit,EL-0034,"Cabo PP 2×2,5mm² (rolo 100m)",Material Elétrico,RL,1,459.00,459.00,break
+2026-02-24 17:43:00,entry,EP-0066,Protetor Auricular Plug,EPI,PAR,348,1.74,605.52,
+2026-02-24 18:10:00,exit,EM-0071,Filme Stretch 500mm,Embalagens,RL,13,49.90,648.70,sale
+2026-02-24 19:35:00,exit,EM-0055,Caixa de Papelão 40×30×30,Embalagens,UN,52,6.50,338.00,sale
+2026-02-25 17:08:00,exit,EL-0121,Carregador USB-C 20W,Eletrônicos,UN,6,79.90,479.40,break
+2026-02-25 18:52:00,exit,FE-0203,Parafuso Sextavado M8×50 ZB,Ferramentas,CX,16,39.90,638.40,sale
+2026-02-26 16:05:00,exit,QM-0118,Desinfetante Hospitalar 5L,Limpeza,GL,3,72.00,216.00,sale
+2026-02-26 18:26:00,entry,QM-0118,Desinfetante Hospitalar 5L,Limpeza,GL,43,33.92,1458.56,
+2026-02-27 12:22:00,exit,EL-0077,Fita Isolante 19mm × 20m,Material Elétrico,RL,21,8.90,186.90,sale
+2026-02-27 13:01:00,exit,EM-0055,Caixa de Papelão 40×30×30,Embalagens,UN,86,6.50,559.00,sale
+2026-02-27 19:57:00,exit,EL-0121,Carregador USB-C 20W,Eletrônicos,UN,10,79.90,799.00,break
+2026-02-28 12:03:00,exit,EL-0077,Fita Isolante 19mm × 20m,Material Elétrico,RL,31,8.90,275.90,sale
+2026-02-28 17:25:00,exit,QM-0104,Detergente Industrial 5L,Limpeza,GL,16,46.00,736.00,sale
+2026-03-01 11:42:00,exit,EL-0112,Lâmpada LED 9W E27,Material Elétrico,UN,13,22.90,297.70,break
+2026-03-01 17:25:00,exit,EP-0066,Protetor Auricular Plug,EPI,PAR,41,5.50,225.50,sale
+2026-03-01 17:34:00,exit,EM-0080,"Plástico Bolha 1,20m × 100m",Embalagens,RL,3,119.00,357.00,sale
+2026-03-01 18:07:00,exit,FE-0203,Parafuso Sextavado M8×50 ZB,Ferramentas,CX,6,39.90,239.40,sale
+2026-03-01 18:28:00,exit,QM-0104,Detergente Industrial 5L,Limpeza,GL,14,46.00,644.00,sale
+2026-03-02 11:06:00,exit,QM-0118,Desinfetante Hospitalar 5L,Limpeza,GL,7,72.00,504.00,sale
+2026-03-02 13:06:00,exit,EP-0090,Máscara PFF2 sem Válvula,EPI,UN,37,6.90,255.30,sale
+2026-03-02 19:44:00,exit,EL-0077,Fita Isolante 19mm × 20m,Material Elétrico,RL,15,8.90,133.50,sale
+2026-03-03 12:05:00,exit,EP-0031,Capacete Amarelo CA 31469,EPI,UN,9,119.00,1071.00,break
+2026-03-03 17:46:00,exit,EM-0080,"Plástico Bolha 1,20m × 100m",Embalagens,RL,2,119.00,238.00,break
+2026-03-03 19:22:00,exit,EP-0052,Óculos de Proteção Incolor CA 40112,EPI,UN,15,18.90,283.50,sale
+2026-03-04 11:19:00,exit,EP-0066,Protetor Auricular Plug,EPI,PAR,53,5.50,291.50,sale
+2026-03-04 12:13:00,exit,EP-0018,Luva de Segurança CA 12345,EPI,PAR,13,24.90,323.70,sale
+2026-03-04 13:16:00,exit,EP-0052,Óculos de Proteção Incolor CA 40112,EPI,UN,11,18.90,207.90,sale
+2026-03-04 17:15:00,exit,QM-0091,Álcool 70% INPM 1L,Químicos,UN,47,28.50,1339.50,sale
+2026-03-05 12:14:00,entry,EM-0071,Filme Stretch 500mm,Embalagens,RL,62,22.90,1419.80,
+2026-03-05 12:38:00,exit,QM-0118,Desinfetante Hospitalar 5L,Limpeza,GL,5,72.00,360.00,sale
+2026-03-05 17:47:00,exit,EP-0090,Máscara PFF2 sem Válvula,EPI,UN,52,6.90,358.80,break
+2026-03-05 18:00:00,exit,EL-0042,Cabo HDMI 2.0 2m,Eletrônicos,UN,11,54.90,603.90,sale
+2026-03-06 11:10:00,entry,EL-0098,Bateria Li-Ion 18650 3.7V,Eletrônicos,UN,113,26.63,3009.19,
+2026-03-07 11:44:00,entry,FE-0215,"Chave de Fenda Phillips 1/4""",Ferramentas,UN,18,10.70,192.60,
+2026-03-07 13:29:00,exit,FE-0244,"Alicate Universal 8""",Ferramentas,UN,7,44.90,314.30,internal
+2026-03-08 11:49:00,exit,QM-0104,Detergente Industrial 5L,Limpeza,GL,12,46.00,552.00,sale
+2026-03-08 16:11:00,exit,EP-0090,Máscara PFF2 sem Válvula,EPI,UN,26,6.90,179.40,internal
+2026-03-08 16:31:00,exit,QM-0091,Álcool 70% INPM 1L,Químicos,UN,34,28.50,969.00,sale
+2026-03-08 16:42:00,exit,EL-0077,Fita Isolante 19mm × 20m,Material Elétrico,RL,29,8.90,258.10,break
+2026-03-09 13:50:00,exit,EL-0034,"Cabo PP 2×2,5mm² (rolo 100m)",Material Elétrico,RL,2,459.00,918.00,sale
+2026-03-09 13:50:00,entry,EM-0080,"Plástico Bolha 1,20m × 100m",Embalagens,RL,12,58.20,698.40,
+2026-03-09 17:12:00,exit,FE-0215,"Chave de Fenda Phillips 1/4""",Ferramentas,UN,2,27.90,55.80,sale
+2026-03-09 20:13:00,exit,EP-0090,Máscara PFF2 sem Válvula,EPI,UN,20,6.90,138.00,sale
+2026-03-10 12:01:00,exit,EP-0066,Protetor Auricular Plug,EPI,PAR,56,5.50,308.00,sale
+2026-03-10 14:20:00,exit,EP-0090,Máscara PFF2 sem Válvula,EPI,UN,61,6.90,420.90,break
+2026-03-10 16:05:00,exit,FE-0215,"Chave de Fenda Phillips 1/4""",Ferramentas,UN,5,27.90,139.50,sale
+2026-03-10 16:24:00,loss,QM-0118,Desinfetante Hospitalar 5L,Limpeza,GL,5,34.00,170.00,loss
+2026-03-10 17:55:00,entry,EP-0052,Óculos de Proteção Incolor CA 40112,EPI,UN,113,7.07,798.91,
+2026-03-10 20:23:00,exit,EL-0077,Fita Isolante 19mm × 20m,Material Elétrico,RL,15,8.90,133.50,sale
+2026-03-11 11:39:00,exit,EL-0042,Cabo HDMI 2.0 2m,Eletrônicos,UN,13,54.90,713.70,sale
+2026-03-11 18:15:00,exit,EL-0150,Disjuntor Bipolar 32A,Material Elétrico,UN,6,58.00,348.00,internal
+2026-03-11 20:28:00,entry,FE-0230,Furadeira de Impacto 650W,Ferramentas,UN,5,186.94,934.70,
+2026-03-11 20:42:00,exit,EP-0018,Luva de Segurança CA 12345,EPI,PAR,34,24.90,846.60,sale
+2026-03-12 12:03:00,exit,EL-0999,Calculadora de Bolso (descontinuada),Eletrônicos,UN,2,19.90,39.80,sale
+2026-03-12 12:52:00,exit,EL-0121,Carregador USB-C 20W,Eletrônicos,UN,12,79.90,958.80,sale
+2026-03-12 13:06:00,exit,EP-0018,Luva de Segurança CA 12345,EPI,PAR,34,24.90,846.60,break
+2026-03-12 13:37:00,exit,EM-0071,Filme Stretch 500mm,Embalagens,RL,8,49.90,399.20,sale
+2026-03-13 12:18:00,exit,EP-0018,Luva de Segurança CA 12345,EPI,PAR,32,24.90,796.80,sale
+2026-03-13 13:32:00,exit,QM-0091,Álcool 70% INPM 1L,Químicos,UN,21,28.50,598.50,sale
+2026-03-13 14:41:00,entry,EL-0133,Mouse Óptico USB,Eletrônicos,UN,41,14.04,575.64,
+2026-03-14 13:03:00,exit,FE-0203,Parafuso Sextavado M8×50 ZB,Ferramentas,CX,7,39.90,279.30,internal
+2026-03-15 12:05:00,exit,EM-0055,Caixa de Papelão 40×30×30,Embalagens,UN,104,6.50,676.00,internal
+2026-03-15 16:58:00,exit,EM-0062,Fita Adesiva Transparente 48mm,Embalagens,RL,53,7.90,418.70,break
+2026-03-16 16:41:00,exit,QM-0118,Desinfetante Hospitalar 5L,Limpeza,GL,5,72.00,360.00,sale
+2026-03-17 12:02:00,loss,EP-0031,Capacete Amarelo CA 31469,EPI,UN,4,52.00,208.00,loss
+2026-03-18 14:12:00,exit,EM-0080,"Plástico Bolha 1,20m × 100m",Embalagens,RL,2,119.00,238.00,sale
+2026-03-18 17:48:00,exit,EM-0062,Fita Adesiva Transparente 48mm,Embalagens,RL,43,7.90,339.70,sale
+2026-03-18 18:24:00,exit,QM-0104,Detergente Industrial 5L,Limpeza,GL,8,46.00,368.00,sale
+2026-03-19 16:35:00,exit,FE-0215,"Chave de Fenda Phillips 1/4""",Ferramentas,UN,5,27.90,139.50,sale
+2026-03-19 16:50:00,loss,EM-0062,Fita Adesiva Transparente 48mm,Embalagens,RL,52,3.20,166.40,loss
+2026-03-19 20:30:00,exit,QM-0091,Álcool 70% INPM 1L,Químicos,UN,26,28.50,741.00,sale
+2026-03-20 12:25:00,exit,EL-0121,Carregador USB-C 20W,Eletrônicos,UN,11,79.90,878.90,break
+2026-03-20 16:35:00,loss,EL-0098,Bateria Li-Ion 18650 3.7V,Eletrônicos,UN,7,28.00,196.00,loss
+2026-03-20 16:41:00,exit,EL-0098,Bateria Li-Ion 18650 3.7V,Eletrônicos,UN,18,62.00,1116.00,sale
+2026-03-20 19:53:00,exit,EL-0077,Fita Isolante 19mm × 20m,Material Elétrico,RL,40,8.90,356.00,break
+2026-03-21 11:30:00,exit,EL-0034,"Cabo PP 2×2,5mm² (rolo 100m)",Material Elétrico,RL,2,459.00,918.00,internal
+2026-03-21 12:02:00,exit,QM-0104,Detergente Industrial 5L,Limpeza,GL,11,46.00,506.00,internal
+2026-03-21 13:53:00,exit,FE-0203,Parafuso Sextavado M8×50 ZB,Ferramentas,CX,15,39.90,598.50,break
+2026-03-21 14:29:00,exit,FE-0215,"Chave de Fenda Phillips 1/4""",Ferramentas,UN,3,27.90,83.70,sale
+2026-03-21 16:34:00,exit,FE-0215,"Chave de Fenda Phillips 1/4""",Ferramentas,UN,6,27.90,167.40,sale
+2026-03-21 16:59:00,exit,FE-0215,"Chave de Fenda Phillips 1/4""",Ferramentas,UN,3,27.90,83.70,sale
+2026-03-21 19:24:00,exit,EP-0090,Máscara PFF2 sem Válvula,EPI,UN,37,6.90,255.30,internal
+2026-03-21 20:25:00,exit,FE-0230,Furadeira de Impacto 650W,Ferramentas,UN,1,349.00,349.00,sale
+2026-03-23 12:58:00,exit,EL-0112,Lâmpada LED 9W E27,Material Elétrico,UN,33,22.90,755.70,sale
+2026-03-23 12:58:00,exit,FE-0215,"Chave de Fenda Phillips 1/4""",Ferramentas,UN,5,27.90,139.50,internal
+2026-03-23 16:24:00,exit,FE-0230,Furadeira de Impacto 650W,Ferramentas,UN,1,349.00,349.00,sale
+2026-03-23 19:01:00,exit,QM-0091,Álcool 70% INPM 1L,Químicos,UN,25,28.50,712.50,internal
+2026-03-24 13:04:00,exit,EP-0090,Máscara PFF2 sem Válvula,EPI,UN,51,6.90,351.90,sale
+2026-03-24 13:35:00,entry,SE-0012,Extintor PQS 4kg ABC,EPI,UN,10,122.51,1225.10,
+2026-03-24 14:42:00,exit,FE-0244,"Alicate Universal 8""",Ferramentas,UN,4,44.90,179.60,internal
+2026-03-24 16:55:00,exit,EL-0133,Mouse Óptico USB,Eletrônicos,UN,5,39.90,199.50,break
+2026-03-24 17:09:00,exit,EP-0090,Máscara PFF2 sem Válvula,EPI,UN,49,6.90,338.10,sale
+2026-03-24 19:04:00,exit,EM-0062,Fita Adesiva Transparente 48mm,Embalagens,RL,43,7.90,339.70,sale
+2026-03-24 19:22:00,exit,EL-0077,Fita Isolante 19mm × 20m,Material Elétrico,RL,48,8.90,427.20,sale
+2026-03-25 16:02:00,exit,EP-0018,Luva de Segurança CA 12345,EPI,PAR,12,24.90,298.80,sale
+2026-03-25 19:59:00,exit,EL-0133,Mouse Óptico USB,Eletrônicos,UN,9,39.90,359.10,internal
+2026-03-25 20:10:00,entry,FE-0244,"Alicate Universal 8""",Ferramentas,UN,22,19.81,435.82,
+2026-03-26 12:02:00,exit,QM-0118,Desinfetante Hospitalar 5L,Limpeza,GL,2,72.00,144.00,break
+2026-03-26 16:09:00,entry,EL-0121,Carregador USB-C 20W,Eletrônicos,UN,72,32.33,2327.76,
+2026-03-26 17:05:00,entry,FE-0203,Parafuso Sextavado M8×50 ZB,Ferramentas,CX,62,17.31,1073.22,
+2026-03-26 17:29:00,exit,EL-0034,"Cabo PP 2×2,5mm² (rolo 100m)",Material Elétrico,RL,1,459.00,459.00,break
+2026-03-26 19:11:00,exit,EL-0112,Lâmpada LED 9W E27,Material Elétrico,UN,30,22.90,687.00,sale
+2026-03-27 16:14:00,entry,EL-0077,Fita Isolante 19mm × 20m,Material Elétrico,RL,158,3.51,554.58,
+2026-03-28 16:29:00,exit,QM-0104,Detergente Industrial 5L,Limpeza,GL,15,46.00,690.00,sale
+2026-03-29 13:22:00,entry,EL-0112,Lâmpada LED 9W E27,Material Elétrico,UN,113,9.95,1124.35,
+2026-03-29 14:08:00,entry,EL-0999,Calculadora de Bolso (descontinuada),Eletrônicos,UN,7,8.02,56.14,
+2026-03-29 20:51:00,entry,EL-0042,Cabo HDMI 2.0 2m,Eletrônicos,UN,173,23.45,4056.85,
+2026-03-30 11:37:00,exit,EP-0018,Luva de Segurança CA 12345,EPI,PAR,32,24.90,796.80,sale
+2026-03-30 16:08:00,entry,EM-0062,Fita Adesiva Transparente 48mm,Embalagens,RL,189,3.29,621.81,
+2026-03-30 19:21:00,exit,EP-0066,Protetor Auricular Plug,EPI,PAR,56,5.50,308.00,internal
+2026-03-31 11:58:00,exit,EP-0090,Máscara PFF2 sem Válvula,EPI,UN,69,6.90,476.10,sale
+2026-03-31 12:15:00,exit,EP-0090,Máscara PFF2 sem Válvula,EPI,UN,75,6.90,517.50,sale
+2026-03-31 13:28:00,exit,EM-0062,Fita Adesiva Transparente 48mm,Embalagens,RL,24,7.90,189.60,sale
+2026-03-31 16:23:00,exit,EL-0042,Cabo HDMI 2.0 2m,Eletrônicos,UN,15,54.90,823.50,sale
+2026-03-31 16:31:00,entry,EM-0055,Caixa de Papelão 40×30×30,Embalagens,UN,617,2.76,1702.92,
+2026-03-31 19:21:00,exit,QM-0118,Desinfetante Hospitalar 5L,Limpeza,GL,8,72.00,576.00,internal
+2026-04-01 11:50:00,exit,EP-0018,Luva de Segurança CA 12345,EPI,PAR,19,24.90,473.10,internal
+2026-04-01 17:27:00,entry,EP-0018,Luva de Segurança CA 12345,EPI,PAR,213,8.80,1874.40,
+2026-04-01 19:01:00,entry,QM-0104,Detergente Industrial 5L,Limpeza,GL,61,20.79,1268.19,
+2026-04-03 14:30:00,exit,EP-0018,Luva de Segurança CA 12345,EPI,PAR,22,24.90,547.80,break
+2026-04-03 17:08:00,exit,EL-0112,Lâmpada LED 9W E27,Material Elétrico,UN,10,22.90,229.00,sale
+2026-04-04 12:23:00,exit,QM-0091,Álcool 70% INPM 1L,Químicos,UN,40,28.50,1140.00,sale
+2026-04-04 12:45:00,exit,EP-0018,Luva de Segurança CA 12345,EPI,PAR,12,24.90,298.80,sale
+2026-04-04 12:50:00,exit,EM-0062,Fita Adesiva Transparente 48mm,Embalagens,RL,35,7.90,276.50,sale
+2026-04-04 16:01:00,entry,QM-0091,Álcool 70% INPM 1L,Químicos,UN,205,11.55,2367.75,
+2026-04-04 17:07:00,exit,EL-0034,"Cabo PP 2×2,5mm² (rolo 100m)",Material Elétrico,RL,1,459.00,459.00,sale
+2026-04-05 12:25:00,exit,EP-0052,Óculos de Proteção Incolor CA 40112,EPI,UN,10,18.90,189.00,sale
+2026-04-05 16:36:00,exit,EP-0090,Máscara PFF2 sem Válvula,EPI,UN,31,6.90,213.90,internal
+2026-04-05 20:37:00,exit,EL-0121,Carregador USB-C 20W,Eletrônicos,UN,4,79.90,319.60,break
+2026-04-06 16:25:00,exit,EL-0042,Cabo HDMI 2.0 2m,Eletrônicos,UN,15,54.90,823.50,sale
+2026-04-06 17:00:00,exit,EP-0090,Máscara PFF2 sem Válvula,EPI,UN,74,6.90,510.60,internal
+2026-04-06 20:12:00,exit,SE-0012,Extintor PQS 4kg ABC,EPI,UN,3,229.00,687.00,internal
+2026-04-07 18:19:00,exit,EP-0052,Óculos de Proteção Incolor CA 40112,EPI,UN,17,18.90,321.30,break
+2026-04-07 20:09:00,exit,EM-0055,Caixa de Papelão 40×30×30,Embalagens,UN,32,6.50,208.00,sale
+2026-04-07 20:21:00,exit,EL-0042,Cabo HDMI 2.0 2m,Eletrônicos,UN,24,54.90,1317.60,internal
+2026-04-08 11:58:00,exit,QM-0104,Detergente Industrial 5L,Limpeza,GL,16,46.00,736.00,internal
+2026-04-08 12:18:00,exit,EL-0077,Fita Isolante 19mm × 20m,Material Elétrico,RL,40,8.90,356.00,sale
+2026-04-08 13:58:00,exit,EL-0133,Mouse Óptico USB,Eletrônicos,UN,1,39.90,39.90,sale
+2026-04-08 18:07:00,exit,EL-0034,"Cabo PP 2×2,5mm² (rolo 100m)",Material Elétrico,RL,1,459.00,459.00,sale
+2026-04-08 19:47:00,exit,EP-0090,Máscara PFF2 sem Válvula,EPI,UN,63,6.90,434.70,internal
+2026-04-09 11:32:00,exit,EL-0150,Disjuntor Bipolar 32A,Material Elétrico,UN,3,58.00,174.00,sale
+2026-04-09 18:50:00,exit,SE-0012,Extintor PQS 4kg ABC,EPI,UN,1,229.00,229.00,sale
+2026-04-10 12:50:00,exit,QM-0091,Álcool 70% INPM 1L,Químicos,UN,20,28.50,570.00,sale
+2026-04-10 18:22:00,entry,FE-0230,Furadeira de Impacto 650W,Ferramentas,UN,6,181.86,1091.16,
+2026-04-10 20:37:00,exit,QM-0118,Desinfetante Hospitalar 5L,Limpeza,GL,1,72.00,72.00,sale
+2026-04-11 16:56:00,loss,EL-0098,Bateria Li-Ion 18650 3.7V,Eletrônicos,UN,19,28.00,532.00,loss
+2026-04-12 19:28:00,exit,QM-0118,Desinfetante Hospitalar 5L,Limpeza,GL,4,72.00,288.00,sale
+2026-04-13 13:09:00,entry,EM-0080,"Plástico Bolha 1,20m × 100m",Embalagens,RL,9,59.31,533.79,
+2026-04-13 14:07:00,loss,FE-0244,"Alicate Universal 8""",Ferramentas,UN,3,19.00,57.00,loss
+2026-04-14 11:40:00,exit,SE-0012,Extintor PQS 4kg ABC,EPI,UN,2,229.00,458.00,sale
+2026-04-14 12:34:00,exit,EL-0034,"Cabo PP 2×2,5mm² (rolo 100m)",Material Elétrico,RL,2,459.00,918.00,break
+2026-04-14 16:03:00,exit,EL-0133,Mouse Óptico USB,Eletrônicos,UN,8,39.90,319.20,break
+2026-04-14 18:15:00,exit,EP-0031,Capacete Amarelo CA 31469,EPI,UN,5,119.00,595.00,sale
+2026-04-14 18:47:00,exit,EL-0042,Cabo HDMI 2.0 2m,Eletrônicos,UN,15,54.90,823.50,break
+2026-04-14 19:58:00,exit,QM-0091,Álcool 70% INPM 1L,Químicos,UN,43,28.50,1225.50,internal
+2026-04-15 11:02:00,exit,EM-0055,Caixa de Papelão 40×30×30,Embalagens,UN,30,6.50,195.00,sale
+2026-04-15 13:51:00,exit,EL-0121,Carregador USB-C 20W,Eletrônicos,UN,8,79.90,639.20,break
+2026-04-15 17:09:00,exit,EM-0071,Filme Stretch 500mm,Embalagens,RL,6,49.90,299.40,sale
+2026-04-15 18:01:00,exit,FE-0203,Parafuso Sextavado M8×50 ZB,Ferramentas,CX,15,39.90,598.50,sale
+2026-04-16 12:13:00,entry,FE-0215,"Chave de Fenda Phillips 1/4""",Ferramentas,UN,24,10.94,262.56,
+2026-04-16 12:19:00,exit,EL-0098,Bateria Li-Ion 18650 3.7V,Eletrônicos,UN,14,62.00,868.00,sale
+2026-04-16 13:18:00,entry,EP-0052,Óculos de Proteção Incolor CA 40112,EPI,UN,86,6.80,584.80,
+2026-04-16 17:38:00,exit,EL-0042,Cabo HDMI 2.0 2m,Eletrônicos,UN,9,54.90,494.10,sale
+2026-04-17 13:14:00,exit,QM-0091,Álcool 70% INPM 1L,Químicos,UN,18,28.50,513.00,sale
+2026-04-17 14:10:00,exit,EM-0055,Caixa de Papelão 40×30×30,Embalagens,UN,47,6.50,305.50,break
+2026-04-17 16:34:00,entry,EM-0071,Filme Stretch 500mm,Embalagens,RL,71,24.05,1707.55,
+2026-04-17 17:26:00,exit,EL-0150,Disjuntor Bipolar 32A,Material Elétrico,UN,7,58.00,406.00,internal
+2026-04-17 20:03:00,exit,QM-0118,Desinfetante Hospitalar 5L,Limpeza,GL,5,72.00,360.00,sale
+2026-04-18 14:03:00,exit,EP-0018,Luva de Segurança CA 12345,EPI,PAR,12,24.90,298.80,break
+2026-04-19 13:27:00,entry,EL-0133,Mouse Óptico USB,Eletrônicos,UN,24,13.78,330.72,
+2026-04-19 16:13:00,exit,EL-0098,Bateria Li-Ion 18650 3.7V,Eletrônicos,UN,11,62.00,682.00,sale
+2026-04-19 16:24:00,exit,FE-0244,"Alicate Universal 8""",Ferramentas,UN,6,44.90,269.40,sale
+2026-04-20 13:20:00,entry,EL-0098,Bateria Li-Ion 18650 3.7V,Eletrônicos,UN,120,28.23,3387.60,
+2026-04-20 16:11:00,exit,EP-0066,Protetor Auricular Plug,EPI,PAR,59,5.50,324.50,sale
+2026-04-20 16:14:00,exit,EM-0080,"Plástico Bolha 1,20m × 100m",Embalagens,RL,4,119.00,476.00,sale
+2026-04-20 19:43:00,exit,EP-0090,Máscara PFF2 sem Válvula,EPI,UN,47,6.90,324.30,break
+2026-04-21 12:26:00,exit,EL-0034,"Cabo PP 2×2,5mm² (rolo 100m)",Material Elétrico,RL,1,459.00,459.00,internal
+2026-04-21 16:06:00,exit,SE-0012,Extintor PQS 4kg ABC,EPI,UN,1,229.00,229.00,sale
+2026-04-22 11:35:00,exit,EL-0042,Cabo HDMI 2.0 2m,Eletrônicos,UN,19,54.90,1043.10,sale
+2026-04-22 13:34:00,exit,QM-0091,Álcool 70% INPM 1L,Químicos,UN,21,28.50,598.50,break
+2026-04-22 16:33:00,exit,EM-0055,Caixa de Papelão 40×30×30,Embalagens,UN,55,6.50,357.50,sale
+2026-04-22 17:50:00,exit,EP-0052,Óculos de Proteção Incolor CA 40112,EPI,UN,14,18.90,264.60,sale
+2026-04-23 12:15:00,exit,EP-0090,Máscara PFF2 sem Válvula,EPI,UN,33,6.90,227.70,sale
+2026-04-23 13:29:00,exit,EL-0121,Carregador USB-C 20W,Eletrônicos,UN,6,79.90,479.40,internal
+2026-04-23 16:09:00,exit,EP-0066,Protetor Auricular Plug,EPI,PAR,40,5.50,220.00,sale
+2026-04-23 18:17:00,exit,EL-0098,Bateria Li-Ion 18650 3.7V,Eletrônicos,UN,16,62.00,992.00,sale
+2026-04-24 18:07:00,exit,FE-0203,Parafuso Sextavado M8×50 ZB,Ferramentas,CX,19,39.90,758.10,break
+2026-04-24 20:06:00,exit,EM-0080,"Plástico Bolha 1,20m × 100m",Embalagens,RL,2,119.00,238.00,sale
+2026-04-25 12:59:00,exit,EL-0112,Lâmpada LED 9W E27,Material Elétrico,UN,35,22.90,801.50,sale
+2026-04-25 13:39:00,exit,EP-0066,Protetor Auricular Plug,EPI,PAR,37,5.50,203.50,sale
+2026-04-25 14:35:00,entry,EL-0150,Disjuntor Bipolar 32A,Material Elétrico,UN,50,23.49,1174.50,
+2026-04-25 16:47:00,exit,FE-0203,Parafuso Sextavado M8×50 ZB,Ferramentas,CX,12,39.90,478.80,internal
+2026-04-26 11:01:00,exit,EL-0133,Mouse Óptico USB,Eletrônicos,UN,5,39.90,199.50,break
+2026-04-26 16:26:00,exit,EM-0055,Caixa de Papelão 40×30×30,Embalagens,UN,90,6.50,585.00,sale
+2026-04-26 16:32:00,exit,EP-0031,Capacete Amarelo CA 31469,EPI,UN,11,119.00,1309.00,sale
+2026-04-26 20:14:00,exit,EM-0071,Filme Stretch 500mm,Embalagens,RL,6,49.90,299.40,sale
+2026-04-27 16:11:00,exit,EL-0150,Disjuntor Bipolar 32A,Material Elétrico,UN,8,58.00,464.00,sale
+2026-04-27 16:29:00,exit,EM-0062,Fita Adesiva Transparente 48mm,Embalagens,RL,36,7.90,284.40,sale
+2026-04-27 17:17:00,exit,EL-0034,"Cabo PP 2×2,5mm² (rolo 100m)",Material Elétrico,RL,1,459.00,459.00,sale
+2026-04-27 19:44:00,exit,EM-0055,Caixa de Papelão 40×30×30,Embalagens,UN,48,6.50,312.00,break
+2026-04-27 20:18:00,exit,SE-0012,Extintor PQS 4kg ABC,EPI,UN,2,229.00,458.00,break
+2026-04-27 20:19:00,exit,FE-0230,Furadeira de Impacto 650W,Ferramentas,UN,1,349.00,349.00,sale
+2026-04-28 13:16:00,exit,EL-0112,Lâmpada LED 9W E27,Material Elétrico,UN,30,22.90,687.00,sale
+2026-04-28 16:11:00,exit,EL-0034,"Cabo PP 2×2,5mm² (rolo 100m)",Material Elétrico,RL,1,459.00,459.00,sale
+2026-04-28 18:04:00,exit,FE-0203,Parafuso Sextavado M8×50 ZB,Ferramentas,CX,9,39.90,359.10,sale
+2026-04-28 18:18:00,exit,EP-0090,Máscara PFF2 sem Válvula,EPI,UN,63,6.90,434.70,break
+2026-04-28 18:25:00,exit,FE-0203,Parafuso Sextavado M8×50 ZB,Ferramentas,CX,10,39.90,399.00,sale
+2026-04-28 18:28:00,exit,FE-0230,Furadeira de Impacto 650W,Ferramentas,UN,1,349.00,349.00,sale
+2026-04-28 19:04:00,entry,EP-0066,Protetor Auricular Plug,EPI,PAR,315,1.85,582.75,
+2026-04-29 13:12:00,exit,FE-0203,Parafuso Sextavado M8×50 ZB,Ferramentas,CX,17,39.90,678.30,internal
+2026-04-29 16:39:00,exit,EL-0121,Carregador USB-C 20W,Eletrônicos,UN,6,79.90,479.40,break
+2026-04-29 18:22:00,entry,EL-0034,"Cabo PP 2×2,5mm² (rolo 100m)",Material Elétrico,RL,20,286.79,5735.80,
+2026-04-30 14:01:00,exit,FE-0230,Furadeira de Impacto 650W,Ferramentas,UN,1,349.00,349.00,sale
+2026-04-30 14:16:00,exit,EM-0071,Filme Stretch 500mm,Embalagens,RL,11,49.90,548.90,internal
+2026-04-30 14:53:00,entry,QM-0118,Desinfetante Hospitalar 5L,Limpeza,GL,57,35.45,2020.65,
+2026-04-30 16:28:00,exit,EL-0098,Bateria Li-Ion 18650 3.7V,Eletrônicos,UN,8,62.00,496.00,internal
+2026-05-01 14:09:00,exit,EL-0042,Cabo HDMI 2.0 2m,Eletrônicos,UN,8,54.90,439.20,break
+2026-05-01 16:58:00,exit,EL-0042,Cabo HDMI 2.0 2m,Eletrônicos,UN,25,54.90,1372.50,sale
+2026-05-01 17:56:00,exit,EM-0071,Filme Stretch 500mm,Embalagens,RL,12,49.90,598.80,sale
+2026-05-01 19:11:00,exit,EL-0098,Bateria Li-Ion 18650 3.7V,Eletrônicos,UN,6,62.00,372.00,sale
+2026-05-02 11:20:00,exit,EM-0062,Fita Adesiva Transparente 48mm,Embalagens,RL,3,7.90,23.70,internal
+2026-05-02 13:26:00,exit,EL-0034,"Cabo PP 2×2,5mm² (rolo 100m)",Material Elétrico,RL,1,459.00,459.00,break
+2026-05-02 18:01:00,exit,EL-0133,Mouse Óptico USB,Eletrônicos,UN,8,39.90,319.20,internal
+2026-05-02 18:03:00,entry,EP-0031,Capacete Amarelo CA 31469,EPI,UN,39,51.26,1999.14,
+2026-05-02 18:21:00,exit,QM-0118,Desinfetante Hospitalar 5L,Limpeza,GL,6,72.00,432.00,sale
+2026-05-02 20:10:00,entry,EP-0090,Máscara PFF2 sem Válvula,EPI,UN,392,2.44,956.48,
+2026-05-03 13:56:00,exit,QM-0091,Álcool 70% INPM 1L,Químicos,UN,33,28.50,940.50,sale
+2026-05-03 19:03:00,exit,EL-0133,Mouse Óptico USB,Eletrônicos,UN,6,39.90,239.40,sale
+2026-05-03 19:16:00,entry,EM-0062,Fita Adesiva Transparente 48mm,Embalagens,RL,260,3.17,824.20,
+2026-05-04 17:07:00,exit,FE-0244,"Alicate Universal 8""",Ferramentas,UN,5,44.90,224.50,sale
+2026-05-04 19:52:00,exit,QM-0118,Desinfetante Hospitalar 5L,Limpeza,GL,4,72.00,288.00,sale
+2026-05-05 14:15:00,exit,EM-0071,Filme Stretch 500mm,Embalagens,RL,12,49.90,598.80,internal
+2026-05-05 14:27:00,exit,EM-0055,Caixa de Papelão 40×30×30,Embalagens,UN,39,6.50,253.50,internal
+2026-05-06 14:57:00,entry,QM-0104,Detergente Industrial 5L,Limpeza,GL,47,20.77,976.19,
+2026-05-06 16:04:00,exit,EL-0150,Disjuntor Bipolar 32A,Material Elétrico,UN,6,58.00,348.00,sale
+2026-05-07 12:31:00,entry,EL-0112,Lâmpada LED 9W E27,Material Elétrico,UN,114,9.60,1094.40,
+2026-05-07 13:22:00,exit,QM-0104,Detergente Industrial 5L,Limpeza,GL,14,46.00,644.00,sale
+2026-05-07 16:59:00,exit,EP-0090,Máscara PFF2 sem Válvula,EPI,UN,21,6.90,144.90,break
+2026-05-07 17:57:00,exit,EP-0090,Máscara PFF2 sem Válvula,EPI,UN,33,6.90,227.70,sale
+2026-05-08 11:43:00,exit,SE-0012,Extintor PQS 4kg ABC,EPI,UN,2,229.00,458.00,sale
+2026-05-08 16:11:00,exit,FE-0215,"Chave de Fenda Phillips 1/4""",Ferramentas,UN,4,27.90,111.60,sale
+2026-05-08 18:04:00,exit,QM-0104,Detergente Industrial 5L,Limpeza,GL,6,46.00,276.00,sale
+2026-05-08 20:10:00,exit,EM-0071,Filme Stretch 500mm,Embalagens,RL,6,49.90,299.40,sale
+2026-05-09 12:11:00,exit,EM-0080,"Plástico Bolha 1,20m × 100m",Embalagens,RL,1,119.00,119.00,sale
+2026-05-11 20:56:00,exit,QM-0104,Detergente Industrial 5L,Limpeza,GL,10,46.00,460.00,sale
+2026-05-12 11:54:00,exit,EP-0090,Máscara PFF2 sem Válvula,EPI,UN,38,6.90,262.20,sale
+2026-05-12 12:29:00,exit,EL-0133,Mouse Óptico USB,Eletrônicos,UN,9,39.90,359.10,internal
+2026-05-12 16:14:00,loss,EP-0052,Óculos de Proteção Incolor CA 40112,EPI,UN,13,6.80,88.40,loss
+2026-05-12 16:42:00,exit,QM-0118,Desinfetante Hospitalar 5L,Limpeza,GL,6,72.00,432.00,sale
+2026-05-14 13:00:00,exit,EL-0121,Carregador USB-C 20W,Eletrônicos,UN,11,79.90,878.90,sale
+2026-05-14 16:02:00,exit,EL-0121,Carregador USB-C 20W,Eletrônicos,UN,5,79.90,399.50,break
+2026-05-14 16:40:00,loss,EL-0042,Cabo HDMI 2.0 2m,Eletrônicos,UN,14,22.50,315.00,loss
+2026-05-14 18:43:00,exit,FE-0203,Parafuso Sextavado M8×50 ZB,Ferramentas,CX,8,39.90,319.20,sale
+2026-05-14 20:49:00,entry,EL-0077,Fita Isolante 19mm × 20m,Material Elétrico,RL,164,3.59,588.76,
+2026-05-15 14:34:00,exit,EL-0098,Bateria Li-Ion 18650 3.7V,Eletrônicos,UN,15,62.00,930.00,sale
+2026-05-15 17:48:00,exit,EP-0066,Protetor Auricular Plug,EPI,PAR,35,5.50,192.50,break
+2026-05-15 18:41:00,exit,EP-0018,Luva de Segurança CA 12345,EPI,PAR,29,24.90,722.10,internal
+2026-05-16 16:00:00,exit,EM-0071,Filme Stretch 500mm,Embalagens,RL,4,49.90,199.60,sale
+2026-05-16 16:45:00,exit,EL-0098,Bateria Li-Ion 18650 3.7V,Eletrônicos,UN,15,62.00,930.00,sale
+2026-05-17 12:16:00,exit,FE-0244,"Alicate Universal 8""",Ferramentas,UN,6,44.90,269.40,break
+2026-05-17 13:30:00,exit,QM-0118,Desinfetante Hospitalar 5L,Limpeza,GL,5,72.00,360.00,sale
+2026-05-17 16:50:00,entry,EP-0018,Luva de Segurança CA 12345,EPI,PAR,196,8.98,1760.08,
+2026-05-17 17:44:00,entry,EM-0080,"Plástico Bolha 1,20m × 100m",Embalagens,RL,11,57.66,634.26,
+2026-05-17 19:45:00,exit,EP-0090,Máscara PFF2 sem Válvula,EPI,UN,41,6.90,282.90,sale
+2026-05-17 20:03:00,exit,EP-0031,Capacete Amarelo CA 31469,EPI,UN,13,119.00,1547.00,break
+2026-05-17 20:04:00,entry,FE-0215,"Chave de Fenda Phillips 1/4""",Ferramentas,UN,30,11.34,340.20,
+2026-05-18 11:49:00,exit,EL-0098,Bateria Li-Ion 18650 3.7V,Eletrônicos,UN,17,62.00,1054.00,sale
+2026-05-18 12:08:00,exit,SE-0012,Extintor PQS 4kg ABC,EPI,UN,1,229.00,229.00,sale
+2026-05-18 13:24:00,exit,EL-0042,Cabo HDMI 2.0 2m,Eletrônicos,UN,26,54.90,1427.40,sale
+2026-05-18 14:19:00,exit,SE-0012,Extintor PQS 4kg ABC,EPI,UN,3,229.00,687.00,break
+2026-05-18 14:56:00,entry,FE-0230,Furadeira de Impacto 650W,Ferramentas,UN,8,188.38,1507.04,
+2026-05-18 16:11:00,exit,FE-0215,"Chave de Fenda Phillips 1/4""",Ferramentas,UN,3,27.90,83.70,sale
+2026-05-18 20:10:00,entry,FE-0203,Parafuso Sextavado M8×50 ZB,Ferramentas,CX,80,17.18,1374.40,
+2026-05-19 11:33:00,exit,EP-0066,Protetor Auricular Plug,EPI,PAR,50,5.50,275.00,sale
+2026-05-19 12:09:00,exit,EM-0071,Filme Stretch 500mm,Embalagens,RL,9,49.90,449.10,break
+2026-05-19 17:02:00,exit,FE-0230,Furadeira de Impacto 650W,Ferramentas,UN,2,349.00,698.00,internal
+2026-05-19 19:18:00,exit,EM-0080,"Plástico Bolha 1,20m × 100m",Embalagens,RL,2,119.00,238.00,sale
+2026-05-20 13:41:00,loss,EP-0052,Óculos de Proteção Incolor CA 40112,EPI,UN,11,6.80,74.80,loss
+2026-05-20 16:23:00,exit,FE-0230,Furadeira de Impacto 650W,Ferramentas,UN,1,349.00,349.00,sale
+2026-05-20 20:48:00,exit,EM-0055,Caixa de Papelão 40×30×30,Embalagens,UN,7,6.50,45.50,sale
+2026-05-21 13:40:00,exit,FE-0230,Furadeira de Impacto 650W,Ferramentas,UN,1,349.00,349.00,internal
+2026-05-21 17:09:00,exit,EL-0133,Mouse Óptico USB,Eletrônicos,UN,7,39.90,279.30,sale
+2026-05-21 20:35:00,exit,EP-0031,Capacete Amarelo CA 31469,EPI,UN,8,119.00,952.00,sale
+2026-05-21 20:53:00,exit,EP-0066,Protetor Auricular Plug,EPI,PAR,39,5.50,214.50,sale
+2026-05-22 12:10:00,exit,FE-0230,Furadeira de Impacto 650W,Ferramentas,UN,2,349.00,698.00,internal
+2026-05-22 14:38:00,entry,EL-0042,Cabo HDMI 2.0 2m,Eletrônicos,UN,133,23.14,3077.62,
+2026-05-22 14:54:00,exit,EP-0090,Máscara PFF2 sem Válvula,EPI,UN,66,6.90,455.40,sale
+2026-05-22 20:05:00,entry,EL-0133,Mouse Óptico USB,Eletrônicos,UN,32,14.15,452.80,
+2026-05-23 12:22:00,exit,EM-0080,"Plástico Bolha 1,20m × 100m",Embalagens,RL,2,119.00,238.00,sale
+2026-05-23 14:39:00,exit,FE-0203,Parafuso Sextavado M8×50 ZB,Ferramentas,CX,11,39.90,438.90,break
+2026-05-23 16:42:00,exit,EL-0077,Fita Isolante 19mm × 20m,Material Elétrico,RL,41,8.90,364.90,internal
+2026-05-24 11:16:00,entry,EL-0121,Carregador USB-C 20W,Eletrônicos,UN,44,31.72,1395.68,
+2026-05-24 11:50:00,exit,EP-0031,Capacete Amarelo CA 31469,EPI,UN,8,119.00,952.00,break
+2026-05-24 12:31:00,entry,EM-0055,Caixa de Papelão 40×30×30,Embalagens,UN,381,2.91,1108.71,
+2026-05-24 12:42:00,exit,FE-0215,"Chave de Fenda Phillips 1/4""",Ferramentas,UN,2,27.90,55.80,sale
+2026-05-24 17:34:00,exit,FE-0230,Furadeira de Impacto 650W,Ferramentas,UN,2,349.00,698.00,internal
+2026-05-25 14:26:00,exit,EP-0090,Máscara PFF2 sem Válvula,EPI,UN,60,6.90,414.00,internal
+2026-05-25 16:38:00,exit,EP-0018,Luva de Segurança CA 12345,EPI,PAR,2,24.90,49.80,sale
+2026-05-25 17:37:00,entry,FE-0244,"Alicate Universal 8""",Ferramentas,UN,32,19.72,631.04,
+2026-05-25 18:35:00,exit,EM-0080,"Plástico Bolha 1,20m × 100m",Embalagens,RL,3,119.00,357.00,internal
+2026-05-26 11:45:00,exit,EP-0090,Máscara PFF2 sem Válvula,EPI,UN,36,6.90,248.40,sale
+2026-05-26 16:58:00,exit,EL-0133,Mouse Óptico USB,Eletrônicos,UN,4,39.90,159.60,sale
+2026-05-26 18:16:00,exit,EL-0077,Fita Isolante 19mm × 20m,Material Elétrico,RL,24,8.90,213.60,internal
+2026-05-26 20:18:00,exit,FE-0203,Parafuso Sextavado M8×50 ZB,Ferramentas,CX,15,39.90,598.50,internal
+2026-05-26 20:32:00,exit,EL-0098,Bateria Li-Ion 18650 3.7V,Eletrônicos,UN,16,62.00,992.00,sale
+2026-05-26 20:52:00,exit,EP-0031,Capacete Amarelo CA 31469,EPI,UN,4,119.00,476.00,sale
+2026-05-27 13:21:00,exit,EP-0031,Capacete Amarelo CA 31469,EPI,UN,7,119.00,833.00,sale
+2026-05-27 13:25:00,entry,SE-0012,Extintor PQS 4kg ABC,EPI,UN,11,112.83,1241.13,
+2026-05-27 19:28:00,exit,EL-0121,Carregador USB-C 20W,Eletrônicos,UN,8,79.90,639.20,sale
+2026-05-28 11:54:00,exit,EP-0018,Luva de Segurança CA 12345,EPI,PAR,25,24.90,622.50,break
+2026-05-28 13:15:00,exit,EL-0112,Lâmpada LED 9W E27,Material Elétrico,UN,11,22.90,251.90,internal
+2026-05-28 14:21:00,exit,EL-0042,Cabo HDMI 2.0 2m,Eletrônicos,UN,17,54.90,933.30,sale
+2026-05-28 16:04:00,exit,EP-0031,Capacete Amarelo CA 31469,EPI,UN,6,119.00,714.00,sale
+2026-05-28 18:21:00,exit,EL-0098,Bateria Li-Ion 18650 3.7V,Eletrônicos,UN,6,62.00,372.00,internal
+2026-05-28 19:20:00,entry,QM-0091,Álcool 70% INPM 1L,Químicos,UN,214,11.82,2529.48,
+2026-05-28 20:07:00,exit,EL-0133,Mouse Óptico USB,Eletrônicos,UN,3,39.90,119.70,break
+2026-05-29 12:09:00,exit,FE-0230,Furadeira de Impacto 650W,Ferramentas,UN,1,349.00,349.00,break
+2026-05-29 20:51:00,exit,EP-0018,Luva de Segurança CA 12345,EPI,PAR,21,24.90,522.90,sale
+2026-05-30 14:50:00,exit,EL-0133,Mouse Óptico USB,Eletrônicos,UN,7,39.90,279.30,break
+2026-05-31 11:52:00,exit,EL-0121,Carregador USB-C 20W,Eletrônicos,UN,9,79.90,719.10,break
+2026-05-31 13:23:00,exit,EL-0034,"Cabo PP 2×2,5mm² (rolo 100m)",Material Elétrico,RL,2,459.00,918.00,break
+2026-05-31 13:29:00,exit,EP-0052,Óculos de Proteção Incolor CA 40112,EPI,UN,14,18.90,264.60,sale
+2026-05-31 14:30:00,exit,EL-0098,Bateria Li-Ion 18650 3.7V,Eletrônicos,UN,17,62.00,1054.00,internal
+2026-05-31 17:21:00,exit,QM-0104,Detergente Industrial 5L,Limpeza,GL,1,46.00,46.00,internal
+2026-05-31 18:46:00,exit,EP-0052,Óculos de Proteção Incolor CA 40112,EPI,UN,11,18.90,207.90,break
+2026-06-01 12:13:00,exit,EM-0055,Caixa de Papelão 40×30×30,Embalagens,UN,28,6.50,182.00,sale
+2026-06-01 12:52:00,exit,EP-0018,Luva de Segurança CA 12345,EPI,PAR,32,24.90,796.80,internal
+2026-06-01 18:19:00,exit,EP-0066,Protetor Auricular Plug,EPI,PAR,24,5.50,132.00,internal
+2026-06-01 19:39:00,exit,EM-0080,"Plástico Bolha 1,20m × 100m",Embalagens,RL,3,119.00,357.00,internal
+2026-06-01 20:03:00,exit,EL-0077,Fita Isolante 19mm × 20m,Material Elétrico,RL,47,8.90,418.30,sale
+2026-06-02 11:04:00,exit,FE-0230,Furadeira de Impacto 650W,Ferramentas,UN,1,349.00,349.00,sale
+2026-06-02 13:54:00,exit,EP-0090,Máscara PFF2 sem Válvula,EPI,UN,33,6.90,227.70,break
+2026-06-02 13:57:00,exit,EP-0031,Capacete Amarelo CA 31469,EPI,UN,6,119.00,714.00,sale
+2026-06-02 14:42:00,exit,EP-0066,Protetor Auricular Plug,EPI,PAR,46,5.50,253.00,internal
+2026-06-02 18:15:00,exit,EM-0062,Fita Adesiva Transparente 48mm,Embalagens,RL,15,7.90,118.50,sale
+2026-06-02 18:26:00,exit,FE-0244,"Alicate Universal 8""",Ferramentas,UN,6,44.90,269.40,sale
+2026-06-02 20:26:00,exit,EL-0042,Cabo HDMI 2.0 2m,Eletrônicos,UN,20,54.90,1098.00,sale
+2026-06-03 13:19:00,exit,FE-0215,"Chave de Fenda Phillips 1/4""",Ferramentas,UN,4,27.90,111.60,internal
+2026-06-03 16:55:00,exit,EP-0052,Óculos de Proteção Incolor CA 40112,EPI,UN,25,18.90,472.50,internal
+2026-06-04 13:06:00,exit,EL-0042,Cabo HDMI 2.0 2m,Eletrônicos,UN,13,54.90,713.70,internal
+2026-06-04 13:08:00,exit,EL-0077,Fita Isolante 19mm × 20m,Material Elétrico,RL,24,8.90,213.60,internal
+2026-06-04 13:14:00,exit,EL-0150,Disjuntor Bipolar 32A,Material Elétrico,UN,7,58.00,406.00,break
+2026-06-04 17:31:00,exit,EM-0071,Filme Stretch 500mm,Embalagens,RL,11,49.90,548.90,sale
+2026-06-04 19:34:00,exit,FE-0244,"Alicate Universal 8""",Ferramentas,UN,1,44.90,44.90,sale
+2026-06-05 11:25:00,exit,SE-0012,Extintor PQS 4kg ABC,EPI,UN,3,229.00,687.00,sale
+2026-06-05 12:24:00,exit,EL-0112,Lâmpada LED 9W E27,Material Elétrico,UN,13,22.90,297.70,break
+2026-06-05 13:03:00,exit,EM-0062,Fita Adesiva Transparente 48mm,Embalagens,RL,33,7.90,260.70,break
+2026-06-05 19:56:00,exit,EM-0080,"Plástico Bolha 1,20m × 100m",Embalagens,RL,2,119.00,238.00,sale
+2026-06-05 20:41:00,exit,QM-0118,Desinfetante Hospitalar 5L,Limpeza,GL,7,72.00,504.00,break
+2026-06-05 20:42:00,exit,EL-0133,Mouse Óptico USB,Eletrônicos,UN,7,39.90,279.30,internal
+2026-06-05 20:56:00,exit,EL-0112,Lâmpada LED 9W E27,Material Elétrico,UN,31,22.90,709.90,break
+2026-06-06 12:56:00,exit,FE-0215,"Chave de Fenda Phillips 1/4""",Ferramentas,UN,2,27.90,55.80,sale
+2026-06-06 18:10:00,entry,EP-0052,Óculos de Proteção Incolor CA 40112,EPI,UN,89,6.53,581.17,
+2026-06-06 19:10:00,entry,EL-0098,Bateria Li-Ion 18650 3.7V,Eletrônicos,UN,100,27.09,2709.00,
+2026-06-06 20:36:00,exit,EL-0042,Cabo HDMI 2.0 2m,Eletrônicos,UN,17,54.90,933.30,sale
+2026-06-07 12:04:00,exit,EL-0077,Fita Isolante 19mm × 20m,Material Elétrico,RL,31,8.90,275.90,sale
+2026-06-07 12:23:00,exit,QM-0104,Detergente Industrial 5L,Limpeza,GL,5,46.00,230.00,sale
+2026-06-07 13:23:00,exit,EP-0066,Protetor Auricular Plug,EPI,PAR,56,5.50,308.00,sale
+2026-06-07 13:53:00,exit,EP-0090,Máscara PFF2 sem Válvula,EPI,UN,38,6.90,262.20,sale
+2026-06-08 12:42:00,exit,QM-0118,Desinfetante Hospitalar 5L,Limpeza,GL,3,72.00,216.00,sale
+2026-06-08 17:43:00,exit,EP-0052,Óculos de Proteção Incolor CA 40112,EPI,UN,18,18.90,340.20,internal
+2026-06-09 12:07:00,exit,EL-0098,Bateria Li-Ion 18650 3.7V,Eletrônicos,UN,18,62.00,1116.00,sale
+2026-06-09 16:37:00,exit,FE-0203,Parafuso Sextavado M8×50 ZB,Ferramentas,CX,6,39.90,239.40,internal
+2026-06-09 19:24:00,exit,FE-0230,Furadeira de Impacto 650W,Ferramentas,UN,2,349.00,698.00,internal
+2026-06-10 11:00:00,exit,EM-0055,Caixa de Papelão 40×30×30,Embalagens,UN,62,6.50,403.00,internal
+2026-06-10 11:14:00,exit,EP-0052,Óculos de Proteção Incolor CA 40112,EPI,UN,28,18.90,529.20,internal
+2026-06-10 17:50:00,exit,QM-0091,Álcool 70% INPM 1L,Químicos,UN,56,28.50,1596.00,sale
+2026-06-10 17:54:00,exit,EM-0080,"Plástico Bolha 1,20m × 100m",Embalagens,RL,2,119.00,238.00,sale
+2026-06-10 17:55:00,exit,EL-0034,"Cabo PP 2×2,5mm² (rolo 100m)",Material Elétrico,RL,2,459.00,918.00,sale
+2026-06-10 19:03:00,exit,EM-0071,Filme Stretch 500mm,Embalagens,RL,14,49.90,698.60,break
+2026-06-10 19:47:00,exit,EP-0052,Óculos de Proteção Incolor CA 40112,EPI,UN,25,18.90,472.50,sale
+2026-06-10 20:26:00,exit,FE-0244,"Alicate Universal 8""",Ferramentas,UN,4,44.90,179.60,internal
+2026-06-11 12:46:00,exit,EL-0098,Bateria Li-Ion 18650 3.7V,Eletrônicos,UN,7,62.00,434.00,sale
+2026-06-11 13:23:00,entry,EM-0071,Filme Stretch 500mm,Embalagens,RL,50,23.36,1168.00,
+2026-06-11 14:20:00,exit,EP-0052,Óculos de Proteção Incolor CA 40112,EPI,UN,17,18.90,321.30,sale
+2026-06-11 16:46:00,exit,EM-0062,Fita Adesiva Transparente 48mm,Embalagens,RL,53,7.90,418.70,internal
+2026-06-12 12:27:00,exit,EM-0062,Fita Adesiva Transparente 48mm,Embalagens,RL,21,7.90,165.90,break
+2026-06-12 16:34:00,exit,EP-0018,Luva de Segurança CA 12345,EPI,PAR,13,24.90,323.70,break
+2026-06-12 20:45:00,exit,EP-0052,Óculos de Proteção Incolor CA 40112,EPI,UN,16,18.90,302.40,sale
+2026-06-13 12:39:00,exit,EP-0031,Capacete Amarelo CA 31469,EPI,UN,11,119.00,1309.00,internal
+2026-06-13 16:44:00,exit,EP-0052,Óculos de Proteção Incolor CA 40112,EPI,UN,19,18.90,359.10,sale
+2026-06-13 18:43:00,exit,EP-0018,Luva de Segurança CA 12345,EPI,PAR,3,24.90,74.70,internal
+2026-06-14 12:56:00,exit,EP-0066,Protetor Auricular Plug,EPI,PAR,28,5.50,154.00,sale
+2026-06-14 14:01:00,exit,EM-0071,Filme Stretch 500mm,Embalagens,RL,6,49.90,299.40,break
+2026-06-14 18:24:00,exit,FE-0203,Parafuso Sextavado M8×50 ZB,Ferramentas,CX,5,39.90,199.50,sale
+2026-06-15 12:43:00,exit,EM-0080,"Plástico Bolha 1,20m × 100m",Embalagens,RL,4,119.00,476.00,sale
+2026-06-15 14:16:00,entry,EM-0062,Fita Adesiva Transparente 48mm,Embalagens,RL,178,3.15,560.70,
+2026-06-15 16:06:00,exit,EM-0055,Caixa de Papelão 40×30×30,Embalagens,UN,53,6.50,344.50,break
+2026-06-15 17:52:00,entry,EL-0077,Fita Isolante 19mm × 20m,Material Elétrico,RL,135,3.42,461.70,
+2026-06-15 18:39:00,exit,EM-0071,Filme Stretch 500mm,Embalagens,RL,11,49.90,548.90,sale
+2026-06-15 18:56:00,exit,FE-0230,Furadeira de Impacto 650W,Ferramentas,UN,1,349.00,349.00,sale
+2026-06-15 19:32:00,exit,EM-0062,Fita Adesiva Transparente 48mm,Embalagens,RL,47,7.90,371.30,internal
+2026-06-16 12:33:00,exit,EP-0052,Óculos de Proteção Incolor CA 40112,EPI,UN,24,18.90,453.60,break
+2026-06-16 14:59:00,exit,EP-0066,Protetor Auricular Plug,EPI,PAR,20,5.50,110.00,internal
+2026-06-16 17:42:00,entry,QM-0104,Detergente Industrial 5L,Limpeza,GL,45,21.15,951.75,
+2026-06-16 18:14:00,exit,EL-0042,Cabo HDMI 2.0 2m,Eletrônicos,UN,18,54.90,988.20,break
+2026-06-17 13:55:00,exit,FE-0203,Parafuso Sextavado M8×50 ZB,Ferramentas,CX,15,39.90,598.50,break
+2026-06-17 16:10:00,exit,EL-0098,Bateria Li-Ion 18650 3.7V,Eletrônicos,UN,15,62.00,930.00,sale
+2026-06-17 19:39:00,exit,EL-0042,Cabo HDMI 2.0 2m,Eletrônicos,UN,19,54.90,1043.10,sale
+2026-06-18 13:11:00,exit,EL-0042,Cabo HDMI 2.0 2m,Eletrônicos,UN,20,54.90,1098.00,sale
+2026-06-18 18:06:00,exit,FE-0215,"Chave de Fenda Phillips 1/4""",Ferramentas,UN,4,27.90,111.60,sale
+2026-06-18 20:45:00,exit,EL-0034,"Cabo PP 2×2,5mm² (rolo 100m)",Material Elétrico,RL,2,459.00,918.00,break
+2026-06-19 16:11:00,exit,FE-0215,"Chave de Fenda Phillips 1/4""",Ferramentas,UN,4,27.90,111.60,break
+2026-06-19 19:46:00,exit,QM-0118,Desinfetante Hospitalar 5L,Limpeza,GL,4,72.00,288.00,sale
+2026-06-20 13:31:00,exit,QM-0118,Desinfetante Hospitalar 5L,Limpeza,GL,6,72.00,432.00,internal
+2026-06-21 11:07:00,exit,EL-0150,Disjuntor Bipolar 32A,Material Elétrico,UN,10,58.00,580.00,internal
+2026-06-21 11:17:00,loss,QM-0104,Detergente Industrial 5L,Limpeza,GL,14,21.00,294.00,loss
+2026-06-21 19:34:00,loss,EM-0080,"Plástico Bolha 1,20m × 100m",Embalagens,RL,3,58.00,174.00,loss
+2026-06-22 12:54:00,exit,EP-0031,Capacete Amarelo CA 31469,EPI,UN,10,119.00,1190.00,internal
+2026-06-22 13:11:00,exit,EL-0150,Disjuntor Bipolar 32A,Material Elétrico,UN,6,58.00,348.00,internal
+2026-06-22 14:47:00,exit,EL-0042,Cabo HDMI 2.0 2m,Eletrônicos,UN,20,54.90,1098.00,sale
+2026-06-22 17:00:00,exit,EL-0133,Mouse Óptico USB,Eletrônicos,UN,8,39.90,319.20,internal
+2026-06-23 14:42:00,exit,QM-0091,Álcool 70% INPM 1L,Químicos,UN,67,28.50,1909.50,break
+2026-06-23 16:18:00,exit,SE-0012,Extintor PQS 4kg ABC,EPI,UN,3,229.00,687.00,sale
+2026-06-23 18:41:00,exit,QM-0091,Álcool 70% INPM 1L,Químicos,UN,46,28.50,1311.00,sale
+2026-06-24 12:45:00,entry,EL-0112,Lâmpada LED 9W E27,Material Elétrico,UN,94,9.94,934.36,
+2026-06-24 14:28:00,exit,EP-0090,Máscara PFF2 sem Válvula,EPI,UN,45,6.90,310.50,break
+2026-06-24 19:05:00,exit,FE-0215,"Chave de Fenda Phillips 1/4""",Ferramentas,UN,6,27.90,167.40,sale
+2026-06-25 13:01:00,exit,EM-0055,Caixa de Papelão 40×30×30,Embalagens,UN,63,6.50,409.50,sale
+2026-06-25 14:32:00,exit,EM-0062,Fita Adesiva Transparente 48mm,Embalagens,RL,41,7.90,323.90,internal
+2026-06-26 16:39:00,exit,EL-0042,Cabo HDMI 2.0 2m,Eletrônicos,UN,24,54.90,1317.60,break
+2026-06-26 20:00:00,exit,EP-0018,Luva de Segurança CA 12345,EPI,PAR,16,24.90,398.40,sale
+2026-06-27 11:03:00,loss,SE-0012,Extintor PQS 4kg ABC,EPI,UN,1,118.00,118.00,loss
+2026-06-27 12:04:00,exit,EL-0077,Fita Isolante 19mm × 20m,Material Elétrico,RL,36,8.90,320.40,break
+2026-06-27 17:54:00,exit,FE-0203,Parafuso Sextavado M8×50 ZB,Ferramentas,CX,14,39.90,558.60,sale
+2026-06-27 18:34:00,exit,EM-0062,Fita Adesiva Transparente 48mm,Embalagens,RL,38,7.90,300.20,break
+2026-06-28 14:33:00,exit,EL-0121,Carregador USB-C 20W,Eletrônicos,UN,4,79.90,319.60,sale
+2026-06-28 17:51:00,exit,EL-0112,Lâmpada LED 9W E27,Material Elétrico,UN,29,22.90,664.10,break
+2026-06-28 20:11:00,loss,FE-0203,Parafuso Sextavado M8×50 ZB,Ferramentas,CX,8,18.00,144.00,loss
+2026-06-29 11:59:00,exit,EP-0018,Luva de Segurança CA 12345,EPI,PAR,23,24.90,572.70,break
+2026-06-29 14:02:00,exit,EL-0150,Disjuntor Bipolar 32A,Material Elétrico,UN,10,58.00,580.00,sale
+2026-06-29 17:19:00,exit,EL-0121,Carregador USB-C 20W,Eletrônicos,UN,10,79.90,799.00,sale
+2026-06-29 18:46:00,exit,QM-0118,Desinfetante Hospitalar 5L,Limpeza,GL,6,72.00,432.00,sale
+2026-06-29 20:26:00,entry,EL-0133,Mouse Óptico USB,Eletrônicos,UN,30,13.70,411.00,
+2026-06-30 12:43:00,entry,FE-0230,Furadeira de Impacto 650W,Ferramentas,UN,8,187.83,1502.64,
+2026-06-30 16:08:00,exit,EL-0042,Cabo HDMI 2.0 2m,Eletrônicos,UN,21,54.90,1152.90,break
+2026-06-30 17:37:00,exit,EL-0112,Lâmpada LED 9W E27,Material Elétrico,UN,19,22.90,435.10,sale
+2026-06-30 18:12:00,exit,QM-0091,Álcool 70% INPM 1L,Químicos,UN,54,28.50,1539.00,sale
+2026-07-01 12:27:00,exit,EL-0121,Carregador USB-C 20W,Eletrônicos,UN,9,79.90,719.10,sale
+2026-07-01 16:41:00,exit,EP-0031,Capacete Amarelo CA 31469,EPI,UN,11,119.00,1309.00,break
+2026-07-01 18:19:00,exit,QM-0118,Desinfetante Hospitalar 5L,Limpeza,GL,6,72.00,432.00,break
+2026-07-01 20:25:00,entry,EP-0066,Protetor Auricular Plug,EPI,PAR,412,1.84,758.08,
+2026-07-01 20:31:00,exit,EP-0066,Protetor Auricular Plug,EPI,PAR,58,5.50,319.00,sale
+2026-07-02 11:19:00,exit,EP-0066,Protetor Auricular Plug,EPI,PAR,59,5.50,324.50,internal
+2026-07-02 11:51:00,entry,EP-0031,Capacete Amarelo CA 31469,EPI,UN,42,52.61,2209.62,
+2026-07-02 13:23:00,entry,EP-0090,Máscara PFF2 sem Válvula,EPI,UN,625,2.42,1512.50,
+2026-07-02 14:33:00,exit,EM-0062,Fita Adesiva Transparente 48mm,Embalagens,RL,20,7.90,158.00,internal
+2026-07-02 14:37:00,exit,EP-0018,Luva de Segurança CA 12345,EPI,PAR,13,24.90,323.70,sale
+2026-07-02 18:08:00,exit,EL-0150,Disjuntor Bipolar 32A,Material Elétrico,UN,8,58.00,464.00,sale
+2026-07-02 19:07:00,exit,FE-0215,"Chave de Fenda Phillips 1/4""",Ferramentas,UN,3,27.90,83.70,sale
+2026-07-02 20:12:00,exit,EM-0055,Caixa de Papelão 40×30×30,Embalagens,UN,50,6.50,325.00,sale
+2026-07-03 16:21:00,exit,EL-0121,Carregador USB-C 20W,Eletrônicos,UN,8,79.90,639.20,break
+2026-07-03 16:53:00,exit,EL-0042,Cabo HDMI 2.0 2m,Eletrônicos,UN,16,54.90,878.40,break
+2026-07-03 17:31:00,exit,QM-0118,Desinfetante Hospitalar 5L,Limpeza,GL,4,72.00,288.00,internal
+2026-07-03 19:01:00,entry,FE-0215,"Chave de Fenda Phillips 1/4""",Ferramentas,UN,29,11.05,320.45,
+2026-07-04 11:08:00,exit,EL-0034,"Cabo PP 2×2,5mm² (rolo 100m)",Material Elétrico,RL,2,459.00,918.00,internal
+2026-07-04 11:16:00,exit,QM-0104,Detergente Industrial 5L,Limpeza,GL,15,46.00,690.00,sale
+2026-07-04 12:58:00,exit,QM-0091,Álcool 70% INPM 1L,Químicos,UN,68,28.50,1938.00,sale
+2026-07-04 14:40:00,entry,QM-0118,Desinfetante Hospitalar 5L,Limpeza,GL,42,33.99,1427.58,
+2026-07-04 14:53:00,entry,EM-0080,"Plástico Bolha 1,20m × 100m",Embalagens,RL,13,55.34,719.42,
+2026-07-04 16:58:00,loss,EP-0018,Luva de Segurança CA 12345,EPI,PAR,20,8.90,178.00,loss
+2026-07-05 11:00:00,exit,EL-0150,Disjuntor Bipolar 32A,Material Elétrico,UN,4,58.00,232.00,sale
+2026-07-05 18:45:00,exit,EM-0062,Fita Adesiva Transparente 48mm,Embalagens,RL,21,7.90,165.90,internal
+2026-07-05 19:50:00,exit,EL-0150,Disjuntor Bipolar 32A,Material Elétrico,UN,9,58.00,522.00,sale
+2026-07-06 16:30:00,exit,EL-0133,Mouse Óptico USB,Eletrônicos,UN,8,39.90,319.20,internal
+2026-07-06 17:42:00,exit,EL-0077,Fita Isolante 19mm × 20m,Material Elétrico,RL,41,8.90,364.90,sale
+2026-07-06 20:28:00,exit,EP-0090,Máscara PFF2 sem Válvula,EPI,UN,68,6.90,469.20,internal
+2026-07-07 11:26:00,exit,EP-0066,Protetor Auricular Plug,EPI,PAR,26,5.50,143.00,sale
+2026-07-07 13:58:00,exit,EM-0055,Caixa de Papelão 40×30×30,Embalagens,UN,99,6.50,643.50,sale
+2026-07-07 17:29:00,exit,EL-0121,Carregador USB-C 20W,Eletrônicos,UN,7,79.90,559.30,sale
+2026-07-07 17:45:00,exit,QM-0118,Desinfetante Hospitalar 5L,Limpeza,GL,2,72.00,144.00,break
+2026-07-08 11:13:00,exit,EP-0066,Protetor Auricular Plug,EPI,PAR,49,5.50,269.50,sale
+2026-07-08 12:33:00,exit,FE-0215,"Chave de Fenda Phillips 1/4""",Ferramentas,UN,3,27.90,83.70,sale
+2026-07-08 14:32:00,exit,EL-0077,Fita Isolante 19mm × 20m,Material Elétrico,RL,58,8.90,516.20,internal
+2026-07-08 17:32:00,exit,EP-0031,Capacete Amarelo CA 31469,EPI,UN,12,119.00,1428.00,break
+2026-07-08 18:30:00,exit,EP-0052,Óculos de Proteção Incolor CA 40112,EPI,UN,23,18.90,434.70,sale
+2026-07-08 18:47:00,exit,EP-0066,Protetor Auricular Plug,EPI,PAR,17,5.50,93.50,sale
+2026-07-08 20:34:00,exit,EL-0112,Lâmpada LED 9W E27,Material Elétrico,UN,17,22.90,389.30,sale
+2026-07-08 20:40:00,exit,FE-0203,Parafuso Sextavado M8×50 ZB,Ferramentas,CX,16,39.90,638.40,break
+2026-07-09 13:49:00,exit,EL-0042,Cabo HDMI 2.0 2m,Eletrônicos,UN,13,54.90,713.70,sale
+2026-07-09 17:10:00,exit,QM-0118,Desinfetante Hospitalar 5L,Limpeza,GL,2,72.00,144.00,break
+2026-07-09 18:05:00,exit,EL-0098,Bateria Li-Ion 18650 3.7V,Eletrônicos,UN,16,62.00,992.00,internal
+2026-07-09 20:45:00,exit,EM-0062,Fita Adesiva Transparente 48mm,Embalagens,RL,52,7.90,410.80,sale
+2026-07-10 16:34:00,exit,EL-0034,"Cabo PP 2×2,5mm² (rolo 100m)",Material Elétrico,RL,1,459.00,459.00,internal
+2026-07-10 17:24:00,exit,EL-0077,Fita Isolante 19mm × 20m,Material Elétrico,RL,42,8.90,373.80,sale
+2026-07-10 19:46:00,exit,EP-0066,Protetor Auricular Plug,EPI,PAR,31,5.50,170.50,sale
+2026-07-10 20:32:00,entry,EL-0034,"Cabo PP 2×2,5mm² (rolo 100m)",Material Elétrico,RL,16,286.50,4584.00,
+2026-07-11 14:57:00,exit,EM-0062,Fita Adesiva Transparente 48mm,Embalagens,RL,53,7.90,418.70,sale
+2026-07-11 18:57:00,entry,QM-0091,Álcool 70% INPM 1L,Químicos,UN,292,12.18,3556.56,
+2026-07-11 19:35:00,entry,EL-0150,Disjuntor Bipolar 32A,Material Elétrico,UN,48,25.17,1208.16,
+2026-07-11 20:46:00,exit,FE-0230,Furadeira de Impacto 650W,Ferramentas,UN,2,349.00,698.00,sale
+2026-07-12 14:30:00,exit,QM-0091,Álcool 70% INPM 1L,Químicos,UN,64,28.50,1824.00,internal
+2026-07-12 14:56:00,exit,EP-0018,Luva de Segurança CA 12345,EPI,PAR,19,24.90,473.10,sale
+2026-07-12 17:56:00,exit,EL-0098,Bateria Li-Ion 18650 3.7V,Eletrônicos,UN,16,62.00,992.00,sale
+2026-07-12 18:32:00,entry,EL-0121,Carregador USB-C 20W,Eletrônicos,UN,53,30.23,1602.19,
+2026-07-12 20:21:00,exit,EL-0034,"Cabo PP 2×2,5mm² (rolo 100m)",Material Elétrico,RL,1,459.00,459.00,internal
+2026-07-13 12:19:00,exit,FE-0203,Parafuso Sextavado M8×50 ZB,Ferramentas,CX,18,39.90,718.20,internal
+2026-07-13 12:25:00,exit,EL-0077,Fita Isolante 19mm × 20m,Material Elétrico,RL,28,8.90,249.20,sale
+2026-07-13 14:36:00,exit,EP-0018,Luva de Segurança CA 12345,EPI,PAR,13,24.90,323.70,sale
+2026-07-13 19:42:00,exit,EL-0133,Mouse Óptico USB,Eletrônicos,UN,4,39.90,159.60,sale
+2026-07-14 13:30:00,exit,EL-0133,Mouse Óptico USB,Eletrônicos,UN,8,39.90,319.20,internal
+2026-07-14 14:54:00,exit,EL-0077,Fita Isolante 19mm × 20m,Material Elétrico,RL,44,8.90,391.60,sale
+2026-07-14 14:58:00,exit,EP-0066,Protetor Auricular Plug,EPI,PAR,55,5.50,302.50,sale
+2026-07-14 16:59:00,exit,EP-0090,Máscara PFF2 sem Válvula,EPI,UN,73,6.90,503.70,break
+2026-07-15 14:29:00,exit,FE-0215,"Chave de Fenda Phillips 1/4""",Ferramentas,UN,3,27.90,83.70,internal
+2026-07-15 18:12:00,exit,EL-0077,Fita Isolante 19mm × 20m,Material Elétrico,RL,18,8.90,160.20,break
+2026-07-15 20:21:00,exit,EM-0055,Caixa de Papelão 40×30×30,Embalagens,UN,78,6.50,507.00,sale
+2026-07-16 14:45:00,entry,FE-0203,Parafuso Sextavado M8×50 ZB,Ferramentas,CX,78,18.43,1437.54,
+2026-07-16 14:47:00,exit,EL-0133,Mouse Óptico USB,Eletrônicos,UN,4,39.90,159.60,break
+2026-07-16 16:57:00,exit,EL-0042,Cabo HDMI 2.0 2m,Eletrônicos,UN,12,54.90,658.80,sale
+2026-07-17 13:12:00,exit,EL-0098,Bateria Li-Ion 18650 3.7V,Eletrônicos,UN,13,62.00,806.00,internal
+2026-07-17 14:44:00,exit,EM-0062,Fita Adesiva Transparente 48mm,Embalagens,RL,46,7.90,363.40,break
+2026-07-17 20:52:00,exit,FE-0230,Furadeira de Impacto 650W,Ferramentas,UN,2,349.00,698.00,sale
+2026-07-18 11:44:00,exit,EL-0112,Lâmpada LED 9W E27,Material Elétrico,UN,21,22.90,480.90,internal
+2026-07-18 18:26:00,exit,EP-0018,Luva de Segurança CA 12345,EPI,PAR,32,24.90,796.80,sale
+2026-07-18 18:33:00,entry,FE-0244,"Alicate Universal 8""",Ferramentas,UN,27,19.67,531.09,
+2026-07-18 20:01:00,exit,EP-0018,Luva de Segurança CA 12345,EPI,PAR,25,24.90,622.50,sale
+2026-07-19 11:20:00,entry,EM-0055,Caixa de Papelão 40×30×30,Embalagens,UN,532,3.00,1596.00,
+2026-07-19 16:15:00,exit,EL-0034,"Cabo PP 2×2,5mm² (rolo 100m)",Material Elétrico,RL,1,459.00,459.00,sale
+2026-07-19 18:19:00,exit,FE-0215,"Chave de Fenda Phillips 1/4""",Ferramentas,UN,5,27.90,139.50,internal
+2026-07-19 18:32:00,exit,EL-0098,Bateria Li-Ion 18650 3.7V,Eletrônicos,UN,13,62.00,806.00,sale
+2026-07-19 20:03:00,exit,QM-0104,Detergente Industrial 5L,Limpeza,GL,14,46.00,644.00,sale
+2026-07-19 20:18:00,exit,EL-0121,Carregador USB-C 20W,Eletrônicos,UN,4,79.90,319.60,sale
+2026-07-20 11:34:00,exit,EM-0071,Filme Stretch 500mm,Embalagens,RL,11,49.90,548.90,internal
+2026-07-20 18:49:00,exit,SE-0012,Extintor PQS 4kg ABC,EPI,UN,3,229.00,687.00,internal
+2026-07-20 20:20:00,exit,EP-0052,Óculos de Proteção Incolor CA 40112,EPI,UN,15,18.90,283.50,sale
+2026-07-21 11:29:00,entry,SE-0012,Extintor PQS 4kg ABC,EPI,UN,12,113.37,1360.44,
+2026-07-21 16:42:00,exit,EL-0077,Fita Isolante 19mm × 20m,Material Elétrico,RL,46,8.90,409.40,sale
+2026-07-21 20:28:00,exit,EM-0071,Filme Stretch 500mm,Embalagens,RL,9,49.90,449.10,sale
+2026-07-22 12:09:00,exit,EM-0062,Fita Adesiva Transparente 48mm,Embalagens,RL,50,7.90,395.00,break
+2026-07-22 12:29:00,exit,FE-0244,"Alicate Universal 8""",Ferramentas,UN,6,44.90,269.40,internal
+2026-07-22 13:05:00,exit,EP-0031,Capacete Amarelo CA 31469,EPI,UN,4,119.00,476.00,break
+2026-07-22 13:08:00,exit,EM-0055,Caixa de Papelão 40×30×30,Embalagens,UN,101,6.50,656.50,sale
+2026-07-22 13:22:00,entry,EL-0042,Cabo HDMI 2.0 2m,Eletrônicos,UN,193,23.49,4533.57,
+2026-07-22 16:22:00,exit,FE-0215,"Chave de Fenda Phillips 1/4""",Ferramentas,UN,4,27.90,111.60,sale
+2026-07-22 18:18:00,exit,FE-0203,Parafuso Sextavado M8×50 ZB,Ferramentas,CX,10,39.90,399.00,sale
+2026-07-22 19:54:00,exit,EM-0055,Caixa de Papelão 40×30×30,Embalagens,UN,36,6.50,234.00,internal
+2026-07-22 19:59:00,exit,EM-0071,Filme Stretch 500mm,Embalagens,RL,5,49.90,249.50,sale
+2026-07-22 20:20:00,exit,EP-0090,Máscara PFF2 sem Válvula,EPI,UN,62,6.90,427.80,sale
+2026-07-23 13:49:00,exit,EP-0018,Luva de Segurança CA 12345,EPI,PAR,18,24.90,448.20,internal
+2026-07-23 16:41:00,loss,FE-0230,Furadeira de Impacto 650W,Ferramentas,UN,2,189.00,378.00,loss
+2026-07-23 18:58:00,exit,EP-0031,Capacete Amarelo CA 31469,EPI,UN,9,119.00,1071.00,sale
+2026-07-23 19:30:00,exit,FE-0230,Furadeira de Impacto 650W,Ferramentas,UN,1,349.00,349.00,sale
+2026-07-23 19:49:00,exit,EM-0062,Fita Adesiva Transparente 48mm,Embalagens,RL,32,7.90,252.80,break
+2026-07-23 20:44:00,entry,EP-0018,Luva de Segurança CA 12345,EPI,PAR,215,9.10,1956.50,
+2026-07-24 13:43:00,entry,EM-0071,Filme Stretch 500mm,Embalagens,RL,70,25.10,1757.00,
+2026-07-24 18:16:00,exit,QM-0118,Desinfetante Hospitalar 5L,Limpeza,GL,2,72.00,144.00,sale
+2026-07-24 20:14:00,exit,EM-0071,Filme Stretch 500mm,Embalagens,RL,11,49.90,548.90,break
+2026-07-25 11:23:00,exit,FE-0215,"Chave de Fenda Phillips 1/4""",Ferramentas,UN,4,27.90,111.60,sale
+2026-07-25 11:31:00,exit,EL-0098,Bateria Li-Ion 18650 3.7V,Eletrônicos,UN,11,62.00,682.00,internal
+2026-07-25 11:39:00,entry,EL-0098,Bateria Li-Ion 18650 3.7V,Eletrônicos,UN,125,28.67,3583.75,
+2026-07-25 12:10:00,exit,EL-0042,Cabo HDMI 2.0 2m,Eletrônicos,UN,16,54.90,878.40,sale
+2026-07-25 12:38:00,exit,EP-0031,Capacete Amarelo CA 31469,EPI,UN,10,119.00,1190.00,break
+2026-07-25 16:31:00,entry,EP-0052,Óculos de Proteção Incolor CA 40112,EPI,UN,71,6.72,477.12,
+2026-07-25 16:44:00,exit,EL-0150,Disjuntor Bipolar 32A,Material Elétrico,UN,4,58.00,232.00,sale
+2026-07-25 18:39:00,exit,EL-0121,Carregador USB-C 20W,Eletrônicos,UN,1,79.90,79.90,internal
+2026-07-26 11:15:00,exit,EL-0133,Mouse Óptico USB,Eletrônicos,UN,8,39.90,319.20,sale
+2026-07-26 11:16:00,entry,QM-0104,Detergente Industrial 5L,Limpeza,GL,61,20.93,1276.73,
+2026-07-26 11:31:00,loss,EL-0121,Carregador USB-C 20W,Eletrônicos,UN,10,31.00,310.00,loss
+2026-07-26 12:10:00,exit,EL-0121,Carregador USB-C 20W,Eletrônicos,UN,4,79.90,319.60,sale
+2026-07-26 13:52:00,entry,EL-0077,Fita Isolante 19mm × 20m,Material Elétrico,RL,208,3.57,742.56,
+2026-07-26 14:24:00,exit,QM-0104,Detergente Industrial 5L,Limpeza,GL,16,46.00,736.00,break
+2026-07-26 19:03:00,exit,EL-0121,Carregador USB-C 20W,Eletrônicos,UN,6,79.90,479.40,sale
+2026-07-26 19:32:00,exit,SE-0012,Extintor PQS 4kg ABC,EPI,UN,3,229.00,687.00,break
+2026-07-27 13:07:00,entry,EL-0112,Lâmpada LED 9W E27,Material Elétrico,UN,81,9.58,775.98,
+2026-07-27 16:27:00,exit,EM-0062,Fita Adesiva Transparente 48mm,Embalagens,RL,16,7.90,126.40,sale
+2026-07-27 19:06:00,exit,FE-0215,"Chave de Fenda Phillips 1/4""",Ferramentas,UN,6,27.90,167.40,sale
+2026-07-27 19:33:00,exit,EM-0080,"Plástico Bolha 1,20m × 100m",Embalagens,RL,2,119.00,238.00,sale
+2026-07-29 12:50:00,exit,EL-0034,"Cabo PP 2×2,5mm² (rolo 100m)",Material Elétrico,RL,2,459.00,918.00,break
+2026-07-29 17:55:00,exit,EL-0150,Disjuntor Bipolar 32A,Material Elétrico,UN,5,58.00,290.00,sale
+2026-07-29 18:00:00,exit,EP-0090,Máscara PFF2 sem Válvula,EPI,UN,56,6.90,386.40,sale
+2026-07-29 19:01:00,exit,EM-0062,Fita Adesiva Transparente 48mm,Embalagens,RL,18,7.90,142.20,sale
+2026-07-30 16:32:00,exit,EM-0055,Caixa de Papelão 40×30×30,Embalagens,UN,97,6.50,630.50,sale
+2026-07-31 12:12:00,exit,EP-0090,Máscara PFF2 sem Válvula,EPI,UN,56,6.90,386.40,sale
+2026-07-31 16:25:00,exit,EM-0055,Caixa de Papelão 40×30×30,Embalagens,UN,32,6.50,208.00,sale
+2026-08-01 12:16:00,exit,EP-0018,Luva de Segurança CA 12345,EPI,PAR,31,24.90,771.90,internal
+2026-08-01 12:35:00,entry,EM-0062,Fita Adesiva Transparente 48mm,Embalagens,RL,244,3.13,763.72,
+2026-08-01 13:54:00,exit,EL-0121,Carregador USB-C 20W,Eletrônicos,UN,8,79.90,639.20,sale
+2026-08-01 16:43:00,exit,EM-0055,Caixa de Papelão 40×30×30,Embalagens,UN,57,6.50,370.50,sale
+2026-08-01 17:00:00,entry,FE-0230,Furadeira de Impacto 650W,Ferramentas,UN,7,195.33,1367.31,
+2026-08-01 17:05:00,exit,EM-0062,Fita Adesiva Transparente 48mm,Embalagens,RL,17,7.90,134.30,sale
+2026-08-02 11:54:00,exit,QM-0104,Detergente Industrial 5L,Limpeza,GL,8,46.00,368.00,sale
+2026-08-02 12:57:00,exit,EM-0071,Filme Stretch 500mm,Embalagens,RL,14,49.90,698.60,break
+2026-08-02 13:09:00,exit,EP-0090,Máscara PFF2 sem Válvula,EPI,UN,23,6.90,158.70,internal
+2026-08-02 13:10:00,exit,EM-0080,"Plástico Bolha 1,20m × 100m",Embalagens,RL,3,119.00,357.00,sale
+2026-08-02 19:39:00,exit,EL-0112,Lâmpada LED 9W E27,Material Elétrico,UN,25,22.90,572.50,sale
+2026-08-02 20:30:00,exit,EP-0090,Máscara PFF2 sem Válvula,EPI,UN,32,6.90,220.80,sale
+2026-08-03 11:41:00,exit,EL-0042,Cabo HDMI 2.0 2m,Eletrônicos,UN,7,54.90,384.30,sale
+2026-08-03 18:51:00,exit,EM-0071,Filme Stretch 500mm,Embalagens,RL,6,49.90,299.40,sale
+2026-08-03 19:12:00,exit,EL-0098,Bateria Li-Ion 18650 3.7V,Eletrônicos,UN,6,62.00,372.00,sale
+2026-08-04 16:00:00,entry,EL-0133,Mouse Óptico USB,Eletrônicos,UN,26,14.17,368.42,
+2026-08-04 17:37:00,loss,EP-0018,Luva de Segurança CA 12345,EPI,PAR,28,8.90,249.20,loss
+2026-08-04 18:23:00,exit,EL-0042,Cabo HDMI 2.0 2m,Eletrônicos,UN,18,54.90,988.20,sale
+2026-08-04 19:38:00,exit,EL-0150,Disjuntor Bipolar 32A,Material Elétrico,UN,4,58.00,232.00,sale
+2026-08-05 13:23:00,exit,EL-0121,Carregador USB-C 20W,Eletrônicos,UN,10,79.90,799.00,break
+2026-08-05 14:41:00,loss,EL-0121,Carregador USB-C 20W,Eletrônicos,UN,5,31.00,155.00,loss
+2026-08-05 17:16:00,exit,FE-0244,"Alicate Universal 8""",Ferramentas,UN,4,44.90,179.60,internal
+2026-08-06 11:05:00,exit,EL-0042,Cabo HDMI 2.0 2m,Eletrônicos,UN,14,54.90,768.60,break
+2026-08-06 12:37:00,exit,EP-0018,Luva de Segurança CA 12345,EPI,PAR,26,24.90,647.40,sale
+2026-08-06 12:39:00,exit,EL-0112,Lâmpada LED 9W E27,Material Elétrico,UN,30,22.90,687.00,sale
+2026-08-07 11:09:00,exit,EP-0052,Óculos de Proteção Incolor CA 40112,EPI,UN,19,18.90,359.10,sale
+2026-08-07 11:26:00,exit,EM-0062,Fita Adesiva Transparente 48mm,Embalagens,RL,47,7.90,371.30,sale
+2026-08-07 18:06:00,exit,EL-0133,Mouse Óptico USB,Eletrônicos,UN,3,39.90,119.70,break
+2026-08-08 13:05:00,exit,FE-0244,"Alicate Universal 8""",Ferramentas,UN,5,44.90,224.50,break
+2026-08-08 16:06:00,entry,FE-0215,"Chave de Fenda Phillips 1/4""",Ferramentas,UN,22,11.39,250.58,
+2026-08-09 14:10:00,exit,EL-0077,Fita Isolante 19mm × 20m,Material Elétrico,RL,29,8.90,258.10,internal
+2026-08-09 17:37:00,entry,EM-0080,"Plástico Bolha 1,20m × 100m",Embalagens,RL,11,55.63,611.93,
+2026-08-09 17:49:00,exit,FE-0203,Parafuso Sextavado M8×50 ZB,Ferramentas,CX,6,39.90,239.40,sale
+2026-08-10 16:55:00,exit,EM-0071,Filme Stretch 500mm,Embalagens,RL,6,49.90,299.40,sale
+2026-08-10 18:29:00,exit,SE-0012,Extintor PQS 4kg ABC,EPI,UN,2,229.00,458.00,sale
+2026-08-11 16:09:00,exit,FE-0230,Furadeira de Impacto 650W,Ferramentas,UN,1,349.00,349.00,break
+2026-08-11 18:24:00,exit,EL-0034,"Cabo PP 2×2,5mm² (rolo 100m)",Material Elétrico,RL,2,459.00,918.00,sale
+2026-08-12 11:09:00,exit,EL-0121,Carregador USB-C 20W,Eletrônicos,UN,12,79.90,958.80,internal
+2026-08-12 17:10:00,exit,EL-0034,"Cabo PP 2×2,5mm² (rolo 100m)",Material Elétrico,RL,2,459.00,918.00,break
+2026-08-12 17:18:00,exit,EL-0077,Fita Isolante 19mm × 20m,Material Elétrico,RL,53,8.90,471.70,sale
+2026-08-12 18:59:00,exit,EL-0098,Bateria Li-Ion 18650 3.7V,Eletrônicos,UN,7,62.00,434.00,sale
+2026-08-12 19:34:00,exit,EP-0066,Protetor Auricular Plug,EPI,PAR,37,5.50,203.50,sale
+2026-08-12 20:18:00,exit,EL-0133,Mouse Óptico USB,Eletrônicos,UN,4,39.90,159.60,sale
+2026-08-13 12:51:00,exit,EL-0121,Carregador USB-C 20W,Eletrônicos,UN,9,79.90,719.10,sale
+2026-08-13 14:30:00,exit,FE-0203,Parafuso Sextavado M8×50 ZB,Ferramentas,CX,6,39.90,239.40,sale
+2026-08-14 12:06:00,exit,FE-0230,Furadeira de Impacto 650W,Ferramentas,UN,1,349.00,349.00,sale
+2026-08-14 13:09:00,exit,EM-0071,Filme Stretch 500mm,Embalagens,RL,4,49.90,199.60,internal
+2026-08-14 16:31:00,exit,EL-0112,Lâmpada LED 9W E27,Material Elétrico,UN,21,22.90,480.90,sale
+2026-08-14 16:35:00,exit,FE-0215,"Chave de Fenda Phillips 1/4""",Ferramentas,UN,3,27.90,83.70,sale
+2026-08-15 11:50:00,exit,FE-0215,"Chave de Fenda Phillips 1/4""",Ferramentas,UN,3,27.90,83.70,break
+2026-08-15 11:56:00,exit,QM-0104,Detergente Industrial 5L,Limpeza,GL,6,46.00,276.00,sale
+2026-08-15 12:24:00,exit,EL-0121,Carregador USB-C 20W,Eletrônicos,UN,10,79.90,799.00,internal
+2026-08-15 19:19:00,exit,EL-0121,Carregador USB-C 20W,Eletrônicos,UN,6,79.90,479.40,sale
+2026-08-16 11:24:00,exit,EP-0018,Luva de Segurança CA 12345,EPI,PAR,25,24.90,622.50,break
+2026-08-16 11:27:00,exit,SE-0012,Extintor PQS 4kg ABC,EPI,UN,2,229.00,458.00,break
+2026-08-16 13:38:00,exit,EL-0121,Carregador USB-C 20W,Eletrônicos,UN,7,79.90,559.30,sale
+2026-08-16 14:29:00,exit,EM-0080,"Plástico Bolha 1,20m × 100m",Embalagens,RL,3,119.00,357.00,break
+2026-08-16 16:32:00,exit,EP-0031,Capacete Amarelo CA 31469,EPI,UN,6,119.00,714.00,internal
+2026-08-17 16:37:00,exit,EL-0034,"Cabo PP 2×2,5mm² (rolo 100m)",Material Elétrico,RL,1,459.00,459.00,sale
+2026-08-17 17:57:00,exit,EL-0112,Lâmpada LED 9W E27,Material Elétrico,UN,9,22.90,206.10,sale
+2026-08-17 19:47:00,exit,EL-0112,Lâmpada LED 9W E27,Material Elétrico,UN,14,22.90,320.60,sale
+2026-08-17 20:10:00,exit,EP-0090,Máscara PFF2 sem Válvula,EPI,UN,72,6.90,496.80,sale
+2026-08-18 13:52:00,exit,FE-0244,"Alicate Universal 8""",Ferramentas,UN,6,44.90,269.40,sale
+2026-08-18 14:00:00,exit,EL-0042,Cabo HDMI 2.0 2m,Eletrônicos,UN,15,54.90,823.50,sale
+2026-08-18 16:49:00,exit,QM-0104,Detergente Industrial 5L,Limpeza,GL,5,46.00,230.00,break
+2026-08-18 19:30:00,exit,EP-0031,Capacete Amarelo CA 31469,EPI,UN,4,119.00,476.00,break
+2026-08-19 11:08:00,exit,EP-0066,Protetor Auricular Plug,EPI,PAR,42,5.50,231.00,sale
+2026-08-19 11:16:00,exit,FE-0203,Parafuso Sextavado M8×50 ZB,Ferramentas,CX,13,39.90,518.70,internal
+2026-08-19 12:18:00,exit,EL-0034,"Cabo PP 2×2,5mm² (rolo 100m)",Material Elétrico,RL,2,459.00,918.00,sale
+2026-08-19 13:48:00,exit,FE-0244,"Alicate Universal 8""",Ferramentas,UN,5,44.90,224.50,internal
+2026-08-19 19:13:00,exit,EM-0062,Fita Adesiva Transparente 48mm,Embalagens,RL,23,7.90,181.70,sale
+2026-08-20 18:57:00,exit,EM-0071,Filme Stretch 500mm,Embalagens,RL,14,49.90,698.60,sale
+2026-08-20 19:11:00,exit,FE-0244,"Alicate Universal 8""",Ferramentas,UN,3,44.90,134.70,sale
+2026-08-20 19:27:00,exit,EL-0077,Fita Isolante 19mm × 20m,Material Elétrico,RL,26,8.90,231.40,sale
+2026-08-20 20:24:00,exit,FE-0230,Furadeira de Impacto 650W,Ferramentas,UN,2,349.00,698.00,internal
+2026-08-21 12:36:00,exit,EM-0080,"Plástico Bolha 1,20m × 100m",Embalagens,RL,3,119.00,357.00,sale
+2026-08-21 13:29:00,exit,FE-0215,"Chave de Fenda Phillips 1/4""",Ferramentas,UN,6,27.90,167.40,break
+2026-08-21 13:57:00,exit,EL-0112,Lâmpada LED 9W E27,Material Elétrico,UN,18,22.90,412.20,break
+2026-08-21 16:43:00,exit,EM-0062,Fita Adesiva Transparente 48mm,Embalagens,RL,5,7.90,39.50,sale
+2026-08-21 18:34:00,exit,EL-0042,Cabo HDMI 2.0 2m,Eletrônicos,UN,22,54.90,1207.80,sale
+2026-08-21 19:42:00,exit,EL-0121,Carregador USB-C 20W,Eletrônicos,UN,1,79.90,79.90,sale
+2026-08-22 13:04:00,exit,EP-0018,Luva de Segurança CA 12345,EPI,PAR,32,24.90,796.80,sale
+2026-08-22 13:56:00,exit,SE-0012,Extintor PQS 4kg ABC,EPI,UN,2,229.00,458.00,sale
+2026-08-22 14:58:00,loss,EL-0133,Mouse Óptico USB,Eletrônicos,UN,8,14.00,112.00,loss
+2026-08-22 16:25:00,loss,QM-0091,Álcool 70% INPM 1L,Químicos,UN,56,12.00,672.00,loss
+2026-08-22 16:27:00,exit,EL-0150,Disjuntor Bipolar 32A,Material Elétrico,UN,9,58.00,522.00,internal
+2026-08-22 16:56:00,exit,EL-0042,Cabo HDMI 2.0 2m,Eletrônicos,UN,9,54.90,494.10,internal
+2026-08-22 19:43:00,exit,FE-0215,"Chave de Fenda Phillips 1/4""",Ferramentas,UN,4,27.90,111.60,sale
+2026-08-22 20:34:00,exit,EL-0034,"Cabo PP 2×2,5mm² (rolo 100m)",Material Elétrico,RL,2,459.00,918.00,sale
+2026-08-23 13:16:00,exit,EP-0031,Capacete Amarelo CA 31469,EPI,UN,1,119.00,119.00,sale
+2026-08-23 17:01:00,exit,EP-0031,Capacete Amarelo CA 31469,EPI,UN,8,119.00,952.00,sale
+2026-08-24 12:00:00,exit,FE-0203,Parafuso Sextavado M8×50 ZB,Ferramentas,CX,18,39.90,718.20,sale
+2026-08-24 14:03:00,exit,EM-0062,Fita Adesiva Transparente 48mm,Embalagens,RL,51,7.90,402.90,internal
+2026-08-24 16:46:00,exit,EP-0031,Capacete Amarelo CA 31469,EPI,UN,5,119.00,595.00,sale
+2026-08-24 17:36:00,exit,EL-0034,"Cabo PP 2×2,5mm² (rolo 100m)",Material Elétrico,RL,1,459.00,459.00,break
+2026-08-25 11:40:00,exit,EL-0133,Mouse Óptico USB,Eletrônicos,UN,7,39.90,279.30,sale
+2026-08-25 11:55:00,exit,QM-0118,Desinfetante Hospitalar 5L,Limpeza,GL,3,72.00,216.00,sale
+2026-08-25 13:37:00,loss,EL-0999,Calculadora de Bolso (descontinuada),Eletrônicos,UN,3,8.00,24.00,loss
+2026-08-25 13:38:00,exit,SE-0012,Extintor PQS 4kg ABC,EPI,UN,2,229.00,458.00,break
+2026-08-25 13:49:00,exit,EL-0121,Carregador USB-C 20W,Eletrônicos,UN,9,79.90,719.10,sale
+2026-08-25 16:01:00,exit,SE-0012,Extintor PQS 4kg ABC,EPI,UN,2,229.00,458.00,sale
+2026-08-25 18:53:00,exit,EM-0062,Fita Adesiva Transparente 48mm,Embalagens,RL,15,7.90,118.50,break
+2026-08-26 14:13:00,exit,EL-0150,Disjuntor Bipolar 32A,Material Elétrico,UN,6,58.00,348.00,sale
+2026-08-26 16:24:00,exit,QM-0118,Desinfetante Hospitalar 5L,Limpeza,GL,4,72.00,288.00,break
+2026-08-26 19:29:00,exit,EL-0112,Lâmpada LED 9W E27,Material Elétrico,UN,35,22.90,801.50,internal
+2026-08-27 14:39:00,exit,EP-0018,Luva de Segurança CA 12345,EPI,PAR,30,24.90,747.00,break
+2026-08-27 17:02:00,loss,EL-0133,Mouse Óptico USB,Eletrônicos,UN,9,14.00,126.00,loss
+2026-08-28 11:49:00,exit,EM-0071,Filme Stretch 500mm,Embalagens,RL,6,49.90,299.40,sale
+2026-08-28 13:56:00,exit,FE-0203,Parafuso Sextavado M8×50 ZB,Ferramentas,CX,18,39.90,718.20,sale
+2026-08-28 13:56:00,exit,SE-0012,Extintor PQS 4kg ABC,EPI,UN,1,229.00,229.00,break
+2026-08-28 14:29:00,exit,EL-0133,Mouse Óptico USB,Eletrônicos,UN,6,39.90,239.40,sale
+2026-08-28 16:36:00,exit,EM-0062,Fita Adesiva Transparente 48mm,Embalagens,RL,42,7.90,331.80,sale
+2026-08-29 16:35:00,exit,EL-0042,Cabo HDMI 2.0 2m,Eletrônicos,UN,14,54.90,768.60,internal
+2026-08-29 16:37:00,exit,QM-0118,Desinfetante Hospitalar 5L,Limpeza,GL,6,72.00,432.00,break
+2026-08-30 13:49:00,exit,EL-0042,Cabo HDMI 2.0 2m,Eletrônicos,UN,10,54.90,549.00,break
+2026-08-30 14:33:00,exit,EP-0031,Capacete Amarelo CA 31469,EPI,UN,1,119.00,119.00,internal
+2026-08-30 16:11:00,exit,FE-0215,"Chave de Fenda Phillips 1/4""",Ferramentas,UN,2,27.90,55.80,internal
+2026-08-30 17:42:00,exit,EL-0112,Lâmpada LED 9W E27,Material Elétrico,UN,25,22.90,572.50,internal
+2026-08-30 18:48:00,exit,EM-0080,"Plástico Bolha 1,20m × 100m",Embalagens,RL,4,119.00,476.00,sale
+2026-08-30 19:04:00,exit,EM-0080,"Plástico Bolha 1,20m × 100m",Embalagens,RL,3,119.00,357.00,sale
+2026-08-30 19:25:00,exit,QM-0091,Álcool 70% INPM 1L,Químicos,UN,21,28.50,598.50,break
+2026-08-30 20:21:00,exit,EP-0018,Luva de Segurança CA 12345,EPI,PAR,2,24.90,49.80,sale
+2026-08-31 18:36:00,exit,FE-0244,"Alicate Universal 8""",Ferramentas,UN,2,44.90,89.80,sale
+2026-08-31 20:21:00,exit,EL-0133,Mouse Óptico USB,Eletrônicos,UN,6,39.90,239.40,internal
+2026-09-01 13:07:00,exit,EL-0133,Mouse Óptico USB,Eletrônicos,UN,10,39.90,399.00,internal
+2026-09-01 16:24:00,exit,EM-0071,Filme Stretch 500mm,Embalagens,RL,4,49.90,199.60,break
+2026-09-01 20:51:00,exit,EM-0071,Filme Stretch 500mm,Embalagens,RL,14,49.90,698.60,sale
+2026-09-02 11:26:00,exit,EL-0133,Mouse Óptico USB,Eletrônicos,UN,7,39.90,279.30,sale
+2026-09-02 12:54:00,exit,EP-0018,Luva de Segurança CA 12345,EPI,PAR,33,24.90,821.70,sale
+2026-09-02 13:49:00,exit,EL-0098,Bateria Li-Ion 18650 3.7V,Eletrônicos,UN,10,62.00,620.00,sale
+2026-09-03 11:13:00,exit,EM-0055,Caixa de Papelão 40×30×30,Embalagens,UN,81,6.50,526.50,internal
+2026-09-03 11:14:00,exit,EP-0052,Óculos de Proteção Incolor CA 40112,EPI,UN,24,18.90,453.60,break
+2026-09-03 14:25:00,exit,EM-0062,Fita Adesiva Transparente 48mm,Embalagens,RL,28,7.90,221.20,sale
+2026-09-03 16:15:00,loss,EP-0018,Luva de Segurança CA 12345,EPI,PAR,29,8.90,258.10,loss
+2026-09-03 20:12:00,exit,FE-0215,"Chave de Fenda Phillips 1/4""",Ferramentas,UN,6,27.90,167.40,sale
+2026-09-04 13:29:00,exit,EL-0034,"Cabo PP 2×2,5mm² (rolo 100m)",Material Elétrico,RL,1,459.00,459.00,sale
+2026-09-04 13:56:00,exit,EL-0133,Mouse Óptico USB,Eletrônicos,UN,5,39.90,199.50,sale
+2026-09-04 16:09:00,exit,EP-0052,Óculos de Proteção Incolor CA 40112,EPI,UN,22,18.90,415.80,internal
+2026-09-04 17:41:00,exit,FE-0230,Furadeira de Impacto 650W,Ferramentas,UN,1,349.00,349.00,break
+2026-09-04 18:13:00,exit,EM-0080,"Plástico Bolha 1,20m × 100m",Embalagens,RL,1,119.00,119.00,sale
+2026-09-05 11:38:00,exit,EL-0133,Mouse Óptico USB,Eletrônicos,UN,9,39.90,359.10,sale
+2026-09-05 12:02:00,exit,FE-0215,"Chave de Fenda Phillips 1/4""",Ferramentas,UN,2,27.90,55.80,break
+2026-09-05 13:55:00,loss,EL-0098,Bateria Li-Ion 18650 3.7V,Eletrônicos,UN,8,28.00,224.00,loss
+2026-09-05 18:07:00,exit,FE-0244,"Alicate Universal 8""",Ferramentas,UN,3,44.90,134.70,sale
+2026-09-05 18:08:00,exit,QM-0118,Desinfetante Hospitalar 5L,Limpeza,GL,3,72.00,216.00,break
+2026-09-06 11:41:00,exit,FE-0203,Parafuso Sextavado M8×50 ZB,Ferramentas,CX,7,39.90,279.30,sale
+2026-09-06 20:15:00,exit,EL-0098,Bateria Li-Ion 18650 3.7V,Eletrônicos,UN,16,62.00,992.00,sale
+2026-09-06 20:31:00,exit,EL-0121,Carregador USB-C 20W,Eletrônicos,UN,4,79.90,319.60,sale
+2026-09-07 14:04:00,exit,EM-0080,"Plástico Bolha 1,20m × 100m",Embalagens,RL,3,119.00,357.00,internal
+2026-09-07 16:41:00,exit,QM-0104,Detergente Industrial 5L,Limpeza,GL,12,46.00,552.00,sale
+2026-09-07 17:38:00,exit,FE-0215,"Chave de Fenda Phillips 1/4""",Ferramentas,UN,1,27.90,27.90,sale
+2026-09-07 19:39:00,exit,EL-0077,Fita Isolante 19mm × 20m,Material Elétrico,RL,33,8.90,293.70,sale
+2026-09-08 13:13:00,exit,EL-0150,Disjuntor Bipolar 32A,Material Elétrico,UN,8,58.00,464.00,internal
+2026-09-08 13:21:00,exit,EL-0034,"Cabo PP 2×2,5mm² (rolo 100m)",Material Elétrico,RL,2,459.00,918.00,internal
+2026-09-08 20:28:00,exit,EM-0055,Caixa de Papelão 40×30×30,Embalagens,UN,90,6.50,585.00,sale
+2026-09-09 12:18:00,exit,EL-0150,Disjuntor Bipolar 32A,Material Elétrico,UN,9,58.00,522.00,sale
+2026-09-09 12:25:00,exit,EL-0098,Bateria Li-Ion 18650 3.7V,Eletrônicos,UN,16,62.00,992.00,sale
+2026-09-09 12:30:00,exit,FE-0215,"Chave de Fenda Phillips 1/4""",Ferramentas,UN,4,27.90,111.60,sale
+2026-09-09 13:14:00,exit,EM-0080,"Plástico Bolha 1,20m × 100m",Embalagens,RL,1,119.00,119.00,sale
+2026-09-09 18:42:00,exit,EM-0055,Caixa de Papelão 40×30×30,Embalagens,UN,40,6.50,260.00,sale
+2026-09-09 20:28:00,exit,EM-0062,Fita Adesiva Transparente 48mm,Embalagens,RL,40,7.90,316.00,break
+2026-09-10 12:48:00,exit,FE-0230,Furadeira de Impacto 650W,Ferramentas,UN,2,349.00,698.00,internal
+2026-09-10 12:52:00,exit,EM-0055,Caixa de Papelão 40×30×30,Embalagens,UN,101,6.50,656.50,sale
+2026-09-10 13:36:00,exit,FE-0203,Parafuso Sextavado M8×50 ZB,Ferramentas,CX,13,39.90,518.70,sale
+2026-09-10 17:29:00,exit,FE-0244,"Alicate Universal 8""",Ferramentas,UN,5,44.90,224.50,internal
+2026-09-10 18:13:00,exit,EM-0071,Filme Stretch 500mm,Embalagens,RL,12,49.90,598.80,internal
+2026-09-10 19:04:00,exit,EL-0034,"Cabo PP 2×2,5mm² (rolo 100m)",Material Elétrico,RL,1,459.00,459.00,sale
+2026-09-11 11:32:00,exit,FE-0215,"Chave de Fenda Phillips 1/4""",Ferramentas,UN,3,27.90,83.70,sale
+2026-09-11 17:23:00,exit,EL-0042,Cabo HDMI 2.0 2m,Eletrônicos,UN,19,54.90,1043.10,break
+2026-09-12 11:52:00,exit,EL-0133,Mouse Óptico USB,Eletrônicos,UN,4,39.90,159.60,sale
+2026-09-12 11:52:00,exit,EM-0055,Caixa de Papelão 40×30×30,Embalagens,UN,41,6.50,266.50,sale
+2026-09-12 13:26:00,exit,FE-0230,Furadeira de Impacto 650W,Ferramentas,UN,1,349.00,349.00,sale
+2026-09-12 13:37:00,exit,EM-0080,"Plástico Bolha 1,20m × 100m",Embalagens,RL,2,119.00,238.00,internal
+2026-09-12 13:49:00,exit,EP-0090,Máscara PFF2 sem Válvula,EPI,UN,45,6.90,310.50,sale
+2026-09-12 14:03:00,exit,EL-0150,Disjuntor Bipolar 32A,Material Elétrico,UN,4,58.00,232.00,sale
+2026-09-12 17:19:00,loss,EM-0080,"Plástico Bolha 1,20m × 100m",Embalagens,RL,3,58.00,174.00,loss
+2026-09-12 17:21:00,transfer,EL-0077,Fita Isolante 19mm × 20m,Material Elétrico,RL,29,3.50,0.00,
+2026-09-12 18:15:00,exit,EP-0018,Luva de Segurança CA 12345,EPI,PAR,11,24.90,273.90,sale
+2026-09-12 19:49:00,exit,EP-0031,Capacete Amarelo CA 31469,EPI,UN,8,119.00,952.00,sale
+2026-09-12 20:04:00,exit,EL-0034,"Cabo PP 2×2,5mm² (rolo 100m)",Material Elétrico,RL,1,459.00,459.00,internal
+2026-09-13 17:26:00,exit,FE-0215,"Chave de Fenda Phillips 1/4""",Ferramentas,UN,1,27.90,27.90,sale
+2026-09-13 17:34:00,exit,EP-0018,Luva de Segurança CA 12345,EPI,PAR,30,24.90,747.00,internal
+2026-09-13 17:49:00,transfer,EP-0031,Capacete Amarelo CA 31469,EPI,UN,34,52.00,0.00,
+2026-09-13 18:25:00,exit,EL-0150,Disjuntor Bipolar 32A,Material Elétrico,UN,9,58.00,522.00,sale
+2026-09-13 19:04:00,exit,EL-0121,Carregador USB-C 20W,Eletrônicos,UN,11,79.90,878.90,sale
+2026-09-13 19:39:00,exit,EL-0121,Carregador USB-C 20W,Eletrônicos,UN,4,79.90,319.60,sale
+2026-09-13 20:31:00,exit,FE-0230,Furadeira de Impacto 650W,Ferramentas,UN,1,349.00,349.00,sale
+2026-09-13 20:36:00,exit,EL-0077,Fita Isolante 19mm × 20m,Material Elétrico,RL,21,8.90,186.90,internal
+2026-09-14 11:04:00,exit,EL-0112,Lâmpada LED 9W E27,Material Elétrico,UN,26,22.90,595.40,sale
+2026-09-14 13:47:00,exit,EL-0133,Mouse Óptico USB,Eletrônicos,UN,9,39.90,359.10,sale
+2026-09-14 16:45:00,exit,EP-0066,Protetor Auricular Plug,EPI,PAR,29,5.50,159.50,sale
+2026-09-15 11:58:00,exit,EL-0042,Cabo HDMI 2.0 2m,Eletrônicos,UN,9,54.90,494.10,break
+2026-09-15 17:10:00,exit,FE-0215,"Chave de Fenda Phillips 1/4""",Ferramentas,UN,4,27.90,111.60,sale
+2026-09-15 17:35:00,transfer,EL-0150,Disjuntor Bipolar 32A,Material Elétrico,UN,7,24.00,0.00,
+2026-09-15 18:41:00,exit,EP-0018,Luva de Segurança CA 12345,EPI,PAR,31,24.90,771.90,sale
+2026-09-15 19:38:00,exit,FE-0230,Furadeira de Impacto 650W,Ferramentas,UN,2,349.00,698.00,sale
+2026-09-16 12:20:00,exit,EP-0090,Máscara PFF2 sem Válvula,EPI,UN,38,6.90,262.20,sale
+2026-09-16 16:09:00,exit,EL-0098,Bateria Li-Ion 18650 3.7V,Eletrônicos,UN,16,62.00,992.00,break
+2026-09-17 11:26:00,exit,FE-0244,"Alicate Universal 8""",Ferramentas,UN,4,44.90,179.60,sale
+2026-09-17 11:38:00,exit,EM-0062,Fita Adesiva Transparente 48mm,Embalagens,RL,21,7.90,165.90,break
+2026-09-17 12:41:00,exit,FE-0215,"Chave de Fenda Phillips 1/4""",Ferramentas,UN,6,27.90,167.40,internal
+2026-09-17 13:07:00,exit,EP-0018,Luva de Segurança CA 12345,EPI,PAR,33,24.90,821.70,sale
+2026-09-17 14:18:00,exit,EM-0055,Caixa de Papelão 40×30×30,Embalagens,UN,62,6.50,403.00,sale
+2026-09-17 17:00:00,transfer,EL-0042,Cabo HDMI 2.0 2m,Eletrônicos,UN,14,22.50,0.00,
+2026-09-17 17:16:00,exit,EM-0080,"Plástico Bolha 1,20m × 100m",Embalagens,RL,3,119.00,357.00,sale
+2026-09-17 18:54:00,exit,EP-0052,Óculos de Proteção Incolor CA 40112,EPI,UN,18,18.90,340.20,sale
+2026-09-18 14:14:00,exit,EL-0042,Cabo HDMI 2.0 2m,Eletrônicos,UN,26,54.90,1427.40,sale
+2026-09-18 17:17:00,exit,EL-0150,Disjuntor Bipolar 32A,Material Elétrico,UN,10,58.00,580.00,sale
+2026-09-19 13:47:00,exit,EP-0090,Máscara PFF2 sem Válvula,EPI,UN,56,6.90,386.40,internal
+2026-09-19 17:07:00,transfer,EL-0098,Bateria Li-Ion 18650 3.7V,Eletrônicos,UN,12,28.00,0.00,
+2026-09-19 18:07:00,exit,SE-0012,Extintor PQS 4kg ABC,EPI,UN,1,229.00,229.00,sale
+2026-09-19 19:50:00,exit,EP-0066,Protetor Auricular Plug,EPI,PAR,32,5.50,176.00,sale
+2026-09-20 11:01:00,exit,EL-0077,Fita Isolante 19mm × 20m,Material Elétrico,RL,28,8.90,249.20,sale
+2026-09-20 12:59:00,exit,FE-0230,Furadeira de Impacto 650W,Ferramentas,UN,1,349.00,349.00,sale
+2026-09-20 16:04:00,exit,EP-0018,Luva de Segurança CA 12345,EPI,PAR,34,24.90,846.60,sale
+2026-09-20 16:16:00,exit,SE-0012,Extintor PQS 4kg ABC,EPI,UN,1,229.00,229.00,break
+2026-09-20 16:42:00,exit,EM-0062,Fita Adesiva Transparente 48mm,Embalagens,RL,28,7.90,221.20,internal
+2026-09-20 17:40:00,exit,FE-0215,"Chave de Fenda Phillips 1/4""",Ferramentas,UN,2,27.90,55.80,break
+2026-09-20 19:06:00,exit,EM-0080,"Plástico Bolha 1,20m × 100m",Embalagens,RL,3,119.00,357.00,break
+2026-09-21 11:56:00,exit,EL-0112,Lâmpada LED 9W E27,Material Elétrico,UN,34,22.90,778.60,sale
+2026-09-21 16:32:00,exit,QM-0091,Álcool 70% INPM 1L,Químicos,UN,51,28.50,1453.50,sale
+2026-09-21 18:48:00,exit,FE-0203,Parafuso Sextavado M8×50 ZB,Ferramentas,CX,1,39.90,39.90,break
+2026-09-21 20:03:00,exit,EL-0121,Carregador USB-C 20W,Eletrônicos,UN,12,79.90,958.80,sale
+2026-09-21 20:44:00,exit,EP-0052,Óculos de Proteção Incolor CA 40112,EPI,UN,13,18.90,245.70,sale
+2026-09-22 11:15:00,exit,EL-0112,Lâmpada LED 9W E27,Material Elétrico,UN,12,22.90,274.80,sale
+2026-09-22 13:15:00,exit,EL-0034,"Cabo PP 2×2,5mm² (rolo 100m)",Material Elétrico,RL,2,459.00,918.00,sale
+2026-09-22 19:53:00,loss,EM-0062,Fita Adesiva Transparente 48mm,Embalagens,RL,17,3.20,54.40,loss
+2026-09-23 11:34:00,exit,EL-0034,"Cabo PP 2×2,5mm² (rolo 100m)",Material Elétrico,RL,2,459.00,918.00,sale
+2026-09-23 11:59:00,exit,EL-0150,Disjuntor Bipolar 32A,Material Elétrico,UN,10,58.00,580.00,sale
+2026-09-23 13:13:00,exit,EL-0098,Bateria Li-Ion 18650 3.7V,Eletrônicos,UN,19,62.00,1178.00,sale
+2026-09-23 17:14:00,transfer,EL-0121,Carregador USB-C 20W,Eletrônicos,UN,8,31.00,0.00,
+2026-09-23 17:23:00,exit,FE-0203,Parafuso Sextavado M8×50 ZB,Ferramentas,CX,9,39.90,359.10,internal
+2026-09-23 19:06:00,exit,FE-0244,"Alicate Universal 8""",Ferramentas,UN,3,44.90,134.70,sale
+2026-09-23 19:43:00,exit,EL-0042,Cabo HDMI 2.0 2m,Eletrônicos,UN,21,54.90,1152.90,internal
+2026-09-24 11:24:00,exit,QM-0118,Desinfetante Hospitalar 5L,Limpeza,GL,7,72.00,504.00,sale
+2026-09-24 12:04:00,exit,EL-0042,Cabo HDMI 2.0 2m,Eletrônicos,UN,22,54.90,1207.80,sale
+2026-09-24 12:10:00,exit,EL-0150,Disjuntor Bipolar 32A,Material Elétrico,UN,9,58.00,522.00,sale
+2026-09-24 14:21:00,exit,EL-0133,Mouse Óptico USB,Eletrônicos,UN,5,39.90,199.50,sale
+2026-09-24 16:18:00,exit,EL-0133,Mouse Óptico USB,Eletrônicos,UN,6,39.90,239.40,sale
+2026-09-25 13:02:00,exit,QM-0104,Detergente Industrial 5L,Limpeza,GL,16,46.00,736.00,internal
+2026-09-25 14:26:00,exit,EL-0077,Fita Isolante 19mm × 20m,Material Elétrico,RL,6,8.90,53.40,sale
+2026-09-25 18:32:00,exit,QM-0118,Desinfetante Hospitalar 5L,Limpeza,GL,6,72.00,432.00,internal
+2026-09-25 19:00:00,adjustment,EL-0098,Bateria Li-Ion 18650 3.7V,Eletrônicos,UN,-3,28.00,-84.00,
+2026-09-26 12:20:00,exit,QM-0118,Desinfetante Hospitalar 5L,Limpeza,GL,4,72.00,288.00,break
+2026-09-26 12:28:00,exit,EP-0052,Óculos de Proteção Incolor CA 40112,EPI,UN,25,18.90,472.50,internal
+2026-09-26 13:07:00,exit,EL-0150,Disjuntor Bipolar 32A,Material Elétrico,UN,8,58.00,464.00,internal
+2026-09-26 13:45:00,loss,EL-0077,Fita Isolante 19mm × 20m,Material Elétrico,RL,35,3.50,122.50,loss
+2026-09-26 13:50:00,loss,EM-0062,Fita Adesiva Transparente 48mm,Embalagens,RL,19,3.20,60.80,loss
+2026-09-26 16:05:00,exit,EM-0071,Filme Stretch 500mm,Embalagens,RL,11,49.90,548.90,internal
+2026-09-26 16:06:00,exit,SE-0012,Extintor PQS 4kg ABC,EPI,UN,3,229.00,687.00,internal
+2026-09-26 16:58:00,loss,EL-0034,"Cabo PP 2×2,5mm² (rolo 100m)",Material Elétrico,RL,1,280.00,280.00,loss
+2026-09-26 18:27:00,exit,QM-0091,Álcool 70% INPM 1L,Químicos,UN,24,28.50,684.00,sale
+2026-09-26 18:48:00,exit,EP-0031,Capacete Amarelo CA 31469,EPI,UN,11,119.00,1309.00,internal
+2026-09-26 19:00:00,adjustment,EL-0077,Fita Isolante 19mm × 20m,Material Elétrico,RL,-2,3.50,-7.00,
+2026-09-26 20:15:00,exit,EM-0055,Caixa de Papelão 40×30×30,Embalagens,UN,58,6.50,377.00,break
+2026-09-27 11:46:00,exit,QM-0104,Detergente Industrial 5L,Limpeza,GL,12,46.00,552.00,sale
+2026-09-27 12:05:00,exit,EP-0090,Máscara PFF2 sem Válvula,EPI,UN,31,6.90,213.90,internal
+2026-09-27 12:37:00,exit,EM-0080,"Plástico Bolha 1,20m × 100m",Embalagens,RL,3,119.00,357.00,break
+2026-09-27 14:13:00,exit,EM-0062,Fita Adesiva Transparente 48mm,Embalagens,RL,15,7.90,118.50,break
+2026-09-27 16:02:00,exit,EL-0098,Bateria Li-Ion 18650 3.7V,Eletrônicos,UN,12,62.00,744.00,break
+2026-09-28 11:54:00,exit,EL-0034,"Cabo PP 2×2,5mm² (rolo 100m)",Material Elétrico,RL,1,459.00,459.00,sale
+2026-09-28 12:50:00,exit,SE-0012,Extintor PQS 4kg ABC,EPI,UN,3,229.00,687.00,sale
+2026-09-28 14:05:00,exit,QM-0104,Detergente Industrial 5L,Limpeza,GL,11,46.00,506.00,internal
+2026-09-28 14:31:00,exit,EM-0055,Caixa de Papelão 40×30×30,Embalagens,UN,82,6.50,533.00,sale
+2026-09-28 17:04:00,exit,EL-0034,"Cabo PP 2×2,5mm² (rolo 100m)",Material Elétrico,RL,2,459.00,918.00,internal
+2026-09-28 17:12:00,exit,FE-0244,"Alicate Universal 8""",Ferramentas,UN,7,44.90,314.30,internal
+2026-09-28 18:24:00,exit,EP-0052,Óculos de Proteção Incolor CA 40112,EPI,UN,18,18.90,340.20,break
+2026-09-28 19:55:00,loss,EM-0071,Filme Stretch 500mm,Embalagens,RL,11,24.00,264.00,loss
+2026-09-29 16:12:00,exit,EL-0042,Cabo HDMI 2.0 2m,Eletrônicos,UN,14,54.90,768.60,sale
+2026-09-29 16:57:00,exit,EL-0133,Mouse Óptico USB,Eletrônicos,UN,3,39.90,119.70,break
+2026-09-29 17:24:00,exit,EL-0112,Lâmpada LED 9W E27,Material Elétrico,UN,29,22.90,664.10,sale
+2026-09-29 17:28:00,transfer,EL-0034,"Cabo PP 2×2,5mm² (rolo 100m)",Material Elétrico,RL,7,280.00,0.00,
+2026-09-29 18:56:00,exit,FE-0215,"Chave de Fenda Phillips 1/4""",Ferramentas,UN,4,27.90,111.60,sale
+2026-09-29 19:00:00,adjustment,EL-0042,Cabo HDMI 2.0 2m,Eletrônicos,UN,-4,22.50,-90.00,
+2026-09-30 11:37:00,exit,EL-0121,Carregador USB-C 20W,Eletrônicos,UN,10,79.90,799.00,sale
+2026-09-30 14:58:00,exit,EL-0133,Mouse Óptico USB,Eletrônicos,UN,8,39.90,319.20,sale
+2026-09-30 14:58:00,exit,FE-0215,"Chave de Fenda Phillips 1/4""",Ferramentas,UN,3,27.90,83.70,sale
+2026-09-30 19:00:00,exit,EM-0062,Fita Adesiva Transparente 48mm,Embalagens,RL,15,7.90,118.50,internal
+2026-09-30 20:32:00,exit,EP-0018,Luva de Segurança CA 12345,EPI,PAR,20,24.90,498.00,sale
+2026-10-01 12:08:00,exit,EM-0055,Caixa de Papelão 40×30×30,Embalagens,UN,93,6.50,604.50,internal
+2026-10-01 12:15:00,exit,EL-0150,Disjuntor Bipolar 32A,Material Elétrico,UN,4,58.00,232.00,sale
+2026-10-01 12:41:00,exit,EP-0052,Óculos de Proteção Incolor CA 40112,EPI,UN,15,18.90,283.50,sale
+2026-10-01 13:13:00,exit,EP-0052,Óculos de Proteção Incolor CA 40112,EPI,UN,14,18.90,264.60,sale
+2026-10-01 13:20:00,exit,EL-0034,"Cabo PP 2×2,5mm² (rolo 100m)",Material Elétrico,RL,2,459.00,918.00,break
+2026-10-01 16:38:00,exit,QM-0104,Detergente Industrial 5L,Limpeza,GL,13,46.00,598.00,sale
+2026-10-01 19:55:00,exit,EM-0062,Fita Adesiva Transparente 48mm,Embalagens,RL,19,7.90,150.10,sale
+2026-10-01 20:55:00,exit,QM-0091,Álcool 70% INPM 1L,Químicos,UN,56,28.50,1596.00,sale
+2026-10-02 12:10:00,entry,EL-0150,Disjuntor Bipolar 32A,Material Elétrico,UN,28,24.00,672.00,
+2026-10-02 12:10:00,entry,EP-0066,Protetor Auricular Plug,EPI,PAR,250,1.80,450.00,
+2026-10-02 12:10:00,entry,FE-0230,Furadeira de Impacto 650W,Ferramentas,UN,20,189.00,3780.00,
+2026-10-02 14:02:00,exit,FE-0215,"Chave de Fenda Phillips 1/4""",Ferramentas,UN,5,27.90,139.50,sale
+2026-10-02 17:42:00,transfer,EP-0018,Luva de Segurança CA 12345,EPI,PAR,5,8.90,0.00,
+2026-10-03 11:05:00,exit,EM-0062,Fita Adesiva Transparente 48mm,Embalagens,RL,21,7.90,165.90,internal
+2026-10-03 12:16:00,exit,EL-0042,Cabo HDMI 2.0 2m,Eletrônicos,UN,16,54.90,878.40,break
+2026-10-03 14:37:00,exit,EP-0018,Luva de Segurança CA 12345,EPI,PAR,34,24.90,846.60,sale
+2026-10-03 18:32:00,exit,EL-0034,"Cabo PP 2×2,5mm² (rolo 100m)",Material Elétrico,RL,2,459.00,918.00,sale
+2026-10-04 13:30:00,exit,QM-0091,Álcool 70% INPM 1L,Químicos,UN,37,28.50,1054.50,sale
+2026-10-04 14:05:00,exit,QM-0104,Detergente Industrial 5L,Limpeza,GL,9,46.00,414.00,sale
+2026-10-04 17:39:00,exit,QM-0118,Desinfetante Hospitalar 5L,Limpeza,GL,1,72.00,72.00,sale
+2026-10-04 18:38:00,exit,EL-0098,Bateria Li-Ion 18650 3.7V,Eletrônicos,UN,11,62.00,682.00,sale
+2026-10-04 19:46:00,exit,EL-0098,Bateria Li-Ion 18650 3.7V,Eletrônicos,UN,12,62.00,744.00,sale
+2026-10-04 20:18:00,exit,EL-0098,Bateria Li-Ion 18650 3.7V,Eletrônicos,UN,12,62.00,744.00,sale
+2026-10-04 20:19:00,exit,EM-0055,Caixa de Papelão 40×30×30,Embalagens,UN,57,6.50,370.50,sale
+2026-10-05 19:20:00,exit,EP-0090,Máscara PFF2 sem Válvula,EPI,UN,18,6.90,124.20,sale
+2026-10-05 20:28:00,exit,EM-0062,Fita Adesiva Transparente 48mm,Embalagens,RL,10,7.90,79.00,sale
+2026-10-05 21:31:00,entry,EM-0055,Caixa de Papelão 40×30×30,Embalagens,UN,21,2.90,60.90,
+2026-10-05 22:36:00,exit,EP-0031,Capacete Amarelo CA 31469,EPI,UN,15,119.00,1785.00,sale
+2026-10-05 23:10:00,exit,EL-0098,Bateria Li-Ion 18650 3.7V,Eletrônicos,UN,14,62.00,868.00,sale
+2026-10-06 00:43:00,entry,EL-0042,Cabo HDMI 2.0 2m,Eletrônicos,UN,25,22.50,562.50,
+2026-10-19 16:04:38,inventory,EL-0098,Bateria Li-Ion 18650 3.7V,Eletrônicos,UN,30,0.00,0.00,
+2026-10-19 16:04:38,inventory,FE-0230,Furadeira de Impacto 650W,Ferramentas,UN,100,0.00,0.00,
+2026-10-19 16:04:38,inventory,EP-0018,Luva de Segurança CA 12345,EPI,PAR,60,0.00,0.00,
+2026-10-19 16:04:38,inventory,FE-0203,Parafuso Sextavado M8×50 ZB,Ferramentas,CX,114,0.00,0.00,
+2026-10-19 16:04:38,inventory,QM-0091,Álcool 70% INPM 1L,Químicos,UN,2,0.00,0.00,
+2026-10-19 16:04:38,inventory,EL-0034,"Cabo PP 2×2,5mm² (rolo 100m)",Material Elétrico,RL,0,0.00,0.00,
+2026-10-19 16:04:39,inventory,EL-0121,Carregador USB-C 20W,Eletrônicos,UN,0,0.00,0.00,
+2026-10-19 16:04:39,inventory,FE-0215,"Chave de Fenda Phillips 1/4""",Ferramentas,UN,0,0.00,0.00,
+2026-10-19 16:04:39,inventory,SE-0012,Extintor PQS 4kg ABC,EPI,UN,11,0.00,0.00,
+2026-10-19 16:04:39,inventory,EM-0062,Fita Adesiva Transparente 48mm,Embalagens,RL,108,0.00,0.00,
+2026-10-19 16:04:39,inventory,EL-0112,Lâmpada LED 9W E27,Material Elétrico,UN,2,0.00,0.00,
+2026-10-19 16:04:39,inventory,EL-0133,Mouse Óptico USB,Eletrônicos,UN,3,0.00,0.00,
+2026-10-19 16:04:39,inventory,EL-0042,Cabo HDMI 2.0 2m,Eletrônicos,UN,0,0.00,0.00,
+2026-10-19 16:04:39,inventory,EM-0055,Caixa de Papelão 40×30×30,Embalagens,UN,0,0.00,0.00,
+2026-10-19 16:04:39,inventory,EP-0031,Capacete Amarelo CA 31469,EPI,UN,0,0.00,0.00,
+2026-10-20 22:35:50,inventory,FE-0244,"Alicate Universal 8""",Ferramentas,UN,10,0.00,0.00,
+2026-10-20 22:35:50,inventory,QM-0118,Desinfetante Hospitalar 5L,Limpeza,GL,0,0.00,0.00,
+2026-10-20 22:35:50,inventory,QM-0104,Detergente Industrial 5L,Limpeza,GL,0,0.00,0.00,
+2026-10-20 22:35:50,inventory,EL-0150,Disjuntor Bipolar 32A,Material Elétrico,UN,0,0.00,0.00,
+2026-10-20 22:35:50,inventory,EM-0071,Filme Stretch 500mm,Embalagens,RL,0,0.00,0.00,
+2026-10-20 22:35:50,inventory,EL-0077,Fita Isolante 19mm × 20m,Material Elétrico,RL,0,0.00,0.00,
+2026-10-20 22:35:51,inventory,EM-0080,"Plástico Bolha 1,20m × 100m",Embalagens,RL,0,0.00,0.00,
+2026-10-20 22:35:51,inventory,EP-0066,Protetor Auricular Plug,EPI,PAR,0,0.00,0.00,
+2026-10-20 22:35:51,inventory,EL-0098,Bateria Li-Ion 18650 3.7V,Eletrônicos,UN,0,0.00,0.00,
+2026-10-20 22:35:51,inventory,SE-0012,Extintor PQS 4kg ABC,EPI,UN,0,0.00,0.00,
+2026-10-20 22:35:51,inventory,EM-0062,Fita Adesiva Transparente 48mm,Embalagens,RL,0,0.00,0.00,
+2026-10-20 22:35:51,inventory,FE-0230,Furadeira de Impacto 650W,Ferramentas,UN,0,0.00,0.00,
+2026-10-20 22:35:51,inventory,EP-0018,Luva de Segurança CA 12345,EPI,PAR,0,0.00,0.00,
+2026-10-20 22:35:51,inventory,EL-0112,Lâmpada LED 9W E27,Material Elétrico,UN,0,0.00,0.00,
+2026-10-20 22:35:51,inventory,EL-0133,Mouse Óptico USB,Eletrônicos,UN,0,0.00,0.00,
+2026-10-20 22:35:51,inventory,EP-0090,Máscara PFF2 sem Válvula,EPI,UN,0,0.00,0.00,
+2026-10-20 22:35:51,inventory,FE-0203,Parafuso Sextavado M8×50 ZB,Ferramentas,CX,0,0.00,0.00,
+2026-10-20 22:35:51,inventory,QM-0091,Álcool 70% INPM 1L,Químicos,UN,0,0.00,0.00,
+2026-10-20 22:35:51,inventory,EP-0052,Óculos de Proteção Incolor CA 40112,EPI,UN,0,0.00,0.00,
