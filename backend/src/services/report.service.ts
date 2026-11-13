@@ -159,8 +159,10 @@ export async function getLotExpirationReport(days = 90) {
 }
 
 export async function getAbcReport() {
+  // Mesmo critério da análise ABC×XYZ do módulo de analytics: apenas saídas.
   const movements = await prisma.movement.groupBy({
     by: ['productId'],
+    where: { type: 'exit' },
     _sum: { totalValue: true },
     orderBy: { _sum: { totalValue: 'desc' } },
   })

@@ -27,4 +27,12 @@ describe('ABC report', () => {
     expect(report.C).toHaveLength(2)
     expect(report.C.map((item) => item.accumulatedPercentage)).toEqual([0, 0])
   })
+
+  it('considers only exit movements, like the analytics ABC×XYZ matrix', async () => {
+    mockGroupBy.mockResolvedValue([])
+
+    await getAbcReport()
+
+    expect(mockGroupBy).toHaveBeenCalledWith(expect.objectContaining({ where: { type: 'exit' } }))
+  })
 })
