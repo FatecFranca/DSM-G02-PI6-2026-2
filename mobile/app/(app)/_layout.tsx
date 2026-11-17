@@ -26,6 +26,7 @@ const TITLES: Record<string, string> = {
   scanner: 'Scanner',
   ia: 'IA — Produtos',
   'ia-analitica': 'IA Analítica',
+  previsao: 'Previsão de Vendas',
   relatorios: 'Relatórios',
   usuarios: 'Usuários',
   auditoria: 'Auditoria',

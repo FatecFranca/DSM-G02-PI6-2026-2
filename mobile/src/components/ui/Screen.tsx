@@ -1,4 +1,4 @@
-import { ReactNode } from 'react'
+import { ReactNode, Ref } from 'react'
 import { KeyboardAvoidingView, Platform, RefreshControl, ScrollView, StyleProp, StyleSheet, View, ViewStyle } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme } from '@/theme/ThemeProvider'
@@ -13,14 +13,17 @@ interface ScreenProps {
   contentStyle?: StyleProp<ViewStyle>
   /** false para telas que cuidam da própria rolagem (FlatList, mapas). */
   scroll?: boolean
+  /** Acesso ao ScrollView (ex.: voltar ao topo depois de escolher um item no fim da tela). */
+  scrollRef?: Ref<ScrollView>
 }
 
 /** Fundo + rolagem + puxar-para-atualizar + rodapé fixo, padrão de toda tela do app. */
-export function Screen({ children, footer, onRefresh, refreshing, contentStyle, scroll = true }: ScreenProps) {
+export function Screen({ children, footer, onRefresh, refreshing, contentStyle, scroll = true, scrollRef }: ScreenProps) {
   const { colors } = useTheme()
   const insets = useSafeAreaInsets()
   const body = scroll ? (
     <ScrollView
+      ref={scrollRef}
       keyboardShouldPersistTaps="handled"
       contentContainerStyle={[styles.content, { paddingBottom: footer ? space.lg : insets.bottom + space.xxl }, contentStyle]}
       refreshControl={onRefresh ? <RefreshControl refreshing={!!refreshing} onRefresh={onRefresh} tintColor={colors.brand} colors={[colors.brand]} /> : undefined}

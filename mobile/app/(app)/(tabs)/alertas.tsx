@@ -7,9 +7,11 @@ import { relativeTime } from '@/lib/format'
 import { useTheme } from '@/theme/ThemeProvider'
 import { space, Tone } from '@/theme/tokens'
 
-type Tab = 'all' | 'unread' | 'critical' | 'stock' | 'expiry'
+type Tab = 'all' | 'unread' | 'critical' | 'stock' | 'expiry' | 'inventory'
 const TONE: Record<string, Tone> = { critical: 'danger', warning: 'warning', info: 'info' }
 const LABEL: Record<string, string> = { critical: 'Crítico', warning: 'Atenção', info: 'Info' }
+const ALERT_HREF = { stock: '/produtos', expiry: '/lotes', inventory: '/inventario' } as const
+const subtitle = 'Gerados a partir do estoque, da validade dos lotes e dos inventários'
 
 export default function AlertasScreen() {
   const router = useRouter()
@@ -23,6 +25,7 @@ export default function AlertasScreen() {
     if (tab === 'critical') return a.type === 'critical'
     if (tab === 'stock') return a.category === 'stock'
     if (tab === 'expiry') return a.category === 'expiry'
+    if (tab === 'inventory') return a.category === 'inventory'
     return true
   })
 
@@ -38,7 +41,7 @@ export default function AlertasScreen() {
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
             <View>
               <AppText variant="subheading">Central de alertas</AppText>
-              <AppText variant="small" color="tertiary">Gerados a partir do estoque e da validade dos lotes</AppText>
+              <AppText variant="small" color="tertiary">{subtitle}</AppText>
             </View>
             {unread > 0 ? <Badge label={`${unread} novos`} tone="danger" /> : null}
           </View>
@@ -51,6 +54,7 @@ export default function AlertasScreen() {
               { id: 'critical', label: 'Críticos', badge: alerts.filter(a => a.type === 'critical').length },
               { id: 'stock', label: 'Estoque', badge: alerts.filter(a => a.category === 'stock').length },
               { id: 'expiry', label: 'Validade', badge: alerts.filter(a => a.category === 'expiry').length },
+              { id: 'inventory', label: 'Inventário', badge: alerts.filter(a => a.category === 'inventory').length },
             ]}
           />
           {unread > 0 ? <Button title="Marcar todos como lidos" icon="check" variant="outline" size="sm" onPress={markAllRead} /> : null}
@@ -62,7 +66,7 @@ export default function AlertasScreen() {
         return (
           <Card
             accent={item.read ? undefined : tone === 'danger' ? colors.danger : tone === 'warning' ? colors.warning : colors.info}
-            onPress={() => { void markRead(item.id); router.push(item.category === 'expiry' ? '/lotes' : '/produtos') }}
+            onPress={() => { void markRead(item.id); router.push(ALERT_HREF[item.category] ?? '/produtos') }}
           >
             <View style={{ flexDirection: 'row', gap: 12 }}>
               <Icon name="alert-triangle" size={18} color={tone} />

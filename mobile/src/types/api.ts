@@ -245,7 +245,7 @@ export interface ApiSupplierReport {
   suppliers: { supplier: { id: string; name: string; tradeName: string }; entryCount: number; totalQuantity: number; totalValue: number }[]
 }
 
-export interface ApiBacktestScore { rmsle: number; wape: number; vies_pct: number; wape_categoria?: number }
+export interface ApiBacktestScore { rmsle: number; wape: number; vies_pct: number; wape_categoria?: number; r2?: number | null; mae?: number; rmse?: number }
 
 export interface ApiForecastModel {
   source: 'ml' | 'baseline'
@@ -254,6 +254,14 @@ export interface ApiForecastModel {
   trainedOn?: string
   savedAt?: string
   dataRange?: [string, string]
+  details?: {
+    algorithm?: string
+    level?: string
+    productsModelled?: number
+    productsTotal?: number
+    importance: { feature: string; label: string; weight: number }[]
+    compared: { id: string; name: string; score: ApiBacktestScore }[]
+  }
   backtest?: {
     horizonDays: number
     testOrigins: string[]
@@ -286,6 +294,29 @@ export interface ApiAnalytics {
     estimatedCost: number
   }[]
   insights: { type: 'warning' | 'success' | 'info'; title: string; desc: string; action: string; href: string }[]
+}
+
+/** Previsão diária por produto do sistema (GET /analytics/products-forecast). */
+export interface ApiProductForecasts {
+  asOf: string
+  horizon: number
+  leadTimeDays: number
+  model: ApiForecastModel
+  products: {
+    id: string
+    name: string
+    code: string
+    category: string
+    unit: string
+    currentStock: number
+    minStock: number
+    maxStock: number
+    salePrice: number
+    purchasePrice: number
+    method: 'rf' | 'gbm' | 'mean' | 'baseline'
+    recent: { date: string; quantity: number }[]
+    daily: { date: string; mean: number; low: number; high: number }[]
+  }[]
 }
 
 export interface ApiCustomer {

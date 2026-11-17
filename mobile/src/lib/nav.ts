@@ -47,6 +47,7 @@ export const MENU: MenuGroup[] = [
     items: [
       { label: 'IA — Produtos', href: '/ia', icon: 'image', desc: 'Identificação por foto' },
       { label: 'IA Analítica', href: '/ia-analitica', icon: 'cpu', desc: 'Previsão e sugestões de compra' },
+      { label: 'Previsão de Vendas', href: '/previsao', icon: 'trending-up', desc: 'Demanda e ruptura por produto' },
       { label: 'Relatórios', href: '/relatorios', icon: 'file-text', desc: 'Relatórios e exportação' },
     ],
   },

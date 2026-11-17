@@ -16,7 +16,7 @@ transferir de endereço e contar inventário no celular.
 ## Como rodar
 
 ```bash
-# 1) backend no ar — ver ../backend/README.md (o serviço de previsão de ML é opcional; sem ele a API usa média móvel)
+# 1) backend no ar — ver ../backend/README.md (o ml-service de previsão é opcional; sem ele a API usa média móvel)
 cd backend && npm run prisma:seed && npm run dev
 
 # 2) app
@@ -48,19 +48,20 @@ todo o resto, respeitando o perfil (como a sidebar do web).
 | Lotes | `/lotes` | status por validade, filtros, CSV |
 | Endereços | `/enderecos` | mapa por corredor/rua/prateleira, detalhe, reservar/bloquear, criar, remover, transferir |
 | Inventário | `/inventario`, `/inventario/novo`, `/inventario/[id]` | criar (completo/parcial/cíclico), iniciar, **contar item a item**, enviar à revisão, concluir |
-| Scanner | `/scanner` | câmera ou digitação; mostra estoque/endereços/lotes e atalhos de movimentação |
+| Scanner | `/scanner` | modos Consulta/Entrada/Saída/Transferência; câmera ou digitação com busca automática (`GET /products/scan/:code`); sugere produtos parecidos quando não há correspondência exata; consultas recentes da sessão; mostra estoque/endereços/lotes e atalhos de movimentação |
 | Categorias · Marcas · Fornecedores · Clientes | `/categorias` … | CRUD completo |
-| IA — Produtos | `/ia` | foto (câmera/galeria); o modelo de visão ainda não existe no backend, e a tela diz isso |
-| IA Analítica | `/ia-analitica` | modelo de ML (status e métricas), previsão semanal com faixa de incerteza, matriz ABC×XYZ, sugestões de compra e exportação |
+| IA — Produtos | `/ia` | foto (câmera/galeria) enviada a `POST /ai/identify-product` (OpenAI, chave só no servidor); mostra o que foi identificado e os produtos parecidos, e abre o cadastro pré-preenchido. Sem `OPENAI_API_KEY` no backend, a tela avisa que a IA não está disponível |
+| IA Analítica | `/ia-analitica` | origem do modelo (ML do `ml-service` ou média móvel) e métricas, previsão semanal com faixa de incerteza, matriz ABC×XYZ, sugestões de compra e exportação. |
+| Previsão de Vendas | `/previsao` | previsão diária **por produto** (`GET /analytics/products-forecast`, Random Forest treinado com as saídas do estoque): categoria/produto, período (7/14/28 dias), cenário de demanda e estoque simulado; cobertura, ruptura, reposição sugerida e data limite do pedido; gráficos de saída real × previsão (com faixa de 80%) e de estoque projetado; lista de todos os produtos por urgência; avaliação do modelo (métodos comparados e atributos mais relevantes) |
 | Relatórios | `/relatorios` | 9 relatórios, período, resumo, prévia e CSV (compartilhar) |
-| Alertas | aba **Alertas** | por tipo/categoria, marcar como lido (individual/todos), badge na aba |
+| Alertas | aba **Alertas** | por tipo/categoria (estoque, validade, inventário), abre a tela do assunto, marcar como lido (individual/todos), badge na aba |
 | Usuários · Auditoria | `/usuarios`, `/auditoria` | só admin/supervisor; reset de senha, ativar/inativar, antes/depois de cada alteração |
 | Configurações | `/configuracoes` | perfil, senha, tema (sistema/claro/escuro), empresa, preferências, servidor/Swagger, perfis de acesso |
 
 ### Endpoints usados
 Os mesmos do web: `/auth/*`, `/products`, `/categories`, `/brands`, `/suppliers`, `/customers`, `/movements`,
-`/lots`, `/warehouse`, `/inventory` (+ `/items/:id/count`), `/alerts`, `/dashboard/*`, `/reports/*`, `/analytics`,
-`/settings`, `/users`, `/audit`. Contrato completo no Swagger do backend (`/docs`).
+`/lots`, `/warehouse`, `/inventory` (+ `/items/:id/count`, `/reprocess`), `/alerts`, `/dashboard/*`, `/reports/*`, `/analytics` (+ `/analytics/products-forecast`),
+`/ai/identify-product`, `/settings`, `/users`, `/audit`. Contrato completo no Swagger do backend (`/docs`).
 
 ## Estrutura
 
@@ -111,6 +112,13 @@ arquivos dependem de dispositivo real.
 ## Novidades (Sprint 2)
 
 - **Foto do produto** na lista e no detalhe (URL assinada devolvida pela API; ícone de reserva se faltar ou expirar).
-- **Inventário assíncrono:** ao concluir, mostra o andamento do ajuste de estoque (fila → ajustando → ajustado/pendências/falhou), atualiza sozinho a cada 3 s e permite reprocessar (admin/supervisor).
+- **Inventário assíncrono:** ao concluir, mostra o andamento do ajuste de estoque, processado por worker via fila Azure (fila → ajustando → ajustado/pendências/falhou), atualiza sozinho a cada 3 s e permite reprocessar (admin/supervisor).
 - **Identificação por foto (IA):** tire/escolha a foto e a API sugere nome, categoria e marca (OpenAI) e lista produtos parecidos; *Cadastrar com estes dados* abre o formulário pré-preenchido. Requer `OPENAI_API_KEY` no backend.
 - Alertas passam a incluir avisos de ajuste de inventário com falha ou pendências.
+
+## Novidades (Sprint 3) — paridade com o web
+
+- **Previsão de Vendas** (`/previsao`): previsão de demanda por produto, cobertura de estoque, ruptura, reposição sugerida e avaliação do modelo (Random Forest × média simples).
+- **Scanner** com modos (consulta/entrada/saída/transferência), busca automática ao digitar, produtos parecidos e consultas recentes.
+- **Alertas de inventário** com filtro próprio e atalho para a tela de Inventário.
+- Tipos da API alinhados ao web (`ApiProductForecasts`, detalhes e métricas do modelo, método `rf`).
